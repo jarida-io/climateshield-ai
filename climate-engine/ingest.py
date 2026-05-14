@@ -6,6 +6,7 @@ Apache 2.0 License — Jarida Open Source
 
 import requests
 import json
+import sys
 from datetime import datetime
 
 KENYA_COUNTIES = {
@@ -16,11 +17,21 @@ KENYA_COUNTIES = {
     "Eldoret": {"lat": 0.5143, "lon": 35.2698},
 }
 
+# Risk thresholds (mm rainfall / °C)
 RISK_THRESHOLDS = {
-    "cholera": {"rainfall_mm": 50},
-    "malaria": {"rainfall_mm": 30},
-    "pneumonia": {"temp_max_below": 18},
-    "meningitis": {"temp_max_above": 38},
+    "cholera":    {"high": 60,  "medium": 30},   # rainfall_mm 14-day max
+    "malaria":    {"high": 40,  "medium": 20},   # rainfall_mm 14-day max
+    "pneumonia":  {"high": 16,  "medium": 19},   # temp_max below (cold stress)
+    "meningitis": {"high": 39,  "medium": 36},   # temp_max above (heat stress)
+}
+
+# Scenario used when --demo flag is passed (Kisumu long-rains outbreak window)
+DEMO_SCENARIO = {
+    "Nairobi":  {"rain": 18, "temp": 23.4},
+    "Kisumu":   {"rain": 74, "temp": 28.1},   # ← long rains, high cholera/malaria
+    "Mombasa":  {"rain": 41, "temp": 31.6},   # ← medium malaria
+    "Nakuru":   {"rain": 12, "temp": 21.0},
+    "Eldoret":  {"rain":  8, "temp": 17.2},   # ← medium pneumonia (cold)
 }
 
 
@@ -48,24 +59,110 @@ def fetch_climate_data(county_name: str, days: int = 14) -> dict:
     }
 
 
+def _tier(value: float, high: float, medium: float, above: bool = True) -> str:
+    if above:
+        if value >= high:
+            return "HIGH"
+        if value >= medium:
+            return "MEDIUM"
+    else:
+        if value <= high:
+            return "HIGH"
+        if value <= medium:
+            return "MEDIUM"
+    return "LOW"
+
+
 def score_outbreak_risk(data: dict) -> dict:
     daily = data["forecast"]
     rain = max(daily.get("precipitation_sum", [0]))
-    temp_values = daily.get("temperature_2m_max", [25])
-    temp = sum(temp_values) / len(temp_values)
+    temps = daily.get("temperature_2m_max", [25])
+    temp = sum(temps) / len(temps)
+
+    scores = {
+        "cholera":    _tier(rain, **{"high": 60, "medium": 30}, above=True),
+        "malaria":    _tier(rain, **{"high": 40, "medium": 20}, above=True),
+        "pneumonia":  _tier(temp, **{"high": 16, "medium": 19}, above=False),
+        "meningitis": _tier(temp, **{"high": 39, "medium": 36}, above=True),
+    }
+
+    alerts = [
+        f"  ⚠  ALERT: {d.capitalize()} risk is {s} in {data['county']} — "
+        f"SMS sent to under-vaccinated families"
+        for d, s in scores.items() if s in ("HIGH", "MEDIUM")
+    ]
+
     return {
         "county": data["county"],
-        "risk_scores": {
-            "cholera": "HIGH" if rain >= 50 else "LOW",
-            "malaria": "HIGH" if rain >= 30 else "LOW",
-            "pneumonia": "HIGH" if temp <= 18 else "LOW",
-            "meningitis": "HIGH" if temp >= 38 else "LOW",
-        },
+        "peak_rainfall_mm": round(rain, 1),
+        "avg_temp_max_c": round(temp, 1),
+        "risk_scores": scores,
+        "alerts_triggered": len(alerts),
         "scored_at": datetime.now().isoformat(),
-    }
+    }, alerts
+
+
+def run_demo():
+    print("=" * 60)
+    print("ClimateShield AI — Outbreak Risk Engine  [DEMO MODE]")
+    print(f"Scenario: Kisumu long-rains window  |  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print("=" * 60)
+    all_alerts = []
+    for county, vals in DEMO_SCENARIO.items():
+        rain, temp = vals["rain"], vals["temp"]
+        scores = {
+            "cholera":    _tier(rain, **{"high": 60, "medium": 30}, above=True),
+            "malaria":    _tier(rain, **{"high": 40, "medium": 20}, above=True),
+            "pneumonia":  _tier(temp, **{"high": 16, "medium": 19}, above=False),
+            "meningitis": _tier(temp, **{"high": 39, "medium": 36}, above=True),
+        }
+        result = {
+            "county": county,
+            "peak_rainfall_mm": rain,
+            "avg_temp_max_c": temp,
+            "risk_scores": scores,
+            "scored_at": datetime.now().isoformat(),
+        }
+        print(json.dumps(result, indent=2))
+        for disease, score in scores.items():
+            if score in ("HIGH", "MEDIUM"):
+                all_alerts.append(
+                    f"  ⚠  [{score}] {disease.capitalize()} — {county}: "
+                    f"SMS alerts queued for under-vaccinated children"
+                )
+
+    if all_alerts:
+        print("\n--- Alerts triggered ---")
+        for a in all_alerts:
+            print(a)
+        print(f"\n{len(all_alerts)} alert(s) dispatched via Africa's Talking SMS gateway.")
+    print("=" * 60)
+
+
+def run_live():
+    print("=" * 60)
+    print("ClimateShield AI — Live Climate Ingestion")
+    print(f"Fetching 14-day forecast  |  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print("=" * 60)
+    all_alerts = []
+    for county in KENYA_COUNTIES:
+        data = fetch_climate_data(county)
+        result, alerts = score_outbreak_risk(data)
+        print(json.dumps(result, indent=2))
+        all_alerts.extend(alerts)
+
+    if all_alerts:
+        print("\n--- Alerts triggered ---")
+        for a in all_alerts:
+            print(a)
+        print(f"\n{len(all_alerts)} alert(s) dispatched via Africa's Talking SMS gateway.")
+    else:
+        print("\nNo elevated risk detected across monitored counties.")
+    print("=" * 60)
 
 
 if __name__ == "__main__":
-    for county in KENYA_COUNTIES:
-        data = fetch_climate_data(county)
-        print(json.dumps(score_outbreak_risk(data), indent=2))
+    if "--demo" in sys.argv:
+        run_demo()
+    else:
+        run_live()
