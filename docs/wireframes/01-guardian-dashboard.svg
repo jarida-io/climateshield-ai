@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" font-family="-apple-system, Segoe UI, sans-serif">
+  <rect width="1200" height="760" fill="#f7f9fb"/>
+  <!-- Top nav -->
+  <rect x="0" y="0" width="1200" height="64" fill="#0D6E6E"/>
+  <text x="32" y="40" fill="white" font-size="22" font-weight="700">💉 Child Immunization Tracker</text>
+  <text x="900" y="40" fill="#9CD3D3" font-size="14">Akinyi Otieno · Guardian · Kisumu</text>
+  <circle cx="1130" cy="32" r="14" fill="#F59E0B"/>
+  <text x="1130" y="37" text-anchor="middle" fill="white" font-size="12" font-weight="700">4</text>
+  <text x="1150" y="37" fill="white" font-size="13">🔔</text>
+
+  <!-- Section title -->
+  <text x="40" y="110" fill="#0D6E6E" font-size="24" font-weight="700">Your Children</text>
+
+  <!-- Card 1: Zuri -->
+  <rect x="40" y="130" width="360" height="220" rx="12" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="60" y="165" fill="#0D6E6E" font-size="20" font-weight="700">Zuri Otieno</text>
+  <text x="60" y="190" fill="#475569" font-size="13">DOB: May 1, 2024 · Age: 1 yr</text>
+  <text x="60" y="210" fill="#475569" font-size="13">Health ID: KE-2024-0112</text>
+  <text x="60" y="245" fill="#1e293b" font-size="13" font-weight="600">Vaccination progress</text>
+  <rect x="60" y="255" width="320" height="10" rx="5" fill="#e2e8f0"/>
+  <rect x="60" y="255" width="115" height="10" rx="5" fill="#DC2626"/>
+  <text x="60" y="285" fill="#475569" font-size="12">6 of 19 vaccines completed · 8 missed</text>
+  <rect x="60" y="305" width="320" height="32" rx="6" fill="#0D6E6E"/>
+  <text x="220" y="326" fill="white" font-size="14" font-weight="600" text-anchor="middle">👁  View Details</text>
+
+  <!-- Card 2: Kofi -->
+  <rect x="420" y="130" width="360" height="220" rx="12" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="440" y="165" fill="#0D6E6E" font-size="20" font-weight="700">Kofi Otieno</text>
+  <text x="440" y="190" fill="#475569" font-size="13">DOB: Aug 22, 2023 · Age: 2 yrs</text>
+  <text x="440" y="210" fill="#475569" font-size="13">Health ID: KE-2023-0098</text>
+  <text x="440" y="245" fill="#1e293b" font-size="13" font-weight="600">Vaccination progress</text>
+  <rect x="440" y="255" width="320" height="10" rx="5" fill="#e2e8f0"/>
+  <rect x="440" y="255" width="245" height="10" rx="5" fill="#F59E0B"/>
+  <text x="440" y="285" fill="#475569" font-size="12">15 of 19 vaccines completed · 2 missed</text>
+  <rect x="440" y="305" width="320" height="32" rx="6" fill="#0D6E6E"/>
+  <text x="600" y="326" fill="white" font-size="14" font-weight="600" text-anchor="middle">👁  View Details</text>
+
+  <!-- Add child card -->
+  <rect x="800" y="130" width="360" height="220" rx="12" fill="white" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="980" y="240" text-anchor="middle" fill="#94a3b8" font-size="48">＋</text>
+  <text x="980" y="280" text-anchor="middle" fill="#64748b" font-size="14" font-weight="600">Register a new child</text>
+
+  <!-- Climate alert banner -->
+  <rect x="40" y="380" width="1120" height="80" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
+  <text x="60" y="412" fill="#B91C1C" font-size="22">🚨</text>
+  <text x="90" y="412" fill="#7F1D1D" font-size="16" font-weight="700">CLIMATE ALERT — Kisumu County</text>
+  <text x="90" y="435" fill="#7F1D1D" font-size="13">High cholera + malaria outbreak risk in next 7–14 days. Zuri has 8 missed doses — visit Kisumu County Referral Hospital urgently.</text>
+  <rect x="990" y="402" width="150" height="36" rx="6" fill="#DC2626"/>
+  <text x="1065" y="425" fill="white" font-size="13" font-weight="600" text-anchor="middle">View 4 Notifications</text>
+
+  <!-- Location -->
+  <rect x="40" y="490" width="540" height="230" rx="12" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="60" y="525" fill="#0D6E6E" font-size="18" font-weight="700">📍 Your Location</text>
+  <text x="60" y="555" fill="#475569" font-size="13">Current county:</text>
+  <rect x="60" y="565" width="500" height="40" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="80" y="591" fill="#0f172a" font-size="14" font-weight="600">Kisumu ▾</text>
+  <rect x="60" y="625" width="160" height="36" rx="6" fill="#0D6E6E"/>
+  <text x="140" y="648" fill="white" font-size="13" font-weight="600" text-anchor="middle">Update Location</text>
+
+  <!-- Quick actions -->
+  <rect x="600" y="490" width="560" height="230" rx="12" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="620" y="525" fill="#0D6E6E" font-size="18" font-weight="700">Quick Actions</text>
+
+  <rect x="620" y="545" width="245" height="70" rx="8" fill="#ECFDF5" stroke="#10B981"/>
+  <text x="635" y="575" fill="#065F46" font-size="14" font-weight="700">＋ Register Child</text>
+  <text x="635" y="595" fill="#047857" font-size="11">Add a new child to your family</text>
+
+  <rect x="885" y="545" width="245" height="70" rx="8" fill="#EFF6FF" stroke="#3B82F6"/>
+  <text x="900" y="575" fill="#1E3A8A" font-size="14" font-weight="700">🔔 Notifications (4)</text>
+  <text x="900" y="595" fill="#1D4ED8" font-size="11">View climate + vaccine alerts</text>
+
+  <rect x="620" y="630" width="245" height="70" rx="8" fill="#FFFBEB" stroke="#F59E0B"/>
+  <text x="635" y="660" fill="#78350F" font-size="14" font-weight="700">📄 Print Schedule</text>
+  <text x="635" y="680" fill="#92400E" font-size="11">Download PDF for clinic visit</text>
+
+  <rect x="885" y="630" width="245" height="70" rx="8" fill="#F5F3FF" stroke="#8B5CF6"/>
+  <text x="900" y="660" fill="#4C1D95" font-size="14" font-weight="700">📞 USSD Code</text>
+  <text x="900" y="680" fill="#5B21B6" font-size="11">Dial *483*45# on any phone</text>
+</svg>

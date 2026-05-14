@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" font-family="-apple-system, Segoe UI, sans-serif">
+  <rect width="1200" height="800" fill="#f7f9fb"/>
+  <rect x="0" y="0" width="1200" height="64" fill="#0D6E6E"/>
+  <text x="32" y="40" fill="white" font-size="22" font-weight="700">💉 Child Immunization Tracker</text>
+  <text x="900" y="40" fill="#9CD3D3" font-size="14">Akinyi Otieno · Guardian · Kisumu</text>
+
+  <text x="40" y="110" fill="#64748b" font-size="13">← Back to Dashboard</text>
+  <text x="40" y="145" fill="#0D6E6E" font-size="26" font-weight="700">Zuri Otieno · Vaccination Schedule</text>
+  <text x="40" y="170" fill="#475569" font-size="13">DOB: May 1, 2024 · Health ID: KE-2024-0112 · Guardian: Akinyi Otieno</text>
+
+  <!-- Status filters -->
+  <rect x="40" y="195" width="100" height="32" rx="16" fill="#0D6E6E"/>
+  <text x="90" y="216" text-anchor="middle" fill="white" font-size="12" font-weight="600">All (19)</text>
+  <rect x="150" y="195" width="120" height="32" rx="16" fill="white" stroke="#10B981" stroke-width="1.5"/>
+  <text x="210" y="216" text-anchor="middle" fill="#10B981" font-size="12" font-weight="600">Completed (6)</text>
+  <rect x="280" y="195" width="120" height="32" rx="16" fill="white" stroke="#DC2626" stroke-width="1.5"/>
+  <text x="340" y="216" text-anchor="middle" fill="#DC2626" font-size="12" font-weight="600">Missed (8)</text>
+  <rect x="410" y="195" width="120" height="32" rx="16" fill="white" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="470" y="216" text-anchor="middle" fill="#F59E0B" font-size="12" font-weight="600">Pending (5)</text>
+
+  <rect x="990" y="195" width="170" height="32" rx="6" fill="#1E40AF"/>
+  <text x="1075" y="216" text-anchor="middle" fill="white" font-size="13" font-weight="600">📄 Download PDF</text>
+
+  <!-- Table -->
+  <rect x="40" y="250" width="1120" height="40" rx="8" fill="#E2E8F0"/>
+  <text x="60"  y="275" fill="#0f172a" font-size="12" font-weight="700">VACCINE</text>
+  <text x="320" y="275" fill="#0f172a" font-size="12" font-weight="700">DISEASE PREVENTED</text>
+  <text x="600" y="275" fill="#0f172a" font-size="12" font-weight="700">DUE DATE</text>
+  <text x="760" y="275" fill="#0f172a" font-size="12" font-weight="700">DOSE</text>
+  <text x="850" y="275" fill="#0f172a" font-size="12" font-weight="700">STATUS</text>
+  <text x="1000" y="275" fill="#0f172a" font-size="12" font-weight="700">COMPLETED ON</text>
+
+  <!-- rows -->
+  <g font-size="13" fill="#0f172a">
+    <rect x="40" y="295" width="1120" height="42" fill="white" stroke="#e2e8f0"/>
+    <text x="60" y="321">BCG</text><text x="320" y="321" fill="#475569">Tuberculosis</text><text x="600" y="321" fill="#475569">2024-05-01</text><text x="760" y="321">1</text>
+    <rect x="850" y="307" width="100" height="22" rx="11" fill="#D1FAE5"/><text x="900" y="322" text-anchor="middle" fill="#065F46" font-size="11" font-weight="700">COMPLETED</text>
+    <text x="1000" y="321" fill="#475569">2024-05-01</text>
+
+    <rect x="40" y="337" width="1120" height="42" fill="#fbfdfe" stroke="#e2e8f0"/>
+    <text x="60" y="363">OPV 0</text><text x="320" y="363" fill="#475569">Polio</text><text x="600" y="363" fill="#475569">2024-05-01</text><text x="760" y="363">1</text>
+    <rect x="850" y="349" width="100" height="22" rx="11" fill="#D1FAE5"/><text x="900" y="364" text-anchor="middle" fill="#065F46" font-size="11" font-weight="700">COMPLETED</text>
+    <text x="1000" y="363" fill="#475569">2024-05-01</text>
+
+    <rect x="40" y="379" width="1120" height="42" fill="white" stroke="#e2e8f0"/>
+    <text x="60" y="405">DPT-HepB-Hib 1</text><text x="320" y="405" fill="#475569">Diphtheria, Pertussis, Tetanus, HepB, Hib</text><text x="600" y="405" fill="#475569">2024-06-12</text><text x="760" y="405">1</text>
+    <rect x="850" y="391" width="100" height="22" rx="11" fill="#D1FAE5"/><text x="900" y="406" text-anchor="middle" fill="#065F46" font-size="11" font-weight="700">COMPLETED</text>
+    <text x="1000" y="405" fill="#475569">2024-06-12</text>
+
+    <!-- MISSED rows -->
+    <rect x="40" y="421" width="1120" height="42" fill="#FEF2F2" stroke="#FECACA"/>
+    <text x="60" y="447" font-weight="600">OPV 2</text><text x="320" y="447" fill="#475569">Polio</text><text x="600" y="447" fill="#475569">2024-07-10</text><text x="760" y="447">2</text>
+    <rect x="850" y="433" width="100" height="22" rx="11" fill="#FEE2E2"/><text x="900" y="448" text-anchor="middle" fill="#991B1B" font-size="11" font-weight="700">MISSED</text>
+    <text x="1000" y="447" fill="#94a3b8">—</text>
+
+    <rect x="40" y="463" width="1120" height="42" fill="#FEF2F2" stroke="#FECACA"/>
+    <text x="60" y="489" font-weight="600">DPT-HepB-Hib 2</text><text x="320" y="489" fill="#475569">Diphtheria, Pertussis, Tetanus, HepB, Hib</text><text x="600" y="489" fill="#475569">2024-07-10</text><text x="760" y="489">2</text>
+    <rect x="850" y="475" width="100" height="22" rx="11" fill="#FEE2E2"/><text x="900" y="490" text-anchor="middle" fill="#991B1B" font-size="11" font-weight="700">MISSED</text>
+    <text x="1000" y="489" fill="#94a3b8">—</text>
+
+    <rect x="40" y="505" width="1120" height="42" fill="#FEF2F2" stroke="#FECACA"/>
+    <text x="60" y="531" font-weight="600">PCV 2</text><text x="320" y="531" fill="#475569">Pneumococcal disease</text><text x="600" y="531" fill="#475569">2024-07-10</text><text x="760" y="531">2</text>
+    <rect x="850" y="517" width="100" height="22" rx="11" fill="#FEE2E2"/><text x="900" y="532" text-anchor="middle" fill="#991B1B" font-size="11" font-weight="700">MISSED</text>
+    <text x="1000" y="531" fill="#94a3b8">—</text>
+
+    <rect x="40" y="547" width="1120" height="42" fill="#FEF2F2" stroke="#FECACA"/>
+    <text x="60" y="573" font-weight="600">RV 2</text><text x="320" y="573" fill="#475569">Rotavirus</text><text x="600" y="573" fill="#475569">2024-07-10</text><text x="760" y="573">2</text>
+    <rect x="850" y="559" width="100" height="22" rx="11" fill="#FEE2E2"/><text x="900" y="574" text-anchor="middle" fill="#991B1B" font-size="11" font-weight="700">MISSED</text>
+    <text x="1000" y="573" fill="#94a3b8">—</text>
+
+    <!-- PENDING -->
+    <rect x="40" y="589" width="1120" height="42" fill="#FFFBEB" stroke="#FDE68A"/>
+    <text x="60" y="615">Measles 1</text><text x="320" y="615" fill="#475569">Measles</text><text x="600" y="615" fill="#475569">2025-02-01</text><text x="760" y="615">1</text>
+    <rect x="850" y="601" width="100" height="22" rx="11" fill="#FEF3C7"/><text x="900" y="616" text-anchor="middle" fill="#92400E" font-size="11" font-weight="700">PENDING</text>
+    <text x="1000" y="615" fill="#94a3b8">—</text>
+  </g>
+
+  <!-- ClimateShield alert footer -->
+  <rect x="40" y="660" width="1120" height="100" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
+  <text x="60" y="690" fill="#B91C1C" font-size="22">🚨</text>
+  <text x="90" y="690" fill="#7F1D1D" font-size="15" font-weight="700">ClimateShield AI alert linked to this child</text>
+  <text x="90" y="715" fill="#7F1D1D" font-size="12">Kisumu is currently flagged HIGH risk for cholera and malaria (74mm rainfall forecast).</text>
+  <text x="90" y="734" fill="#7F1D1D" font-size="12">SMS sent to +254733000004 at 08:01 EAT · USSD shortcode *483*45# also available.</text>
+</svg>
