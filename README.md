@@ -106,7 +106,7 @@ climateshield-ai/
 | Layer | Technology |
 |---|---|
 | Climate data | [Open-Meteo API](https://open-meteo.com/) (free, no key required), Kenya Met Department |
-| ML | scikit-learn (GradientBoosting), TensorFlow Lite (edge/offline inference) |
+| ML | scikit-learn (GradientBoosting), MediaPipe Tasks (edge/offline inference) |
 | Backend | Python (FastAPI planned), PostgreSQL + PostGIS |
 | Notifications | SMS/USSD via mobile gateway (Africa's Talking or equivalent) |
 | Health data | Child Immunization Tracker (this org), open health-data standards integration planned |
@@ -186,7 +186,7 @@ Planned React.js + Leaflet.js interface for county health officers showing real-
 | Repository | Role in ClimateShield AI |
 |---|---|
 | [Child Immunization Tracker](https://github.com/jarida-io/Child-Immunization-Tracker) | Data source: child records, vaccination status, guardian contact details |
-| [KSL Translator](https://github.com/jarida-io/kenyan_sign_language_app) | Demonstrates Jarida's on-device ML capability — the same TensorFlow Lite architecture will power the offline CHW module |
+| [KSL Translator](https://github.com/jarida-io/kenyan_sign_language_app) | Demonstrates Jarida's on-device ML capability — the same MediaPipe Tasks architecture will power the offline CHW module |
 
 ## Contributing
 

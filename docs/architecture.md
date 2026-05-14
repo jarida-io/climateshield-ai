@@ -29,4 +29,4 @@ County Dashboard        — Real-time risk heatmap for health officers
 
 ## Offline / Edge AI
 
-The KSL Translator project (`jarida-io/kenyan_sign_language_app`) demonstrates Jarida's on-device ML capability. The CHW Android module for ClimateShield AI will use the same TensorFlow Lite architecture for offline risk assessment in low-connectivity areas.
+The KSL Translator project (`jarida-io/kenyan_sign_language_app`) demonstrates Jarida's on-device ML capability. The CHW Android module for ClimateShield AI will use the same MediaPipe Tasks architecture for offline risk assessment in low-connectivity areas.
