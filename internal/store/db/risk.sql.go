@@ -15,7 +15,7 @@ const currentRisk = `-- name: CurrentRisk :many
 SELECT DISTINCT ON (rs.area_id, rs.disease)
     rs.id, rs.area_id, rs.disease, rs.level, rs.driver, rs.driver_value,
     rs.forecast_date, rs.window_days, rs.predictor, rs.predictor_version,
-    rs.scored_at,
+    rs.exceedance, rs.explanation, rs.scored_at,
     a.name AS area_name,
     ST_X(a.centroid)::float8 AS longitude,
     ST_Y(a.centroid)::float8 AS latitude
@@ -35,6 +35,8 @@ type CurrentRiskRow struct {
 	WindowDays       int32
 	Predictor        string
 	PredictorVersion string
+	Exceedance       *float64
+	Explanation      *string
 	ScoredAt         pgtype.Timestamptz
 	AreaName         string
 	Longitude        float64
@@ -62,6 +64,8 @@ func (q *Queries) CurrentRisk(ctx context.Context) ([]CurrentRiskRow, error) {
 			&i.WindowDays,
 			&i.Predictor,
 			&i.PredictorVersion,
+			&i.Exceedance,
+			&i.Explanation,
 			&i.ScoredAt,
 			&i.AreaName,
 			&i.Longitude,
@@ -81,7 +85,7 @@ const riskHistory = `-- name: RiskHistory :many
 SELECT
     rs.id, rs.area_id, rs.disease, rs.level, rs.driver, rs.driver_value,
     rs.forecast_date, rs.window_days, rs.predictor, rs.predictor_version,
-    rs.scored_at,
+    rs.exceedance, rs.explanation, rs.scored_at,
     a.name AS area_name,
     ST_X(a.centroid)::float8 AS longitude,
     ST_Y(a.centroid)::float8 AS latitude
@@ -114,6 +118,8 @@ type RiskHistoryRow struct {
 	WindowDays       int32
 	Predictor        string
 	PredictorVersion string
+	Exceedance       *float64
+	Explanation      *string
 	ScoredAt         pgtype.Timestamptz
 	AreaName         string
 	Longitude        float64
@@ -146,6 +152,8 @@ func (q *Queries) RiskHistory(ctx context.Context, arg RiskHistoryParams) ([]Ris
 			&i.WindowDays,
 			&i.Predictor,
 			&i.PredictorVersion,
+			&i.Exceedance,
+			&i.Explanation,
 			&i.ScoredAt,
 			&i.AreaName,
 			&i.Longitude,
@@ -165,9 +173,10 @@ const upsertRiskScore = `-- name: UpsertRiskScore :one
 
 INSERT INTO risk_scores (
     area_id, disease, level, driver, driver_value,
-    forecast_date, window_days, predictor, predictor_version
+    forecast_date, window_days, predictor, predictor_version,
+    exceedance, explanation
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (area_id, disease, forecast_date) DO UPDATE SET
     level = excluded.level,
     driver = excluded.driver,
@@ -175,6 +184,8 @@ ON CONFLICT (area_id, disease, forecast_date) DO UPDATE SET
     window_days = excluded.window_days,
     predictor = excluded.predictor,
     predictor_version = excluded.predictor_version,
+    exceedance = excluded.exceedance,
+    explanation = excluded.explanation,
     scored_at = now()
 RETURNING id
 `
@@ -189,6 +200,8 @@ type UpsertRiskScoreParams struct {
 	WindowDays       int32
 	Predictor        string
 	PredictorVersion string
+	Exceedance       *float64
+	Explanation      *string
 }
 
 // SPDX-License-Identifier: Apache-2.0
@@ -203,6 +216,8 @@ func (q *Queries) UpsertRiskScore(ctx context.Context, arg UpsertRiskScoreParams
 		arg.WindowDays,
 		arg.Predictor,
 		arg.PredictorVersion,
+		arg.Exceedance,
+		arg.Explanation,
 	)
 	var id int64
 	err := row.Scan(&id)

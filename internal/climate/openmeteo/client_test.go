@@ -56,11 +56,13 @@ func TestFetchDailyParsesGoldenPayload(t *testing.T) {
 	// The golden Kisumu window must reproduce the demo scenario features.
 	precip := make([]float64, 0, 14)
 	tmax := make([]float64, 0, 14)
+	tmin := make([]float64, 0, 14)
 	for _, d := range fc.Days {
 		precip = append(precip, d.PrecipitationSumMM)
 		tmax = append(tmax, d.TempMaxC)
+		tmin = append(tmin, d.TempMinC)
 	}
-	f, err := predict.FeaturesFrom(precip, tmax)
+	f, err := predict.FeaturesFrom("kisumu", int(fc.Days[0].Date.Month()), precip, tmax, tmin)
 	require.NoError(t, err)
 	require.InDelta(t, 74.0, f.PeakRainfallMM, 1e-9)
 	require.InDelta(t, 28.1, f.MeanMaxTempC, 1e-9)

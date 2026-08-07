@@ -27,6 +27,7 @@ type ServiceConfig struct {
 	config.Common
 	config.DB
 	Addr      string `env:"PREDICTOR_ADDR" envDefault:":8091"`
+	Predictor string `env:"PREDICTOR" envDefault:"rules"`
 	ModelPath string `env:"ONNX_MODEL_PATH" envDefault:""`
 }
 
@@ -53,18 +54,24 @@ func scoreArea(
 	}
 	precip := make([]float64, 0, len(window))
 	tmax := make([]float64, 0, len(window))
+	tmin := make([]float64, 0, len(window))
 	for _, row := range window {
 		precip = append(precip, row.PrecipitationSumMm)
 		tmax = append(tmax, row.TempMaxC)
+		tmin = append(tmin, row.TempMinC)
 	}
-	feats, err := FeaturesFrom(precip, tmax)
+	forecastDate := window[0].ForecastDate
+	feats, err := FeaturesFrom(areaID, int(forecastDate.Time.Month()), precip, tmax, tmin)
 	if err != nil {
 		return 0, err
 	}
-
-	forecastDate := window[0].ForecastDate
 	alerts := 0
 	for _, pred := range p.Predict(feats) {
+		var explanation *string
+		if pred.Explanation != "" {
+			e := pred.Explanation
+			explanation = &e
+		}
 		id, err := q.UpsertRiskScore(ctx, db.UpsertRiskScoreParams{
 			AreaID:           areaID,
 			Disease:          string(pred.Disease),
@@ -75,6 +82,8 @@ func scoreArea(
 			WindowDays:       int32(len(window)),
 			Predictor:        p.Name(),
 			PredictorVersion: p.Version(),
+			Exceedance:       pred.Exceedance,
+			Explanation:      explanation,
 		})
 		if err != nil {
 			return alerts, fmt.Errorf("predict: persist %s/%s: %w", areaID, pred.Disease, err)
@@ -133,7 +142,7 @@ func Run(ctx context.Context) error {
 	log := logging.New(os.Stdout, cfg.LogLevel)
 	m := metrics.New("predictor")
 
-	predictor, err := Select(cfg.ModelPath, log)
+	predictor, err := Select(cfg.Predictor, cfg.ModelPath, log)
 	if err != nil {
 		return err
 	}

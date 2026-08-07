@@ -114,6 +114,8 @@ type RiskScore struct {
 	Predictor        string
 	PredictorVersion string
 	ScoredAt         pgtype.Timestamptz
+	Exceedance       *float64
+	Explanation      *string
 }
 
 type SealedChildKey struct {

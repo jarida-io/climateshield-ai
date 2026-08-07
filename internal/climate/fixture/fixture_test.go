@@ -38,11 +38,13 @@ func TestFixtureReproducesDemoScenario(t *testing.T) {
 		fc, err := s.FetchDaily(context.Background(), climate.Area{ID: id}, 14)
 		require.NoError(t, err)
 		precip, tmax := make([]float64, 0, 14), make([]float64, 0, 14)
+		tmin := make([]float64, 0, 14)
 		for _, d := range fc.Days {
 			precip = append(precip, d.PrecipitationSumMM)
 			tmax = append(tmax, d.TempMaxC)
+			tmin = append(tmin, d.TempMinC)
 		}
-		f, err := predict.FeaturesFrom(precip, tmax)
+		f, err := predict.FeaturesFrom(id, int(fc.Days[0].Date.Month()), precip, tmax, tmin)
 		require.NoError(t, err)
 		require.InDelta(t, exp[0], f.PeakRainfallMM, 1e-9, "%s peak rainfall", id)
 		require.InDelta(t, exp[1], f.MeanMaxTempC, 1e-9, "%s mean max temp", id)

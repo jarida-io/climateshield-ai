@@ -2,6 +2,8 @@
 
 package predict
 
+import "fmt"
+
 // SINGLE SOURCE OF TRUTH for the v1 risk thresholds, exactly as published in
 // the funding proposal and docs/diagrams/risk-scoring.md. Do not change these
 // numbers without a proposal amendment.
@@ -43,25 +45,61 @@ func (RulesPredictor) Predict(f Features) []Prediction {
 			Level:       tierAtOrAbove(f.PeakRainfallMM, CholeraHighMM, CholeraMediumMM),
 			Driver:      DriverPeakRainfall,
 			DriverValue: f.PeakRainfallMM,
+			Explanation: explainAtOrAbove("peak 14-day rainfall", "mm",
+				f.PeakRainfallMM, CholeraHighMM, CholeraMediumMM),
 		},
 		{
 			Disease:     Malaria,
 			Level:       tierAtOrAbove(f.PeakRainfallMM, MalariaHighMM, MalariaMediumMM),
 			Driver:      DriverPeakRainfall,
 			DriverValue: f.PeakRainfallMM,
+			Explanation: explainAtOrAbove("peak 14-day rainfall", "mm",
+				f.PeakRainfallMM, MalariaHighMM, MalariaMediumMM),
 		},
 		{
 			Disease:     Pneumonia,
 			Level:       tierAtOrBelow(f.MeanMaxTempC, PneumoniaHighC, PneumoniaMediumC),
 			Driver:      DriverMeanMaxTemp,
 			DriverValue: f.MeanMaxTempC,
+			Explanation: explainAtOrBelow("mean 14-day maximum temperature", "°C",
+				f.MeanMaxTempC, PneumoniaHighC, PneumoniaMediumC),
 		},
 		{
 			Disease:     Meningitis,
 			Level:       tierAtOrAbove(f.MeanMaxTempC, MeningitisHighC, MeningitisMediumC),
 			Driver:      DriverMeanMaxTemp,
 			DriverValue: f.MeanMaxTempC,
+			Explanation: explainAtOrAbove("mean 14-day maximum temperature", "°C",
+				f.MeanMaxTempC, MeningitisHighC, MeningitisMediumC),
 		},
+	}
+}
+
+func explainAtOrAbove(driver, unit string, value, high, medium float64) string {
+	switch {
+	case value >= high:
+		return fmt.Sprintf("%s of %.1f%s is at or above the HIGH threshold of %.0f%s",
+			driver, value, unit, high, unit)
+	case value >= medium:
+		return fmt.Sprintf("%s of %.1f%s is at or above the MEDIUM threshold of %.0f%s but below HIGH (%.0f%s)",
+			driver, value, unit, medium, unit, high, unit)
+	default:
+		return fmt.Sprintf("%s of %.1f%s is below the MEDIUM threshold of %.0f%s",
+			driver, value, unit, medium, unit)
+	}
+}
+
+func explainAtOrBelow(driver, unit string, value, high, medium float64) string {
+	switch {
+	case value <= high:
+		return fmt.Sprintf("%s of %.1f%s is at or below the HIGH threshold of %.0f%s",
+			driver, value, unit, high, unit)
+	case value <= medium:
+		return fmt.Sprintf("%s of %.1f%s is at or below the MEDIUM threshold of %.0f%s but above HIGH (%.0f%s)",
+			driver, value, unit, medium, unit, high, unit)
+	default:
+		return fmt.Sprintf("%s of %.1f%s is above the MEDIUM threshold of %.0f%s",
+			driver, value, unit, medium, unit)
 	}
 }
 

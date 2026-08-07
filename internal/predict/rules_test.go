@@ -133,18 +133,24 @@ func TestRulesDemoScenario(t *testing.T) {
 }
 
 func TestFeaturesFrom(t *testing.T) {
-	f, err := FeaturesFrom(
+	f, err := FeaturesFrom("kisumu", 8,
 		[]float64{0, 12, 74, 3},
 		[]float64{26, 28, 30.3},
+		[]float64{16, 17, 18},
 	)
 	require.NoError(t, err)
 	require.InDelta(t, 74.0, f.PeakRainfallMM, 1e-9)
 	require.InDelta(t, (26+28+30.3)/3, f.MeanMaxTempC, 1e-9)
+	require.InDelta(t, 17.0, f.MeanMinTempC, 1e-9)
+	require.Equal(t, "kisumu", f.AreaID)
+	require.Equal(t, 8, f.Month)
 
 	// Empty inputs are an error, not a silent default: the Python prototype's
 	// fallback (assume 25°C) could mask a data outage as "no risk".
-	_, err = FeaturesFrom(nil, []float64{20})
+	_, err = FeaturesFrom("kisumu", 8, nil, []float64{20}, []float64{10})
 	require.Error(t, err)
-	_, err = FeaturesFrom([]float64{1}, nil)
+	_, err = FeaturesFrom("kisumu", 8, []float64{1}, nil, []float64{10})
+	require.Error(t, err)
+	_, err = FeaturesFrom("kisumu", 8, []float64{1}, []float64{20}, nil)
 	require.Error(t, err)
 }

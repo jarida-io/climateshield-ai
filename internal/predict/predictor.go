@@ -40,19 +40,25 @@ const (
 const (
 	DriverPeakRainfall = "peak_rainfall_mm_14d"
 	DriverMeanMaxTemp  = "mean_max_temp_c_14d"
+	DriverMeanMinTemp  = "mean_min_temp_c_14d"
 )
 
 // Features are the climate inputs for one area over a 14-day forecast window.
+// AreaID and Month are carried so a predictor can compare the window against
+// that county's own seasonal history rather than a fixed global cutoff.
 type Features struct {
 	PeakRainfallMM float64
 	MeanMaxTempC   float64
+	MeanMinTempC   float64
+	AreaID         string
+	Month          int // 1-12, calendar month of the first forecast day
 }
 
 // FeaturesFrom computes window features from daily series. Empty input is an
 // error by design: the Python prototype defaulted missing temperatures to
 // 25°C, which silently turned a data outage into "no risk".
-func FeaturesFrom(dailyPrecipMM, dailyTempMaxC []float64) (Features, error) {
-	if len(dailyPrecipMM) == 0 || len(dailyTempMaxC) == 0 {
+func FeaturesFrom(areaID string, month int, dailyPrecipMM, dailyTempMaxC, dailyTempMinC []float64) (Features, error) {
+	if len(dailyPrecipMM) == 0 || len(dailyTempMaxC) == 0 || len(dailyTempMinC) == 0 {
 		return Features{}, errors.New("predict: empty climate series")
 	}
 	peak := dailyPrecipMM[0]
@@ -61,14 +67,21 @@ func FeaturesFrom(dailyPrecipMM, dailyTempMaxC []float64) (Features, error) {
 			peak = v
 		}
 	}
-	sum := 0.0
-	for _, v := range dailyTempMaxC {
-		sum += v
-	}
 	return Features{
 		PeakRainfallMM: peak,
-		MeanMaxTempC:   sum / float64(len(dailyTempMaxC)),
+		MeanMaxTempC:   mean(dailyTempMaxC),
+		MeanMinTempC:   mean(dailyTempMinC),
+		AreaID:         areaID,
+		Month:          month,
 	}, nil
+}
+
+func mean(v []float64) float64 {
+	sum := 0.0
+	for _, x := range v {
+		sum += x
+	}
+	return sum / float64(len(v))
 }
 
 // Prediction is one disease's scored risk.
@@ -77,6 +90,18 @@ type Prediction struct {
 	Level       Level
 	Driver      string
 	DriverValue float64
+
+	// Exceedance is how rare this driver value is for this county and month,
+	// measured against the reference climatology: 0.02 means the window sits
+	// in the most extreme 2% of the last decade. It is a property of the
+	// WEATHER, not a probability that an outbreak will occur — no outbreak
+	// surveillance data exists in this system to estimate that. Nil for
+	// predictors that do not compute it.
+	Exceedance *float64
+
+	// Explanation is a one-line, human-readable reason a health officer can
+	// act on or challenge.
+	Explanation string
 }
 
 // Predictor scores all diseases for one feature window.
@@ -89,10 +114,15 @@ type Predictor interface {
 // ErrNotImplemented marks predictors that are declared but not yet built.
 var ErrNotImplemented = errors.New("predict: not implemented")
 
-// Select returns the active predictor: the ONNX predictor when a model path
-// is configured, the rules engine otherwise. It logs which one is active so
-// every deployment's scoring provenance is explicit.
-func Select(modelPath string, log *slog.Logger) (Predictor, error) {
+// Select returns the active predictor.
+//
+//	PREDICTOR=rules       the published proposal thresholds (default)
+//	PREDICTOR=climatology per-county seasonal percentiles
+//
+// A configured ONNX model path is a hard startup error while no model exists:
+// silently falling back to rules would misreport scoring provenance.
+// The choice is logged so every deployment's provenance is explicit.
+func Select(name, modelPath string, log *slog.Logger) (Predictor, error) {
 	if modelPath != "" {
 		p, err := NewONNXPredictor(modelPath)
 		if err != nil {
@@ -101,7 +131,20 @@ func Select(modelPath string, log *slog.Logger) (Predictor, error) {
 		log.Info("predictor selected", "predictor", p.Name(), "version", p.Version())
 		return p, nil
 	}
-	p := NewRulesPredictor()
+
+	var p Predictor
+	switch name {
+	case "", "rules":
+		p = NewRulesPredictor()
+	case "climatology":
+		c, err := NewClimatologyPredictor()
+		if err != nil {
+			return nil, err
+		}
+		p = c
+	default:
+		return nil, fmt.Errorf("predict: unknown predictor %q (want rules or climatology)", name)
+	}
 	log.Info("predictor selected", "predictor", p.Name(), "version", p.Version())
 	return p, nil
 }
