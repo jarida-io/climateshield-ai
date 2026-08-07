@@ -8,8 +8,9 @@ import (
 )
 
 // Leaf computes the per-child leaf hash: HMAC-SHA256(childKey, canonical).
-// The key never leaves sealed.child_keys; destroying it (ForgetChild) makes
-// every leaf it produced permanently unlinkable to the child.
+// The key never leaves the sealed schema's child_keys table; destroying it
+// (ForgetChild) makes every leaf it produced permanently unlinkable to the
+// child.
 func Leaf(childKey []byte, canonical []byte) []byte {
 	mac := hmac.New(sha256.New, childKey)
 	mac.Write(canonical)

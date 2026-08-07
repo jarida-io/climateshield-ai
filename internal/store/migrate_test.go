@@ -34,7 +34,7 @@ func TestMigrationsCreateSchema(t *testing.T) {
 		`SELECT EXISTS (SELECT 1 FROM information_schema.tables
 		 WHERE table_schema = 'sealed' AND table_name = 'child_keys')`).Scan(&exists)
 	require.NoError(t, err)
-	require.True(t, exists, "sealed.child_keys missing")
+	require.True(t, exists, "child_keys table missing from sealed schema")
 
 	var kepiRows int
 	require.NoError(t, pool.QueryRow(ctx, `SELECT count(*) FROM vaccine_schedule`).Scan(&kepiRows))

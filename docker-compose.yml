@@ -81,6 +81,27 @@ services:
       timeout: 3s
       retries: 12
 
+  notifier:
+    build:
+      context: .
+      dockerfile: deploy/go.Dockerfile
+      args: { CMD: notifier }
+    environment:
+      <<: *appenv
+      NOTIFY_CHANNEL: ${NOTIFY_CHANNEL:-mock}
+      MOCK_OUTBOX_PATH: /outbox/outbox.jsonl
+      PII_KEY_HEX: ${PII_KEY_HEX:?set PII_KEY_HEX in .env (cp .env.example .env)}
+    volumes:
+      - ./var:/outbox
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8092/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
   registry:
     build:
       context: .

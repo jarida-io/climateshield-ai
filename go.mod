@@ -12,6 +12,7 @@ tool (
 require (
 	connectrpc.com/connect v1.20.0
 	github.com/caarlos0/env/v11 v11.4.1
+	github.com/fiorix/go-smpp v0.0.0-20210403173735-2894b96e70ba
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/jackc/pgx/v5 v5.10.0

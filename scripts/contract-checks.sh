@@ -30,6 +30,7 @@ done < <(
 while IFS= read -r f; do
   case "$f" in
     internal/store/queries/ledger.sql) ;; # the one allowed site
+    internal/store/db/ledger.sql.go)   ;; # sqlc output generated from it
     internal/store/migrations/*)       ;; # schema definition itself
     scripts/contract-checks.sh)        ;;
     *)
