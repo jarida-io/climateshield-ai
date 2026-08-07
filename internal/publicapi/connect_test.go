@@ -91,6 +91,57 @@ func TestConnectNeverFailsWhenBackendIsDown(t *testing.T) {
 	require.Equal(t, "true", stats.Header().Get("X-Data-Stale"))
 }
 
+// The availability promise covers the evidence surfaces too: a reviewer
+// clicking through the dashboard during a database outage sees stale data
+// marked as stale, not a stack of broken panels.
+func TestConnectEvidenceSurfacesSurviveBackendLoss(t *testing.T) {
+	pool, _ := testdb.PoolDSN(t)
+	seedRiskScores(t, db.New(pool))
+	srv := publicapi.NewServer(pool, logging.New(io.Discard, "info")).
+		WithDeployment("climatology", "1.0.0", "mock", "6h")
+	ts := httptest.NewServer(srv.Router(nil, nil))
+	t.Cleanup(ts.Close)
+
+	client := climateshieldv1connect.NewPublicServiceClient(http.DefaultClient, ts.URL)
+	ctx := context.Background()
+
+	// Warm every evidence method.
+	_, err := client.GetModelInfo(ctx, connect.NewRequest(&climateshieldv1.GetModelInfoRequest{}))
+	require.NoError(t, err)
+	_, err = client.GetClimateSeries(ctx, connect.NewRequest(&climateshieldv1.GetClimateSeriesRequest{}))
+	require.NoError(t, err)
+	_, err = client.GetLedgerSummary(ctx, connect.NewRequest(&climateshieldv1.GetLedgerSummaryRequest{}))
+	require.NoError(t, err)
+	_, err = client.GetAlertSummary(ctx, connect.NewRequest(&climateshieldv1.GetAlertSummaryRequest{}))
+	require.NoError(t, err)
+	_, err = client.GetPipelineStatus(ctx, connect.NewRequest(&climateshieldv1.GetPipelineStatusRequest{}))
+	require.NoError(t, err)
+
+	pool.Close()
+
+	// Model info needs no database at all, so it keeps working outright.
+	model, err := client.GetModelInfo(ctx, connect.NewRequest(&climateshieldv1.GetModelInfoRequest{}))
+	require.NoError(t, err)
+	require.Equal(t, "climatology", model.Msg.GetActivePredictor())
+
+	// The database-backed ones degrade to stale rather than failing.
+	climate, err := client.GetClimateSeries(ctx, connect.NewRequest(&climateshieldv1.GetClimateSeriesRequest{}))
+	require.NoError(t, err)
+	require.Equal(t, "true", climate.Header().Get("X-Data-Stale"))
+
+	ledger, err := client.GetLedgerSummary(ctx, connect.NewRequest(&climateshieldv1.GetLedgerSummaryRequest{}))
+	require.NoError(t, err)
+	require.Equal(t, "true", ledger.Header().Get("X-Data-Stale"))
+
+	alerts, err := client.GetAlertSummary(ctx, connect.NewRequest(&climateshieldv1.GetAlertSummaryRequest{}))
+	require.NoError(t, err)
+	require.Equal(t, "true", alerts.Header().Get("X-Data-Stale"))
+
+	pipeline, err := client.GetPipelineStatus(ctx, connect.NewRequest(&climateshieldv1.GetPipelineStatusRequest{}))
+	require.NoError(t, err)
+	require.Equal(t, "true", pipeline.Header().Get("X-Data-Stale"))
+}
+
 func TestConnectStaleColdStart(t *testing.T) {
 	// Never served successfully and the database is gone: still no error,
 	// just an empty payload marked stale.

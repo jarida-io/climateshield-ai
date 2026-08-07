@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file climateshield/v1/public.proto.
  */
 export const file_climateshield_v1_public: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jbGltYXRlc2hpZWxkL3YxL3B1YmxpYy5wcm90bxIQY2xpbWF0ZXNoaWVsZC52MSKwAgoJUmlza1Njb3JlEgwKBGFyZWEYASABKAkSEAoIbGF0aXR1ZGUYAiABKAESEQoJbG9uZ2l0dWRlGAMgASgBEioKB2Rpc2Vhc2UYBCABKA4yGS5jbGltYXRlc2hpZWxkLnYxLkRpc2Vhc2USKgoFbGV2ZWwYBSABKA4yGy5jbGltYXRlc2hpZWxkLnYxLlJpc2tMZXZlbBIVCg1mb3JlY2FzdF9kYXRlGAYgASgJEg4KBmRyaXZlchgHIAEoCRIUCgxkcml2ZXJfdmFsdWUYCCABKAESEQoJcHJlZGljdG9yGAkgASgJEhkKEXByZWRpY3Rvcl92ZXJzaW9uGAogASgJEi0KCXNjb3JlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiFwoVR2V0Q3VycmVudFJpc2tSZXF1ZXN0IncKFkdldEN1cnJlbnRSaXNrUmVzcG9uc2USKwoGc2NvcmVzGAEgAygLMhsuY2xpbWF0ZXNoaWVsZC52MS5SaXNrU2NvcmUSMAoMZ2VuZXJhdGVkX2F0GAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKEAQoVR2V0Umlza0hpc3RvcnlSZXF1ZXN0EgwKBGFyZWEYASABKAkSKgoHZGlzZWFzZRgCIAEoDjIZLmNsaW1hdGVzaGllbGQudjEuRGlzZWFzZRIRCglmcm9tX2RhdGUYAyABKAkSDwoHdG9fZGF0ZRgEIAEoCRINCgVsaW1pdBgFIAEoBSJ3ChZHZXRSaXNrSGlzdG9yeVJlc3BvbnNlEisKBnNjb3JlcxgBIAMoCzIbLmNsaW1hdGVzaGllbGQudjEuUmlza1Njb3JlEjAKDGdlbmVyYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAi/AIKC0NvdW50eVN0YXRzEgwKBGFyZWEYASABKAkSIAoTY2hpbGRyZW5fcmVnaXN0ZXJlZBgCIAEoA0gAiAEBEiYKHmNoaWxkcmVuX3JlZ2lzdGVyZWRfc3VwcHJlc3NlZBgDIAEoCBIZCgxjaGlsZHJlbl9kdWUYBCABKANIAYgBARIfChdjaGlsZHJlbl9kdWVfc3VwcHJlc3NlZBgFIAEoCBIdChBjaGlsZHJlbl9vdmVyZHVlGAYgASgDSAKIAQESIwobY2hpbGRyZW5fb3ZlcmR1ZV9zdXBwcmVzc2VkGAcgASgIEh0KEGFsZXJ0c19nZW5lcmF0ZWQYCCABKANIA4gBARIjChthbGVydHNfZ2VuZXJhdGVkX3N1cHByZXNzZWQYCSABKAhCFgoUX2NoaWxkcmVuX3JlZ2lzdGVyZWRCDwoNX2NoaWxkcmVuX2R1ZUITChFfY2hpbGRyZW5fb3ZlcmR1ZUITChFfYWxlcnRzX2dlbmVyYXRlZCIRCg9HZXRTdGF0c1JlcXVlc3QicgoQR2V0U3RhdHNSZXNwb25zZRIsCgVzdGF0cxgBIAMoCzIdLmNsaW1hdGVzaGllbGQudjEuQ291bnR5U3RhdHMSMAoMZ2VuZXJhdGVkX2F0GAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcDKyAgoNUHVibGljU2VydmljZRJlCg5HZXRDdXJyZW50UmlzaxInLmNsaW1hdGVzaGllbGQudjEuR2V0Q3VycmVudFJpc2tSZXF1ZXN0GiguY2xpbWF0ZXNoaWVsZC52MS5HZXRDdXJyZW50Umlza1Jlc3BvbnNlIgASZQoOR2V0Umlza0hpc3RvcnkSJy5jbGltYXRlc2hpZWxkLnYxLkdldFJpc2tIaXN0b3J5UmVxdWVzdBooLmNsaW1hdGVzaGllbGQudjEuR2V0Umlza0hpc3RvcnlSZXNwb25zZSIAElMKCEdldFN0YXRzEiEuY2xpbWF0ZXNoaWVsZC52MS5HZXRTdGF0c1JlcXVlc3QaIi5jbGltYXRlc2hpZWxkLnYxLkdldFN0YXRzUmVzcG9uc2UiAEJSWlBnaXRodWIuY29tL2phcmlkYS1pby9jbGltYXRlc2hpZWxkL2ludGVybmFsL2dlbi9jbGltYXRlc2hpZWxkL3YxO2NsaW1hdGVzaGllbGR2MWIGcHJvdG8z", [file_climateshield_v1_common, file_google_protobuf_timestamp]);
+  fileDesc("Ch1jbGltYXRlc2hpZWxkL3YxL3B1YmxpYy5wcm90bxIQY2xpbWF0ZXNoaWVsZC52MSLtAgoJUmlza1Njb3JlEgwKBGFyZWEYASABKAkSEAoIbGF0aXR1ZGUYAiABKAESEQoJbG9uZ2l0dWRlGAMgASgBEioKB2Rpc2Vhc2UYBCABKA4yGS5jbGltYXRlc2hpZWxkLnYxLkRpc2Vhc2USKgoFbGV2ZWwYBSABKA4yGy5jbGltYXRlc2hpZWxkLnYxLlJpc2tMZXZlbBIVCg1mb3JlY2FzdF9kYXRlGAYgASgJEg4KBmRyaXZlchgHIAEoCRIUCgxkcml2ZXJfdmFsdWUYCCABKAESEQoJcHJlZGljdG9yGAkgASgJEhkKEXByZWRpY3Rvcl92ZXJzaW9uGAogASgJEi0KCXNjb3JlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFwoKZXhjZWVkYW5jZRgMIAEoAUgAiAEBEhMKC2V4cGxhbmF0aW9uGA0gASgJQg0KC19leGNlZWRhbmNlIhcKFUdldEN1cnJlbnRSaXNrUmVxdWVzdCJ3ChZHZXRDdXJyZW50Umlza1Jlc3BvbnNlEisKBnNjb3JlcxgBIAMoCzIbLmNsaW1hdGVzaGllbGQudjEuUmlza1Njb3JlEjAKDGdlbmVyYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAihAEKFUdldFJpc2tIaXN0b3J5UmVxdWVzdBIMCgRhcmVhGAEgASgJEioKB2Rpc2Vhc2UYAiABKA4yGS5jbGltYXRlc2hpZWxkLnYxLkRpc2Vhc2USEQoJZnJvbV9kYXRlGAMgASgJEg8KB3RvX2RhdGUYBCABKAkSDQoFbGltaXQYBSABKAUidwoWR2V0Umlza0hpc3RvcnlSZXNwb25zZRIrCgZzY29yZXMYASADKAsyGy5jbGltYXRlc2hpZWxkLnYxLlJpc2tTY29yZRIwCgxnZW5lcmF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIvwCCgtDb3VudHlTdGF0cxIMCgRhcmVhGAEgASgJEiAKE2NoaWxkcmVuX3JlZ2lzdGVyZWQYAiABKANIAIgBARImCh5jaGlsZHJlbl9yZWdpc3RlcmVkX3N1cHByZXNzZWQYAyABKAgSGQoMY2hpbGRyZW5fZHVlGAQgASgDSAGIAQESHwoXY2hpbGRyZW5fZHVlX3N1cHByZXNzZWQYBSABKAgSHQoQY2hpbGRyZW5fb3ZlcmR1ZRgGIAEoA0gCiAEBEiMKG2NoaWxkcmVuX292ZXJkdWVfc3VwcHJlc3NlZBgHIAEoCBIdChBhbGVydHNfZ2VuZXJhdGVkGAggASgDSAOIAQESIwobYWxlcnRzX2dlbmVyYXRlZF9zdXBwcmVzc2VkGAkgASgIQhYKFF9jaGlsZHJlbl9yZWdpc3RlcmVkQg8KDV9jaGlsZHJlbl9kdWVCEwoRX2NoaWxkcmVuX292ZXJkdWVCEwoRX2FsZXJ0c19nZW5lcmF0ZWQiEQoPR2V0U3RhdHNSZXF1ZXN0InIKEEdldFN0YXRzUmVzcG9uc2USLAoFc3RhdHMYASADKAsyHS5jbGltYXRlc2hpZWxkLnYxLkNvdW50eVN0YXRzEjAKDGdlbmVyYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiFQoTR2V0TW9kZWxJbmZvUmVxdWVzdCKcAQoNVGhyZXNob2xkUnVsZRIPCgdkaXNlYXNlGAEgASgJEg4KBmRyaXZlchgCIAEoCRIMCgRoaWdoGAMgASgBEg4KBm1lZGl1bRgEIAEoARIXCg9oaWdoZXJfaXNfd29yc2UYBSABKAgSJQodcmVhY2hhYmxlX2luX3JlZmVyZW5jZV9wZXJpb2QYBiABKAgSDAoEbm90ZRgHIAEoCSLGAgoUR2V0TW9kZWxJbmZvUmVzcG9uc2USGAoQYWN0aXZlX3ByZWRpY3RvchgBIAEoCRIWCg5hY3RpdmVfdmVyc2lvbhgCIAEoCRIcChRhdmFpbGFibGVfcHJlZGljdG9ycxgDIAMoCRIuCgVydWxlcxgEIAMoCzIfLmNsaW1hdGVzaGllbGQudjEuVGhyZXNob2xkUnVsZRIYChByZWZlcmVuY2VfcGVyaW9kGAUgASgJEhgKEHJlZmVyZW5jZV9zb3VyY2UYBiABKAkSGQoRcmVmZXJlbmNlX2xpY2VuY2UYByABKAkSEwoLd2luZG93X2RheXMYCCABKAUSFwoPaGlnaF9leGNlZWRhbmNlGAkgASgBEhkKEW1lZGl1bV9leGNlZWRhbmNlGAogASgBEhYKDmludGVycHJldGF0aW9uGAsgASgJIicKF0dldENsaW1hdGVTZXJpZXNSZXF1ZXN0EgwKBGFyZWEYASABKAkiXAoKQ2xpbWF0ZURheRIMCgRkYXRlGAEgASgJEhgKEHByZWNpcGl0YXRpb25fbW0YAiABKAESEgoKdGVtcF9tYXhfYxgDIAEoARISCgp0ZW1wX21pbl9jGAQgASgBIocBCgxDb3VudHlTZXJpZXMSDAoEYXJlYRgBIAEoCRIOCgZzb3VyY2UYAiABKAkSLQoJaXNzdWVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIqCgRkYXlzGAQgAygLMhwuY2xpbWF0ZXNoaWVsZC52MS5DbGltYXRlRGF5InwKGEdldENsaW1hdGVTZXJpZXNSZXNwb25zZRIuCgZzZXJpZXMYASADKAsyHi5jbGltYXRlc2hpZWxkLnYxLkNvdW50eVNlcmllcxIwCgxnZW5lcmF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIhkKF0dldExlZGdlclN1bW1hcnlSZXF1ZXN0IrcBCglEYWlseVJvb3QSCwoDZGF5GAEgASgJEhAKCHJvb3RfaGV4GAIgASgJEhcKCmxlYWZfY291bnQYAyABKANIAIgBARIdChVsZWFmX2NvdW50X3N1cHByZXNzZWQYBCABKAgSEwoLYW5jaG9yX3R5cGUYBSABKAkSLwoLYW5jaG9yZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQg0KC19sZWFmX2NvdW50IrQBChhHZXRMZWRnZXJTdW1tYXJ5UmVzcG9uc2USKgoFcm9vdHMYASADKAsyGy5jbGltYXRlc2hpZWxkLnYxLkRhaWx5Um9vdBISCgp0b3RhbF9kYXlzGAIgASgDEhEKCWFsZ29yaXRobRgDIAEoCRITCgthbmNob3Jfbm90ZRgEIAEoCRIwCgxnZW5lcmF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIhgKFkdldEFsZXJ0U3VtbWFyeVJlcXVlc3QiVAoQQWxlcnRTdGF0dXNDb3VudBIOCgZzdGF0dXMYASABKAkSEgoFY291bnQYAiABKANIAIgBARISCgpzdXBwcmVzc2VkGAMgASgIQggKBl9jb3VudCJSCg5UZW1wbGF0ZVNhbXBsZRIMCgRsYW5nGAEgASgJEgwKBGJvZHkYAiABKAkSDwoHc2VwdGV0cxgDIAEoBRITCgttYXhfc2VwdGV0cxgEIAEoBSKJAgoXR2V0QWxlcnRTdW1tYXJ5UmVzcG9uc2USDwoHY2hhbm5lbBgBIAEoCRIVCg1jaGFubmVsX3NlbmRzGAIgASgIEhQKDGNoYW5uZWxfbm90ZRgDIAEoCRI0CghzdGF0dXNlcxgEIAMoCzIiLmNsaW1hdGVzaGllbGQudjEuQWxlcnRTdGF0dXNDb3VudBIzCgl0ZW1wbGF0ZXMYBSADKAsyIC5jbGltYXRlc2hpZWxkLnYxLlRlbXBsYXRlU2FtcGxlEhMKC3F1aWV0X2hvdXJzGAYgASgJEjAKDGdlbmVyYXRlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiGgoYR2V0UGlwZWxpbmVTdGF0dXNSZXF1ZXN0InEKDUpvYktpbmRTdGF0dXMSDAoEa2luZBgBIAEoCRINCgVzdGF0ZRgCIAEoCRINCgVjb3VudBgDIAEoAxI0ChBsYXN0X2ZpbmlzaGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKDAgoZR2V0UGlwZWxpbmVTdGF0dXNSZXNwb25zZRItCgRqb2JzGAEgAygLMh8uY2xpbWF0ZXNoaWVsZC52MS5Kb2JLaW5kU3RhdHVzEhwKFGNsaW1hdGVfb2JzZXJ2YXRpb25zGAIgASgDEhMKC3Jpc2tfc2NvcmVzGAMgASgDEjkKFWxhdGVzdF9vYnNlcnZhdGlvbl9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFwoPaW5nZXN0X2ludGVydmFsGAUgASgJEjAKDGdlbmVyYXRlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAyxwYKDVB1YmxpY1NlcnZpY2USZQoOR2V0Q3VycmVudFJpc2sSJy5jbGltYXRlc2hpZWxkLnYxLkdldEN1cnJlbnRSaXNrUmVxdWVzdBooLmNsaW1hdGVzaGllbGQudjEuR2V0Q3VycmVudFJpc2tSZXNwb25zZSIAEmUKDkdldFJpc2tIaXN0b3J5EicuY2xpbWF0ZXNoaWVsZC52MS5HZXRSaXNrSGlzdG9yeVJlcXVlc3QaKC5jbGltYXRlc2hpZWxkLnYxLkdldFJpc2tIaXN0b3J5UmVzcG9uc2UiABJTCghHZXRTdGF0cxIhLmNsaW1hdGVzaGllbGQudjEuR2V0U3RhdHNSZXF1ZXN0GiIuY2xpbWF0ZXNoaWVsZC52MS5HZXRTdGF0c1Jlc3BvbnNlIgASXwoMR2V0TW9kZWxJbmZvEiUuY2xpbWF0ZXNoaWVsZC52MS5HZXRNb2RlbEluZm9SZXF1ZXN0GiYuY2xpbWF0ZXNoaWVsZC52MS5HZXRNb2RlbEluZm9SZXNwb25zZSIAEmsKEEdldENsaW1hdGVTZXJpZXMSKS5jbGltYXRlc2hpZWxkLnYxLkdldENsaW1hdGVTZXJpZXNSZXF1ZXN0GiouY2xpbWF0ZXNoaWVsZC52MS5HZXRDbGltYXRlU2VyaWVzUmVzcG9uc2UiABJrChBHZXRMZWRnZXJTdW1tYXJ5EikuY2xpbWF0ZXNoaWVsZC52MS5HZXRMZWRnZXJTdW1tYXJ5UmVxdWVzdBoqLmNsaW1hdGVzaGllbGQudjEuR2V0TGVkZ2VyU3VtbWFyeVJlc3BvbnNlIgASaAoPR2V0QWxlcnRTdW1tYXJ5EiguY2xpbWF0ZXNoaWVsZC52MS5HZXRBbGVydFN1bW1hcnlSZXF1ZXN0GikuY2xpbWF0ZXNoaWVsZC52MS5HZXRBbGVydFN1bW1hcnlSZXNwb25zZSIAEm4KEUdldFBpcGVsaW5lU3RhdHVzEiouY2xpbWF0ZXNoaWVsZC52MS5HZXRQaXBlbGluZVN0YXR1c1JlcXVlc3QaKy5jbGltYXRlc2hpZWxkLnYxLkdldFBpcGVsaW5lU3RhdHVzUmVzcG9uc2UiAEJSWlBnaXRodWIuY29tL2phcmlkYS1pby9jbGltYXRlc2hpZWxkL2ludGVybmFsL2dlbi9jbGltYXRlc2hpZWxkL3YxO2NsaW1hdGVzaGllbGR2MWIGcHJvdG8z", [file_climateshield_v1_common, file_google_protobuf_timestamp]);
 
 /**
  * RiskScore is one county x disease risk assessment for one forecast window.
@@ -88,6 +88,24 @@ export type RiskScore = Message<"climateshield.v1.RiskScore"> & {
    * @generated from field: google.protobuf.Timestamp scored_at = 11;
    */
   scoredAt?: Timestamp | undefined;
+
+  /**
+   * exceedance is how rare this driver value is for this county and month
+   * against the reference climatology: 0.02 means the most extreme 2% of the
+   * reference decade. It describes the WEATHER. It is NOT a probability that
+   * an outbreak will occur — this system holds no outbreak surveillance data
+   * and does not estimate that. Absent for the fixed-threshold predictor.
+   *
+   * @generated from field: optional double exceedance = 12;
+   */
+  exceedance?: number | undefined;
+
+  /**
+   * explanation is a one-line reason a health officer can act on or dispute.
+   *
+   * @generated from field: string explanation = 13;
+   */
+  explanation: string;
 };
 
 /**
@@ -298,6 +316,562 @@ export const GetStatsResponseSchema: GenMessage<GetStatsResponse> = /*@__PURE__*
   messageDesc(file_climateshield_v1_public, 7);
 
 /**
+ * @generated from message climateshield.v1.GetModelInfoRequest
+ */
+export type GetModelInfoRequest = Message<"climateshield.v1.GetModelInfoRequest"> & {
+};
+
+/**
+ * Describes the message climateshield.v1.GetModelInfoRequest.
+ * Use `create(GetModelInfoRequestSchema)` to create a new message.
+ */
+export const GetModelInfoRequestSchema: GenMessage<GetModelInfoRequest> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 8);
+
+/**
+ * ThresholdRule is one published proposal cutoff, reported so a reviewer can
+ * compare what is claimed against what the reference climate record shows.
+ *
+ * @generated from message climateshield.v1.ThresholdRule
+ */
+export type ThresholdRule = Message<"climateshield.v1.ThresholdRule"> & {
+  /**
+   * @generated from field: string disease = 1;
+   */
+  disease: string;
+
+  /**
+   * @generated from field: string driver = 2;
+   */
+  driver: string;
+
+  /**
+   * @generated from field: double high = 3;
+   */
+  high: number;
+
+  /**
+   * @generated from field: double medium = 4;
+   */
+  medium: number;
+
+  /**
+   * @generated from field: bool higher_is_worse = 5;
+   */
+  higherIsWorse: boolean;
+
+  /**
+   * reachable_in_reference_period is false when no county in the reference
+   * record ever came close to the HIGH cutoff, i.e. the rule cannot fire.
+   *
+   * @generated from field: bool reachable_in_reference_period = 6;
+   */
+  reachableInReferencePeriod: boolean;
+
+  /**
+   * @generated from field: string note = 7;
+   */
+  note: string;
+};
+
+/**
+ * Describes the message climateshield.v1.ThresholdRule.
+ * Use `create(ThresholdRuleSchema)` to create a new message.
+ */
+export const ThresholdRuleSchema: GenMessage<ThresholdRule> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 9);
+
+/**
+ * @generated from message climateshield.v1.GetModelInfoResponse
+ */
+export type GetModelInfoResponse = Message<"climateshield.v1.GetModelInfoResponse"> & {
+  /**
+   * @generated from field: string active_predictor = 1;
+   */
+  activePredictor: string;
+
+  /**
+   * @generated from field: string active_version = 2;
+   */
+  activeVersion: string;
+
+  /**
+   * @generated from field: repeated string available_predictors = 3;
+   */
+  availablePredictors: string[];
+
+  /**
+   * @generated from field: repeated climateshield.v1.ThresholdRule rules = 4;
+   */
+  rules: ThresholdRule[];
+
+  /**
+   * Reference climatology metadata (empty when the rules predictor is active).
+   *
+   * @generated from field: string reference_period = 5;
+   */
+  referencePeriod: string;
+
+  /**
+   * @generated from field: string reference_source = 6;
+   */
+  referenceSource: string;
+
+  /**
+   * @generated from field: string reference_licence = 7;
+   */
+  referenceLicence: string;
+
+  /**
+   * @generated from field: int32 window_days = 8;
+   */
+  windowDays: number;
+
+  /**
+   * @generated from field: double high_exceedance = 9;
+   */
+  highExceedance: number;
+
+  /**
+   * @generated from field: double medium_exceedance = 10;
+   */
+  mediumExceedance: number;
+
+  /**
+   * Plain-language statement of what the number does and does not mean.
+   *
+   * @generated from field: string interpretation = 11;
+   */
+  interpretation: string;
+};
+
+/**
+ * Describes the message climateshield.v1.GetModelInfoResponse.
+ * Use `create(GetModelInfoResponseSchema)` to create a new message.
+ */
+export const GetModelInfoResponseSchema: GenMessage<GetModelInfoResponse> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 10);
+
+/**
+ * @generated from message climateshield.v1.GetClimateSeriesRequest
+ */
+export type GetClimateSeriesRequest = Message<"climateshield.v1.GetClimateSeriesRequest"> & {
+  /**
+   * optional county-name filter
+   *
+   * @generated from field: string area = 1;
+   */
+  area: string;
+};
+
+/**
+ * Describes the message climateshield.v1.GetClimateSeriesRequest.
+ * Use `create(GetClimateSeriesRequestSchema)` to create a new message.
+ */
+export const GetClimateSeriesRequestSchema: GenMessage<GetClimateSeriesRequest> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 11);
+
+/**
+ * @generated from message climateshield.v1.ClimateDay
+ */
+export type ClimateDay = Message<"climateshield.v1.ClimateDay"> & {
+  /**
+   * @generated from field: string date = 1;
+   */
+  date: string;
+
+  /**
+   * @generated from field: double precipitation_mm = 2;
+   */
+  precipitationMm: number;
+
+  /**
+   * @generated from field: double temp_max_c = 3;
+   */
+  tempMaxC: number;
+
+  /**
+   * @generated from field: double temp_min_c = 4;
+   */
+  tempMinC: number;
+};
+
+/**
+ * Describes the message climateshield.v1.ClimateDay.
+ * Use `create(ClimateDaySchema)` to create a new message.
+ */
+export const ClimateDaySchema: GenMessage<ClimateDay> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 12);
+
+/**
+ * @generated from message climateshield.v1.CountySeries
+ */
+export type CountySeries = Message<"climateshield.v1.CountySeries"> & {
+  /**
+   * @generated from field: string area = 1;
+   */
+  area: string;
+
+  /**
+   * "openmeteo" or "fixture" — never assumed, always read back
+   *
+   * @generated from field: string source = 2;
+   */
+  source: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp issued_at = 3;
+   */
+  issuedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: repeated climateshield.v1.ClimateDay days = 4;
+   */
+  days: ClimateDay[];
+};
+
+/**
+ * Describes the message climateshield.v1.CountySeries.
+ * Use `create(CountySeriesSchema)` to create a new message.
+ */
+export const CountySeriesSchema: GenMessage<CountySeries> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 13);
+
+/**
+ * @generated from message climateshield.v1.GetClimateSeriesResponse
+ */
+export type GetClimateSeriesResponse = Message<"climateshield.v1.GetClimateSeriesResponse"> & {
+  /**
+   * @generated from field: repeated climateshield.v1.CountySeries series = 1;
+   */
+  series: CountySeries[];
+
+  /**
+   * @generated from field: google.protobuf.Timestamp generated_at = 2;
+   */
+  generatedAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message climateshield.v1.GetClimateSeriesResponse.
+ * Use `create(GetClimateSeriesResponseSchema)` to create a new message.
+ */
+export const GetClimateSeriesResponseSchema: GenMessage<GetClimateSeriesResponse> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 14);
+
+/**
+ * @generated from message climateshield.v1.GetLedgerSummaryRequest
+ */
+export type GetLedgerSummaryRequest = Message<"climateshield.v1.GetLedgerSummaryRequest"> & {
+};
+
+/**
+ * Describes the message climateshield.v1.GetLedgerSummaryRequest.
+ * Use `create(GetLedgerSummaryRequestSchema)` to create a new message.
+ */
+export const GetLedgerSummaryRequestSchema: GenMessage<GetLedgerSummaryRequest> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 15);
+
+/**
+ * DailyRoot is one day's Merkle root. The root is a commitment over that
+ * day's leaves; it is not derived from any single child and publishing it
+ * discloses nothing about one. Individual leaves are NEVER published.
+ *
+ * @generated from message climateshield.v1.DailyRoot
+ */
+export type DailyRoot = Message<"climateshield.v1.DailyRoot"> & {
+  /**
+   * @generated from field: string day = 1;
+   */
+  day: string;
+
+  /**
+   * @generated from field: string root_hex = 2;
+   */
+  rootHex: string;
+
+  /**
+   * leaf_count is suppressed below the k threshold: on a very quiet day it
+   * would say how many children were immunized.
+   *
+   * @generated from field: optional int64 leaf_count = 3;
+   */
+  leafCount?: bigint | undefined;
+
+  /**
+   * @generated from field: bool leaf_count_suppressed = 4;
+   */
+  leafCountSuppressed: boolean;
+
+  /**
+   * @generated from field: string anchor_type = 5;
+   */
+  anchorType: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp anchored_at = 6;
+   */
+  anchoredAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message climateshield.v1.DailyRoot.
+ * Use `create(DailyRootSchema)` to create a new message.
+ */
+export const DailyRootSchema: GenMessage<DailyRoot> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 16);
+
+/**
+ * @generated from message climateshield.v1.GetLedgerSummaryResponse
+ */
+export type GetLedgerSummaryResponse = Message<"climateshield.v1.GetLedgerSummaryResponse"> & {
+  /**
+   * @generated from field: repeated climateshield.v1.DailyRoot roots = 1;
+   */
+  roots: DailyRoot[];
+
+  /**
+   * @generated from field: int64 total_days = 2;
+   */
+  totalDays: bigint;
+
+  /**
+   * @generated from field: string algorithm = 3;
+   */
+  algorithm: string;
+
+  /**
+   * states plainly that no blockchain is written to
+   *
+   * @generated from field: string anchor_note = 4;
+   */
+  anchorNote: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp generated_at = 5;
+   */
+  generatedAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message climateshield.v1.GetLedgerSummaryResponse.
+ * Use `create(GetLedgerSummaryResponseSchema)` to create a new message.
+ */
+export const GetLedgerSummaryResponseSchema: GenMessage<GetLedgerSummaryResponse> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 17);
+
+/**
+ * @generated from message climateshield.v1.GetAlertSummaryRequest
+ */
+export type GetAlertSummaryRequest = Message<"climateshield.v1.GetAlertSummaryRequest"> & {
+};
+
+/**
+ * Describes the message climateshield.v1.GetAlertSummaryRequest.
+ * Use `create(GetAlertSummaryRequestSchema)` to create a new message.
+ */
+export const GetAlertSummaryRequestSchema: GenMessage<GetAlertSummaryRequest> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 18);
+
+/**
+ * @generated from message climateshield.v1.AlertStatusCount
+ */
+export type AlertStatusCount = Message<"climateshield.v1.AlertStatusCount"> & {
+  /**
+   * @generated from field: string status = 1;
+   */
+  status: string;
+
+  /**
+   * @generated from field: optional int64 count = 2;
+   */
+  count?: bigint | undefined;
+
+  /**
+   * @generated from field: bool suppressed = 3;
+   */
+  suppressed: boolean;
+};
+
+/**
+ * Describes the message climateshield.v1.AlertStatusCount.
+ * Use `create(AlertStatusCountSchema)` to create a new message.
+ */
+export const AlertStatusCountSchema: GenMessage<AlertStatusCount> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 19);
+
+/**
+ * TemplateSample is a template rendered with PLACEHOLDER values so the
+ * message shape can be reviewed without exposing a real recipient.
+ *
+ * @generated from message climateshield.v1.TemplateSample
+ */
+export type TemplateSample = Message<"climateshield.v1.TemplateSample"> & {
+  /**
+   * @generated from field: string lang = 1;
+   */
+  lang: string;
+
+  /**
+   * @generated from field: string body = 2;
+   */
+  body: string;
+
+  /**
+   * @generated from field: int32 septets = 3;
+   */
+  septets: number;
+
+  /**
+   * @generated from field: int32 max_septets = 4;
+   */
+  maxSeptets: number;
+};
+
+/**
+ * Describes the message climateshield.v1.TemplateSample.
+ * Use `create(TemplateSampleSchema)` to create a new message.
+ */
+export const TemplateSampleSchema: GenMessage<TemplateSample> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 20);
+
+/**
+ * @generated from message climateshield.v1.GetAlertSummaryResponse
+ */
+export type GetAlertSummaryResponse = Message<"climateshield.v1.GetAlertSummaryResponse"> & {
+  /**
+   * @generated from field: string channel = 1;
+   */
+  channel: string;
+
+  /**
+   * channel_sends is false whenever the active channel delivers nothing.
+   *
+   * @generated from field: bool channel_sends = 2;
+   */
+  channelSends: boolean;
+
+  /**
+   * @generated from field: string channel_note = 3;
+   */
+  channelNote: string;
+
+  /**
+   * @generated from field: repeated climateshield.v1.AlertStatusCount statuses = 4;
+   */
+  statuses: AlertStatusCount[];
+
+  /**
+   * @generated from field: repeated climateshield.v1.TemplateSample templates = 5;
+   */
+  templates: TemplateSample[];
+
+  /**
+   * @generated from field: string quiet_hours = 6;
+   */
+  quietHours: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp generated_at = 7;
+   */
+  generatedAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message climateshield.v1.GetAlertSummaryResponse.
+ * Use `create(GetAlertSummaryResponseSchema)` to create a new message.
+ */
+export const GetAlertSummaryResponseSchema: GenMessage<GetAlertSummaryResponse> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 21);
+
+/**
+ * @generated from message climateshield.v1.GetPipelineStatusRequest
+ */
+export type GetPipelineStatusRequest = Message<"climateshield.v1.GetPipelineStatusRequest"> & {
+};
+
+/**
+ * Describes the message climateshield.v1.GetPipelineStatusRequest.
+ * Use `create(GetPipelineStatusRequestSchema)` to create a new message.
+ */
+export const GetPipelineStatusRequestSchema: GenMessage<GetPipelineStatusRequest> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 22);
+
+/**
+ * @generated from message climateshield.v1.JobKindStatus
+ */
+export type JobKindStatus = Message<"climateshield.v1.JobKindStatus"> & {
+  /**
+   * @generated from field: string kind = 1;
+   */
+  kind: string;
+
+  /**
+   * @generated from field: string state = 2;
+   */
+  state: string;
+
+  /**
+   * @generated from field: int64 count = 3;
+   */
+  count: bigint;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp last_finished_at = 4;
+   */
+  lastFinishedAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message climateshield.v1.JobKindStatus.
+ * Use `create(JobKindStatusSchema)` to create a new message.
+ */
+export const JobKindStatusSchema: GenMessage<JobKindStatus> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 23);
+
+/**
+ * @generated from message climateshield.v1.GetPipelineStatusResponse
+ */
+export type GetPipelineStatusResponse = Message<"climateshield.v1.GetPipelineStatusResponse"> & {
+  /**
+   * @generated from field: repeated climateshield.v1.JobKindStatus jobs = 1;
+   */
+  jobs: JobKindStatus[];
+
+  /**
+   * @generated from field: int64 climate_observations = 2;
+   */
+  climateObservations: bigint;
+
+  /**
+   * @generated from field: int64 risk_scores = 3;
+   */
+  riskScores: bigint;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp latest_observation_at = 4;
+   */
+  latestObservationAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: string ingest_interval = 5;
+   */
+  ingestInterval: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp generated_at = 6;
+   */
+  generatedAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message climateshield.v1.GetPipelineStatusResponse.
+ * Use `create(GetPipelineStatusResponseSchema)` to create a new message.
+ */
+export const GetPipelineStatusResponseSchema: GenMessage<GetPipelineStatusResponse> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 24);
+
+/**
  * PublicService is the read-only public tier. Everything here is aggregate
  * (county x disease x date). It must never expose personal data, and counts
  * derived from people are k>=10 suppressed before they reach a response.
@@ -328,6 +902,49 @@ export const PublicService: GenService<{
     methodKind: "unary";
     input: typeof GetStatsRequestSchema;
     output: typeof GetStatsResponseSchema;
+  },
+  /**
+   * Evidence surfaces. Each one exists so a reviewer can check a claim
+   * against running data instead of taking it on trust.
+   *
+   * @generated from rpc climateshield.v1.PublicService.GetModelInfo
+   */
+  getModelInfo: {
+    methodKind: "unary";
+    input: typeof GetModelInfoRequestSchema;
+    output: typeof GetModelInfoResponseSchema;
+  },
+  /**
+   * @generated from rpc climateshield.v1.PublicService.GetClimateSeries
+   */
+  getClimateSeries: {
+    methodKind: "unary";
+    input: typeof GetClimateSeriesRequestSchema;
+    output: typeof GetClimateSeriesResponseSchema;
+  },
+  /**
+   * @generated from rpc climateshield.v1.PublicService.GetLedgerSummary
+   */
+  getLedgerSummary: {
+    methodKind: "unary";
+    input: typeof GetLedgerSummaryRequestSchema;
+    output: typeof GetLedgerSummaryResponseSchema;
+  },
+  /**
+   * @generated from rpc climateshield.v1.PublicService.GetAlertSummary
+   */
+  getAlertSummary: {
+    methodKind: "unary";
+    input: typeof GetAlertSummaryRequestSchema;
+    output: typeof GetAlertSummaryResponseSchema;
+  },
+  /**
+   * @generated from rpc climateshield.v1.PublicService.GetPipelineStatus
+   */
+  getPipelineStatus: {
+    methodKind: "unary";
+    input: typeof GetPipelineStatusRequestSchema;
+    output: typeof GetPipelineStatusResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_climateshield_v1_public, 0);

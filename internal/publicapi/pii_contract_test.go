@@ -132,6 +132,15 @@ func TestContract_PIILeak(t *testing.T) {
 		"/v1/stats",
 		"/v1/stats?format=csv",
 		"/health",
+		// Evidence views. These are the riskiest surfaces in the system —
+		// they exist to show ledger, messaging and pipeline internals — so
+		// they are the ones this contract most needs to cover.
+		"/v1/model",
+		"/v1/climate/series",
+		"/v1/climate/series?area=Kisumu",
+		"/v1/ledger/summary",
+		"/v1/alerts/summary",
+		"/v1/pipeline",
 	}
 	sentinels := []string{
 		sentinelChildName, sentinelGuardianName, sentinelPhone, sentinelNationalID,
@@ -154,7 +163,10 @@ func TestContract_PIILeak(t *testing.T) {
 	}
 
 	// Connect surface too: the same rule holds for the RPC responses.
-	for _, procedure := range []string{"GetCurrentRisk", "GetStats"} {
+	for _, procedure := range []string{
+		"GetCurrentRisk", "GetStats", "GetModelInfo", "GetClimateSeries",
+		"GetLedgerSummary", "GetAlertSummary", "GetPipelineStatus",
+	} {
 		resp, err := http.Post(
 			ts.URL+"/climateshield.v1.PublicService/"+procedure,
 			"application/json", strings.NewReader("{}"))

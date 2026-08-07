@@ -58,7 +58,10 @@ credentials**.
    mutating queries.
 9. **`sealed.child_keys`** may be referenced only from
    `internal/store/queries/ledger.sql` (grep-enforced).
-10. Risk thresholds live in `internal/predict/rules.go` ONLY (cholera ≥60/≥30mm,
+10. Two published thresholds (pneumonia, meningitis) are UNREACHABLE in the
+    monitored counties — see docs/threshold-validation.md. Do not "fix" them in
+    code; they are contractual. Report, do not amend.
+11. Risk thresholds live in `internal/predict/rules.go` ONLY (cholera ≥60/≥30mm,
     malaria ≥40/≥20mm, pneumonia ≤16/≤19°C, meningitis ≥39/≥36°C). Published in
     the funding proposal — do not invent new ones.
 

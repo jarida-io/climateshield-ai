@@ -15,6 +15,14 @@ service PublicService {
   rpc GetCurrentRisk(GetCurrentRiskRequest) returns (GetCurrentRiskResponse) {}
   rpc GetRiskHistory(GetRiskHistoryRequest) returns (GetRiskHistoryResponse) {}
   rpc GetStats(GetStatsRequest) returns (GetStatsResponse) {}
+
+  // Evidence surfaces. Each one exists so a reviewer can check a claim
+  // against running data instead of taking it on trust.
+  rpc GetModelInfo(GetModelInfoRequest) returns (GetModelInfoResponse) {}
+  rpc GetClimateSeries(GetClimateSeriesRequest) returns (GetClimateSeriesResponse) {}
+  rpc GetLedgerSummary(GetLedgerSummaryRequest) returns (GetLedgerSummaryResponse) {}
+  rpc GetAlertSummary(GetAlertSummaryRequest) returns (GetAlertSummaryResponse) {}
+  rpc GetPipelineStatus(GetPipelineStatusRequest) returns (GetPipelineStatusResponse) {}
 }
 
 // RiskScore is one county x disease risk assessment for one forecast window.
@@ -30,6 +38,16 @@ message RiskScore {
   string predictor = 9; // predictor that produced this row, e.g. "rules"
   string predictor_version = 10;
   google.protobuf.Timestamp scored_at = 11;
+
+  // exceedance is how rare this driver value is for this county and month
+  // against the reference climatology: 0.02 means the most extreme 2% of the
+  // reference decade. It describes the WEATHER. It is NOT a probability that
+  // an outbreak will occur — this system holds no outbreak surveillance data
+  // and does not estimate that. Absent for the fixed-threshold predictor.
+  optional double exceedance = 12;
+
+  // explanation is a one-line reason a health officer can act on or dispute.
+  string explanation = 13;
 }
 
 message GetCurrentRiskRequest {}
@@ -72,4 +90,134 @@ message GetStatsRequest {}
 message GetStatsResponse {
   repeated CountyStats stats = 1;
   google.protobuf.Timestamp generated_at = 2;
+}
+
+// --- Evidence surfaces -------------------------------------------------
+// Everything below is aggregate or system metadata. No message here carries
+// a child or guardian identifier, name, phone, or per-child hash.
+
+message GetModelInfoRequest {}
+
+// ThresholdRule is one published proposal cutoff, reported so a reviewer can
+// compare what is claimed against what the reference climate record shows.
+message ThresholdRule {
+  string disease = 1;
+  string driver = 2;
+  double high = 3;
+  double medium = 4;
+  bool higher_is_worse = 5;
+  // reachable_in_reference_period is false when no county in the reference
+  // record ever came close to the HIGH cutoff, i.e. the rule cannot fire.
+  bool reachable_in_reference_period = 6;
+  string note = 7;
+}
+
+message GetModelInfoResponse {
+  string active_predictor = 1;
+  string active_version = 2;
+  repeated string available_predictors = 3;
+  repeated ThresholdRule rules = 4;
+
+  // Reference climatology metadata (empty when the rules predictor is active).
+  string reference_period = 5;
+  string reference_source = 6;
+  string reference_licence = 7;
+  int32 window_days = 8;
+  double high_exceedance = 9;
+  double medium_exceedance = 10;
+  // Plain-language statement of what the number does and does not mean.
+  string interpretation = 11;
+}
+
+message GetClimateSeriesRequest {
+  string area = 1; // optional county-name filter
+}
+
+message ClimateDay {
+  string date = 1;
+  double precipitation_mm = 2;
+  double temp_max_c = 3;
+  double temp_min_c = 4;
+}
+
+message CountySeries {
+  string area = 1;
+  string source = 2; // "openmeteo" or "fixture" — never assumed, always read back
+  google.protobuf.Timestamp issued_at = 3;
+  repeated ClimateDay days = 4;
+}
+
+message GetClimateSeriesResponse {
+  repeated CountySeries series = 1;
+  google.protobuf.Timestamp generated_at = 2;
+}
+
+message GetLedgerSummaryRequest {}
+
+// DailyRoot is one day's Merkle root. The root is a commitment over that
+// day's leaves; it is not derived from any single child and publishing it
+// discloses nothing about one. Individual leaves are NEVER published.
+message DailyRoot {
+  string day = 1;
+  string root_hex = 2;
+  // leaf_count is suppressed below the k threshold: on a very quiet day it
+  // would say how many children were immunized.
+  optional int64 leaf_count = 3;
+  bool leaf_count_suppressed = 4;
+  string anchor_type = 5;
+  google.protobuf.Timestamp anchored_at = 6;
+}
+
+message GetLedgerSummaryResponse {
+  repeated DailyRoot roots = 1;
+  int64 total_days = 2;
+  string algorithm = 3;
+  string anchor_note = 4; // states plainly that no blockchain is written to
+  google.protobuf.Timestamp generated_at = 5;
+}
+
+message GetAlertSummaryRequest {}
+
+message AlertStatusCount {
+  string status = 1;
+  optional int64 count = 2;
+  bool suppressed = 3;
+}
+
+// TemplateSample is a template rendered with PLACEHOLDER values so the
+// message shape can be reviewed without exposing a real recipient.
+message TemplateSample {
+  string lang = 1;
+  string body = 2;
+  int32 septets = 3;
+  int32 max_septets = 4;
+}
+
+message GetAlertSummaryResponse {
+  string channel = 1;
+  // channel_sends is false whenever the active channel delivers nothing.
+  bool channel_sends = 2;
+  string channel_note = 3;
+  repeated AlertStatusCount statuses = 4;
+  repeated TemplateSample templates = 5;
+  string quiet_hours = 6;
+  google.protobuf.Timestamp generated_at = 7;
+}
+
+message GetPipelineStatusRequest {}
+
+message JobKindStatus {
+  string kind = 1;
+  string state = 2;
+  int64 count = 3;
+  google.protobuf.Timestamp last_finished_at = 4;
+}
+
+message GetPipelineStatusResponse {
+  repeated JobKindStatus jobs = 1;
+  int64 climate_observations = 2;
+  int64 risk_scores = 3;
+  google.protobuf.Timestamp latest_observation_at = 4;
+  string ingest_interval = 5;
+  google.protobuf.Timestamp generated_at = 6;
 }

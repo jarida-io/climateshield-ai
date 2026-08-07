@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -16,6 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/jarida-io/climateshield/internal/climate"
+	"github.com/jarida-io/climateshield/internal/climate/fixture"
 	climateshieldv1 "github.com/jarida-io/climateshield/internal/gen/climateshield/v1"
 	"github.com/jarida-io/climateshield/internal/platform/logging"
 	"github.com/jarida-io/climateshield/internal/publicapi"
@@ -195,4 +198,15 @@ func TestConnectAndRESTServeSameData(t *testing.T) {
 	require.Equal(t, len(restMsg.GetScores()), len(connectMsg.GetScores()))
 	require.Equal(t, restMsg.GetScores()[0].GetArea(), connectMsg.GetScores()[0].GetArea())
 	require.Equal(t, restMsg.GetScores()[0].GetLevel(), connectMsg.GetScores()[0].GetLevel())
+}
+
+// ingestFixtureWindow loads one county's committed 14-day golden window so
+// evidence tests have real climate rows behind them.
+func ingestFixtureWindow(t *testing.T, q *db.Queries, areaID string) {
+	t.Helper()
+	src := fixture.New(filepath.Join("..", "..", "testdata", "golden"))
+	fc, err := src.FetchDaily(context.Background(), climate.Area{ID: areaID}, 14)
+	require.NoError(t, err)
+	_, err = climate.UpsertForecast(context.Background(), q, fc)
+	require.NoError(t, err)
 }

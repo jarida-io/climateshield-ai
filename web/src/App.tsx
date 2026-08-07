@@ -1,108 +1,129 @@
 // SPDX-License-Identifier: Apache-2.0
-import type maplibregl from "maplibre-gl";
-import { useEffect, useRef, useState } from "react";
-import "maplibre-gl/dist/maplibre-gl.css";
 
-import { publicClient } from "./api";
-import type { GetCurrentRiskResponse } from "./gen/climateshield/v1/public_pb";
+import { useEffect, useState } from "react";
+
 import { Logo } from "./Logo";
-import { createMap, groupByCounty, levelColors, renderMarkers } from "./map";
+import { brand, space, text } from "./ui";
+import { AlertsView } from "./views/AlertsView";
+import { ClimateView } from "./views/ClimateView";
+import { DataView } from "./views/DataView";
+import { LedgerView } from "./views/LedgerView";
+import { MapView } from "./views/MapView";
+import { ModelView } from "./views/ModelView";
+import { PipelineView } from "./views/PipelineView";
 
-type LoadState =
-  | { kind: "loading" }
-  | { kind: "ready"; data: GetCurrentRiskResponse }
-  | { kind: "error"; message: string };
+// Each view exists to let a reviewer verify one claim against live data.
+// Hash routing keeps every view linkable without adding a router dependency.
+const VIEWS = [
+  { id: "map", label: "Risk map", proves: "Current risk by county", render: () => <MapView /> },
+  { id: "model", label: "Model", proves: "There is a scoring model, and its thresholds were checked", render: () => <ModelView /> },
+  { id: "climate", label: "Weather", proves: "Risk reacts to the forecast", render: () => <ClimateView /> },
+  { id: "alerts", label: "Messaging", proves: "Guardians are reachable by SMS", render: () => <AlertsView /> },
+  { id: "ledger", label: "History", proves: "Immunization history is tamper-evident", render: () => <LedgerView /> },
+  { id: "pipeline", label: "Automation", proves: "It runs unattended", render: () => <PipelineView /> },
+  { id: "data", label: "Open data", proves: "Anyone can replicate this", render: () => <DataView /> },
+] as const;
+
+type ViewId = (typeof VIEWS)[number]["id"];
+
+function currentView(): ViewId {
+  const id = window.location.hash.replace(/^#\/?/, "");
+  return (VIEWS.find((v) => v.id === id)?.id ?? "map") as ViewId;
+}
 
 export default function App(): React.JSX.Element {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
+  const [view, setView] = useState<ViewId>(currentView);
 
   useEffect(() => {
-    let cancelled = false;
-    publicClient
-      .getCurrentRisk({})
-      .then((data) => {
-        if (!cancelled) setState({ kind: "ready", data });
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setState({ kind: "error", message: String(err) });
-      });
-    return () => {
-      cancelled = true;
-    };
+    const onHash = () => setView(currentView());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  // The map is created once, on mount, and outlives every data update.
-  // Recreating it per render would rebuild the canvas while the container is
-  // mid-layout, which leaves MapLibre stuck at its 400x300 fallback size.
-  useEffect(() => {
-    if (mapContainer.current === null) return;
-    const map = createMap(mapContainer.current);
-    mapRef.current = map;
-    return () => {
-      mapRef.current = null;
-      map.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map === null || state.kind !== "ready") return;
-    const markers = renderMarkers(map, groupByCounty(state.data.scores));
-    return () => markers.forEach((m) => m.remove());
-  }, [state]);
+  const active = VIEWS.find((v) => v.id === view) ?? VIEWS[0];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", margin: 0 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        background: brand.canvas,
+        color: brand.ink,
+      }}
+    >
       <header
         style={{
-          padding: "10px 16px",
-          background: "#14213d",
-          color: "#ffffff",
+          padding: `${space(3)} ${space(5)}`,
+          background: brand.navy,
+          color: "#fff",
           display: "flex",
-          // center, not baseline: an SVG mark has no text baseline to sit on
           alignItems: "center",
-          gap: 10,
+          gap: space(3),
+          flexWrap: "wrap",
+          flex: "none",
         }}
       >
         <Logo size={22} />
-        <strong style={{ fontSize: 19, letterSpacing: "0.01em" }}>ClimateShield</strong>
-        <span style={{ opacity: 0.85, fontSize: 13 }}>
+        <strong style={{ ...text.h1, fontSize: 19 }}>ClimateShield</strong>
+        <span style={{ ...text.small, opacity: 0.85 }}>
           Climate-linked outbreak risk — public county aggregates
         </span>
-        <span style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>
-          {state.kind === "loading" && "loading…"}
-          {state.kind === "error" && `unavailable: ${state.message}`}
-          {state.kind === "ready" &&
-            `${state.data.scores.length} scores · generated ${
-              state.data.generatedAt
-                ? new Date(Number(state.data.generatedAt.seconds) * 1000).toLocaleString()
-                : "n/a"
-            }`}
-        </span>
       </header>
-      {/* position:relative + a definite flex basis so MapLibre can measure
-          the element on the first frame. */}
-      <div ref={mapContainer} style={{ flex: "1 1 auto", position: "relative", minHeight: 0 }} />
-      <footer style={{ padding: "6px 16px", fontSize: 12, background: "#f5f5f5", display: "flex", gap: 16 }}>
-        {(["HIGH", "MEDIUM", "LOW"] as const).map((lvl) => (
-          <span key={lvl} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <span
+
+      <nav
+        aria-label="Views"
+        style={{
+          display: "flex",
+          gap: space(1),
+          padding: `0 ${space(5)}`,
+          background: brand.navySoft,
+          overflowX: "auto",
+          flex: "none",
+          alignItems: "stretch",
+        }}
+      >
+        {VIEWS.map((v) => {
+          const isActive = v.id === active.id;
+          return (
+            <a
+              key={v.id}
+              href={`#/${v.id}`}
+              title={v.proves}
+              aria-current={isActive ? "page" : undefined}
               style={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                display: "inline-block",
-                backgroundColor: levelColors[lvl],
+                ...text.small,
+                color: isActive ? "#fff" : "rgba(255,255,255,0.72)",
+                fontWeight: isActive ? 700 : 400,
+                textDecoration: "none",
+                padding: `${space(3)} ${space(4)}`,
+                borderBottom: `3px solid ${isActive ? brand.purple : "transparent"}`,
+                whiteSpace: "nowrap",
               }}
-            />
-            {lvl}
-          </span>
-        ))}
-        <span style={{ marginLeft: "auto", opacity: 0.7 }}>
-          Aggregate data only — no personal information is served.
-        </span>
+            >
+              {v.label}
+            </a>
+          );
+        })}
+      </nav>
+
+      <main style={{ flex: "1 1 auto", minHeight: 0, overflowY: "auto" }}>{active.render()}</main>
+
+      <footer
+        style={{
+          ...text.small,
+          flex: "none",
+          borderTop: `1px solid ${brand.line}`,
+          background: brand.surface,
+          color: brand.muted,
+          padding: `${space(2)} ${space(5)}`,
+          display: "flex",
+          gap: space(4),
+          flexWrap: "wrap",
+        }}
+      >
+        <span>Aggregate data only — no personal information is served.</span>
+        <span style={{ marginLeft: "auto" }}>Apache-2.0 · open data · no credentials required</span>
       </footer>
     </div>
   );

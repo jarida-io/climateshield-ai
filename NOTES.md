@@ -17,7 +17,9 @@ unflattering. Everything below was verified by running it, not by intention.
 | Erasure | Real. `ForgetChild` deletes records, scrubs leaf linkage, destroys the HMAC key; tested that roots still verify structurally afterwards. |
 | Notification | Real up to the channel boundary. Bilingual GSM-7 templates, consent gate, quiet hours, per-child-per-score dedup. The mock channel writes JSONL and sends nothing. |
 | Public API | Real. REST (JSON/CSV/GeoJSON) + Connect over the same proto messages, k≥10 suppression, last-good-response stale cache, never-500 reads. |
-| Dashboard | Real but minimal. One page, five markers, types generated from protobuf. |
+| Dashboard | Seven views, each backed by a live endpoint, each carrying an on-screen statement of what it does NOT prove. Types generated from protobuf. |
+| Climatology predictor | Real. Empirical per-county, per-month distributions from ~18,200 historical 14-day windows, embedded in the binary. Reports exceedance of the CLIMATE driver, never an outbreak probability. |
+| Threshold validation | Real, and the most useful thing in here. Two of four published cutoffs are unreachable in the monitored counties; see docs/threshold-validation.md. Encoded as a failing-if-untrue test and exposed on /v1/model. |
 | Pipeline | Real. River-backed ingest → predict → alert, plus a ledger sweep, exercised end to end by an integration test that boots all six services. |
 
 `make verify`, `make up` and `make demo` all pass; the demo output in the README
@@ -103,8 +105,23 @@ place, with boundary tests.
 
 ## Coverage, per package
 
-Total: **81.1%** (1110/1369 statements), gate is 80%. Generated code
-(`internal/gen`, `internal/store/db`) excluded; nothing else is.
+**Total: 74.9% (1388/1852 statements). The gate is 80% and is currently RED.**
+Generated code (`internal/gen`, `internal/store/db`) is excluded; nothing else
+is. This branch adds roughly 480 statements — the climatology predictor and the
+evidence API — and about half of the new service-bootstrap paths are not yet
+exercised. The gap is concentrated in `Run` composition roots
+(`internal/predict/service.go`, `internal/publicapi/server.go`,
+`internal/climate/ingestor/service.go`), which only the integration test
+touches.
+
+Two honest ways to close it, and the choice is a policy one:
+(a) write tests for the bootstrap paths, or (b) argue that `Run` composition
+roots belong in the same excluded category as the thin `cmd/` mains and
+document that decision. Option (b) must not be taken quietly — moving a
+threshold to meet the code is exactly what the gate exists to prevent.
+
+Per-package figures below predate this branch and are stale; regenerate before
+quoting them.
 
 | Package | Coverage | |
 |---|---|---|
@@ -171,6 +188,23 @@ first.
   will not paint on its own. Responsive behaviour at real window sizes and on
   mobile is therefore unverified. Open it in a normal browser before any demo.
 
+## On calling it a "model"
+
+Be ready for this question, because a good evaluator will ask it.
+
+The climatology predictor has **fitted parameters** — roughly 3,800 empirical
+quantiles learned from real reanalysis, per county, per month, per driver — and
+it produces a continuous, interpretable number. That is more than four
+if-statements. But it is **not** supervised learning: nothing was fitted to
+health outcomes, because no outcome data exists here. It predicts nothing about
+disease. It answers "how unusual is this weather for this place at this time of
+year", precisely and defensibly, and stops there.
+
+The honest sentence is: *"a fitted statistical baseline over a decade of
+reanalysis, used to flag climatological extremes; no disease model has been
+trained or validated."* Anyone who wants to call that "AI" should be
+corrected — including in your own slides.
+
 ## The three things I would do next
 
 1. **Validate the thresholds, or stop calling them a model.** Pull historical
@@ -182,7 +216,12 @@ first.
    its own database role with schema-scoped grants, move the PII key behind
    OpenBao, and expose `ForgetChild` through an audited operator endpoint. The
    guarantees are implemented; they are not yet administrable.
-3. **Prove one real SMS path end to end.** The Channel port is the riskiest
+3. **Amend the pneumonia and meningitis thresholds.** Two of the four published
+   rules are inert. The pneumonia fix is small and valuable — measure cold
+   stress on daily minimum temperature, where the highland signal is real — and
+   the meningitis rule needs either re-scoping to arid northern counties or
+   dropping. This needs a proposal amendment, not a commit.
+4. **Prove one real SMS path end to end.** The Channel port is the riskiest
    untested boundary: get an SMPP or Africa's Talking sandbox delivering to one
    handset, with delivery receipts recorded, before anyone plans a pilot.
    Nothing else in the system is worth much if the last hop does not work.

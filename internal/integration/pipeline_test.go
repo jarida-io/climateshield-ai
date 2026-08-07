@@ -228,6 +228,23 @@ func TestAllServicesBootAndRunThePipeline(t *testing.T) {
 	require.Contains(t, string(body), "Kisumu")
 	require.NotContains(t, string(body), "+2547")
 
+	// Every evidence surface must answer through the booted service, since
+	// each one is a claim a reviewer will click on during a demo.
+	for _, path := range []string{
+		"/v1/model", "/v1/climate/series", "/v1/ledger/summary",
+		"/v1/alerts/summary", "/v1/pipeline", "/v1/stats",
+		"/v1/risk/current?format=csv", "/v1/risk/current?format=geojson",
+	} {
+		r, err := http.Get("http://127.0.0.1" + addrs["PUBLICAPI_ADDR"] + path)
+		require.NoError(t, err)
+		b, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+		require.NoError(t, r.Body.Close())
+		require.Equal(t, http.StatusOK, r.StatusCode, "%s", path)
+		require.NotEmpty(t, b, "%s returned an empty body", path)
+		require.NotContains(t, string(b), "+2547", "%s leaked a phone number", path)
+	}
+
 	// Metrics are exposed for the uptime obligation.
 	resp, err = http.Get("http://127.0.0.1" + addrs["PUBLICAPI_ADDR"] + "/metrics")
 	require.NoError(t, err)

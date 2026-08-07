@@ -21,6 +21,7 @@ import (
 	"github.com/jarida-io/climateshield/internal/platform/httpx"
 	"github.com/jarida-io/climateshield/internal/platform/logging"
 	"github.com/jarida-io/climateshield/internal/platform/metrics"
+	"github.com/jarida-io/climateshield/internal/predict"
 	"github.com/jarida-io/climateshield/internal/store"
 	"github.com/jarida-io/climateshield/internal/store/db"
 )
@@ -30,19 +31,62 @@ type ServiceConfig struct {
 	config.Common
 	config.DB
 	Addr string `env:"PUBLICAPI_ADDR" envDefault:":8080"`
+	// Mirrors of the other services' configuration, reported by the evidence
+	// views so they describe the deployment rather than a guess.
+	PredictorName  string `env:"PREDICTOR" envDefault:"rules"`
+	Channel        string `env:"NOTIFY_CHANNEL" envDefault:"mock"`
+	IngestInterval string `env:"INGEST_INTERVAL" envDefault:"6h"`
+}
+
+func predictorVersionFor(name string) string {
+	if name == "climatology" {
+		return predict.ClimatologyVersion
+	}
+	return predict.RulesVersion
 }
 
 // Server is the public read-only tier: REST (JSON/CSV/GeoJSON) and Connect,
 // both fed by the same proto messages.
 type Server struct {
 	q     *db.Queries
+	pool  *pgxpool.Pool // nil unless a pool was supplied; only for River's own tables
 	cache *staleCache
 	log   *slog.Logger
+
+	// Deployment facts reported by the evidence views. They are read from the
+	// running configuration rather than assumed, so a view cannot claim a
+	// predictor or channel that is not the one in use.
+	predictorName    string
+	predictorVersion string
+	channel          string
+	ingestInterval   string
+	climatology      *predict.Climatology
 }
 
 // NewServer builds the public server over a database handle.
 func NewServer(dbtx db.DBTX, log *slog.Logger) *Server {
-	return &Server{q: db.New(dbtx), cache: newStaleCache(), log: log}
+	s := &Server{
+		q: db.New(dbtx), cache: newStaleCache(), log: log,
+		predictorName: "rules", predictorVersion: predict.RulesVersion,
+		channel: "mock", ingestInterval: "6h",
+	}
+	if pool, ok := dbtx.(*pgxpool.Pool); ok {
+		s.pool = pool
+	}
+	if clim, err := predict.LoadClimatology(); err == nil {
+		s.climatology = clim
+	}
+	return s
+}
+
+// WithDeployment records which predictor and channel are actually running, so
+// the evidence views report the live configuration instead of a default.
+func (s *Server) WithDeployment(predictorName, predictorVersion, channel, ingestInterval string) *Server {
+	s.predictorName = predictorName
+	s.predictorVersion = predictorVersion
+	s.channel = channel
+	s.ingestInterval = ingestInterval
+	return s
 }
 
 // Router assembles /health, /metrics, the /v1 REST surface and the Connect
@@ -79,9 +123,97 @@ func (s *Server) Router(healthy httpx.HealthFunc, metricsHandler http.Handler) c
 		}, &climateshieldv1.GetStatsResponse{})
 	})
 
+	// Evidence views. Each is a plain GET so a reviewer can curl it.
+	r.Get("/v1/model", func(w http.ResponseWriter, req *http.Request) {
+		s.serveREST(w, req, "model", func(ctx context.Context) (proto.Message, error) {
+			return s.buildModelInfo(ctx)
+		}, &climateshieldv1.GetModelInfoResponse{})
+	})
+	r.Get("/v1/climate/series", func(w http.ResponseWriter, req *http.Request) {
+		area := req.URL.Query().Get("area")
+		s.serveREST(w, req, "climate", func(ctx context.Context) (proto.Message, error) {
+			return s.buildClimateSeries(ctx, area)
+		}, &climateshieldv1.GetClimateSeriesResponse{})
+	})
+	r.Get("/v1/ledger/summary", func(w http.ResponseWriter, req *http.Request) {
+		s.serveREST(w, req, "ledger", func(ctx context.Context) (proto.Message, error) {
+			return s.buildLedgerSummary(ctx)
+		}, &climateshieldv1.GetLedgerSummaryResponse{})
+	})
+	r.Get("/v1/alerts/summary", func(w http.ResponseWriter, req *http.Request) {
+		s.serveREST(w, req, "alerts", func(ctx context.Context) (proto.Message, error) {
+			return s.buildAlertSummary(ctx)
+		}, &climateshieldv1.GetAlertSummaryResponse{})
+	})
+	r.Get("/v1/pipeline", func(w http.ResponseWriter, req *http.Request) {
+		s.serveREST(w, req, "pipeline", func(ctx context.Context) (proto.Message, error) {
+			return s.buildPipelineStatus(ctx)
+		}, &climateshieldv1.GetPipelineStatusResponse{})
+	})
+
 	path, handler := climateshieldv1connect.NewPublicServiceHandler(s)
 	r.Mount(path, handler)
 	return r
+}
+
+// GetModelInfo implements climateshieldv1connect.PublicServiceHandler.
+func (s *Server) GetModelInfo(
+	ctx context.Context, _ *connect.Request[climateshieldv1.GetModelInfoRequest],
+) (*connect.Response[climateshieldv1.GetModelInfoResponse], error) {
+	msg, err := s.buildModelInfo(ctx)
+	if err != nil {
+		return staleConnect[climateshieldv1.GetModelInfoResponse](s, "connect:model")
+	}
+	s.cache.storeProto("connect:model", msg)
+	return connect.NewResponse(msg), nil
+}
+
+// GetClimateSeries implements climateshieldv1connect.PublicServiceHandler.
+func (s *Server) GetClimateSeries(
+	ctx context.Context, req *connect.Request[climateshieldv1.GetClimateSeriesRequest],
+) (*connect.Response[climateshieldv1.GetClimateSeriesResponse], error) {
+	msg, err := s.buildClimateSeries(ctx, req.Msg.GetArea())
+	if err != nil {
+		return staleConnect[climateshieldv1.GetClimateSeriesResponse](s, "connect:climate")
+	}
+	s.cache.storeProto("connect:climate", msg)
+	return connect.NewResponse(msg), nil
+}
+
+// GetLedgerSummary implements climateshieldv1connect.PublicServiceHandler.
+func (s *Server) GetLedgerSummary(
+	ctx context.Context, _ *connect.Request[climateshieldv1.GetLedgerSummaryRequest],
+) (*connect.Response[climateshieldv1.GetLedgerSummaryResponse], error) {
+	msg, err := s.buildLedgerSummary(ctx)
+	if err != nil {
+		return staleConnect[climateshieldv1.GetLedgerSummaryResponse](s, "connect:ledger")
+	}
+	s.cache.storeProto("connect:ledger", msg)
+	return connect.NewResponse(msg), nil
+}
+
+// GetAlertSummary implements climateshieldv1connect.PublicServiceHandler.
+func (s *Server) GetAlertSummary(
+	ctx context.Context, _ *connect.Request[climateshieldv1.GetAlertSummaryRequest],
+) (*connect.Response[climateshieldv1.GetAlertSummaryResponse], error) {
+	msg, err := s.buildAlertSummary(ctx)
+	if err != nil {
+		return staleConnect[climateshieldv1.GetAlertSummaryResponse](s, "connect:alerts")
+	}
+	s.cache.storeProto("connect:alerts", msg)
+	return connect.NewResponse(msg), nil
+}
+
+// GetPipelineStatus implements climateshieldv1connect.PublicServiceHandler.
+func (s *Server) GetPipelineStatus(
+	ctx context.Context, _ *connect.Request[climateshieldv1.GetPipelineStatusRequest],
+) (*connect.Response[climateshieldv1.GetPipelineStatusResponse], error) {
+	msg, err := s.buildPipelineStatus(ctx)
+	if err != nil {
+		return staleConnect[climateshieldv1.GetPipelineStatusResponse](s, "connect:pipeline")
+	}
+	s.cache.storeProto("connect:pipeline", msg)
+	return connect.NewResponse(msg), nil
 }
 
 // serveREST is the never-500 read path: build fresh -> cache -> serve; on
@@ -224,7 +356,8 @@ func Run(ctx context.Context) error {
 	}
 	defer pool.Close()
 
-	srv := NewServer(pool, log)
+	srv := NewServer(pool, log).WithDeployment(
+		cfg.PredictorName, predictorVersionFor(cfg.PredictorName), cfg.Channel, cfg.IngestInterval)
 	router := srv.Router(healthFunc(pool), m.Handler())
 
 	log.Info("public api started", "addr", cfg.Addr)

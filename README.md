@@ -40,7 +40,7 @@ a minute (57s measured on an M-series Mac). `make demo` then seeds a fictional
 population, runs the pipeline end to end, and prints what happened:
 
 - Public API — <http://localhost:8080/v1/risk/current>
-- Dashboard — <http://localhost:8081>
+- Dashboard — <http://localhost:8081> (seven views, one per capability claim)
 - Registry API (internal) — <http://localhost:8082>
 
 Tear everything down with `make down` (this deletes the database volume).
@@ -122,8 +122,25 @@ These thresholds are published in the funding proposal. They live in exactly
 one place — [`internal/predict/rules.go`](internal/predict/rules.go) — and every
 one has at/just-below/just-above boundary tests. **No accuracy, sensitivity or
 specificity claim is made for this ruleset**; it has not been validated against
-outbreak surveillance data. A trained model is future work
-(`internal/predict/onnx.go` is an interface stub that reports `ErrNotImplemented`).
+outbreak surveillance data.
+
+> **Two of these four cutoffs cannot fire in the monitored counties.** Checked
+> against ten years of ERA5 reanalysis, the coldest single-day maximum on
+> record is 16.3 °C (the pneumonia rule needs a 14-day *mean* ≤ 16 °C) and the
+> hottest is 36.2 °C (meningitis needs ≥ 39 °C). See
+> [docs/threshold-validation.md](docs/threshold-validation.md). The thresholds
+> are unchanged here because they are contractual; the finding is reported
+> instead, and `GET /v1/model` exposes it per rule.
+
+### A second predictor: `climatology`
+
+`PREDICTOR=climatology` scores each forecast window against that county's own
+distribution for that calendar month, measured from 3,600+ historical windows
+per county-month. It reports an **exceedance probability of the climate
+driver** — "this window is in the most extreme 2% of the last decade here" —
+which is a property of the weather, **not** a probability that an outbreak will
+occur. Where it has no reference distribution it reports "not scored" rather
+than a confident LOW. The rules engine remains the default.
 
 Every `risk_scores` row records the predictor name and version that produced
 it, so scores stay auditable across model changes.
@@ -141,6 +158,11 @@ All endpoints are unauthenticated, read-only, and return aggregates only.
 | `GET /v1/risk/current` | Latest risk score per county × disease |
 | `GET /v1/risk/history` | Historical scores; filters below |
 | `GET /v1/stats` | Per-county counts derived from people (k≥10 suppressed) |
+| `GET /v1/model` | Active predictor, published thresholds and whether each is reachable |
+| `GET /v1/climate/series` | The forecast window each score was computed from |
+| `GET /v1/ledger/summary` | Daily Merkle roots and anchors (never individual leaves) |
+| `GET /v1/alerts/summary` | Messaging outcomes, channel status, rendered templates |
+| `GET /v1/pipeline` | Job history and data volumes |
 
 `GET /v1/risk/history` accepts `area` (county name), `disease`
 (`cholera`\|`malaria`\|`pneumonia`\|`meningitis`), `from` and `to`
@@ -287,6 +309,7 @@ default; none is a credential.
 | `MOCK_OUTBOX_PATH` | `var/outbox.jsonl` | Where the mock channel records would-be messages |
 | `SMPP_ADDR` / `SMPP_SYSTEM_ID` / `SMPP_PASSWORD` | dummy | SMPP bind settings; only read when `NOTIFY_CHANNEL=smpp` |
 | `LEDGER_SWEEP_INTERVAL` | `1h` | How often the ledger commits new events and recomputes roots |
+| `PREDICTOR` | `rules` | `rules` (published thresholds) or `climatology` (per-county seasonal percentiles) |
 | `ONNX_MODEL_PATH` | *(empty)* | If set, the predictor requires an ONNX model. Not implemented — a non-empty value fails startup rather than silently falling back |
 | `PUBLICAPI_ADDR` | `:8080` | Public API listen address |
 | `REGISTRY_ADDR` | `:8082` | Registry (internal) listen address |
