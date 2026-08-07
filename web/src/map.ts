@@ -96,6 +96,27 @@ export function createMap(container: HTMLElement): maplibregl.Map {
   return map;
 }
 
+/**
+ * Frame the map on the counties actually being shown, with padding.
+ *
+ * A fixed centre and zoom silently cropped Mombasa off the east edge — the
+ * map claimed five counties while showing four. Fitting the data means the
+ * view is always correct, including when a filter narrows the set.
+ */
+export function fitToCounties(map: maplibregl.Map, groups: CountyGroup[]): void {
+  if (groups.length === 0) return;
+  const bounds = new maplibregl.LngLatBounds();
+  for (const g of groups) bounds.extend([g.longitude, g.latitude]);
+
+  // Framing is a camera operation and does not need the style, so apply it
+  // immediately: the markers must be correctly placed even when the basemap
+  // never arrives. Re-apply on load so a late style does not leave the view
+  // somewhere else.
+  const apply = () => map.fitBounds(bounds, { padding: 80, maxZoom: 7, duration: 0 });
+  apply();
+  if (!map.isStyleLoaded()) map.once("load", apply);
+}
+
 /** Render one marker per county, colored by its worst risk level. */
 export function renderMarkers(map: maplibregl.Map, groups: CountyGroup[]): maplibregl.Marker[] {
   return groups.map((g) => {

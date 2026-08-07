@@ -7,7 +7,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { publicClient } from "../api";
 import { Columns } from "../charts";
 import { Select } from "../forms";
-import { createMap, diseaseName, groupByCounty, levelName, renderMarkers } from "../map";
+import { createMap, diseaseName, fitToCounties, groupByCounty, levelName, renderMarkers } from "../map";
 import { Caveat, Failed, Loading, Pill, brand, levelColor, space, text } from "../ui";
 import { useApi } from "../useApi";
 
@@ -18,6 +18,7 @@ export function MapView() {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [disease, setDisease] = useState("");
+  const [basemap, setBasemap] = useState<"loading" | "ready" | "unavailable">("loading");
   const risk = useApi(() => publicClient.getCurrentRisk({}), []);
 
   const scores =
@@ -30,7 +31,25 @@ export function MapView() {
     if (container.current === null) return;
     const map = createMap(container.current);
     mapRef.current = map;
+
+    // Attached at creation, because a listener registered in a later effect
+    // can miss an event the map has already fired.
+    //
+    // The basemap comes from MapLibre's public demo tile server. On a
+    // restricted or offline network it can stall with no error event at all,
+    // so a timeout is the only way to distinguish "slow" from "never". Say
+    // which one it is rather than leaving a blank rectangle: the county
+    // markers are the data and remain accurate either way.
+    const ready = () => setBasemap("ready");
+    map.once("idle", ready);
+    const giveUp = setTimeout(
+      () => setBasemap((s) => (s === "ready" ? s : "unavailable")),
+      10000,
+    );
+
     return () => {
+      clearTimeout(giveUp);
+      map.off("idle", ready);
       mapRef.current = null;
       map.remove();
     };
@@ -39,7 +58,9 @@ export function MapView() {
   useEffect(() => {
     const map = mapRef.current;
     if (map === null || risk.kind !== "ready") return;
-    const markers = renderMarkers(map, groupByCounty(scores));
+    const groups = groupByCounty(scores);
+    const markers = renderMarkers(map, groups);
+    fitToCounties(map, groups);
     return () => markers.forEach((m) => m.remove());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [risk, disease]);
@@ -76,8 +97,27 @@ export function MapView() {
         </Caveat>
       </div>
 
-      <div style={{ flex: "1 1 auto", position: "relative", minHeight: 320 }}>
+      <div style={{ flex: "0 0 auto", position: "relative", height: 420, minHeight: 300 }}>
         <div ref={container} style={{ position: "absolute", inset: 0 }} />
+        {basemap !== "ready" && (
+          <div
+            style={{
+              position: "absolute", top: space(3), left: space(3),
+              background: brand.surface, border: `1px solid ${brand.line}`,
+              borderRadius: 999, padding: `${space(1)} ${space(3)}`,
+              ...text.small,
+              color: basemap === "unavailable" ? brand.warn : brand.muted,
+              pointerEvents: "none",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+              maxWidth: "min(90%, 520px)",
+              lineHeight: 1.5,
+            }}
+          >
+            {basemap === "loading"
+              ? "Loading basemap…"
+              : "Basemap unavailable — county markers and risk levels below are still accurate"}
+          </div>
+        )}
       </div>
 
       <div
@@ -118,7 +158,7 @@ export function MapView() {
         </div>
       )}
       {risk.kind === "ready" && (
-        <div style={{ padding: `${space(4)} ${space(6)}`, maxWidth: 1180, margin: "0 auto", width: "100%" }}>
+        <div style={{ padding: `${space(4)} ${space(6)} ${space(10)}`, maxWidth: 1180, margin: "0 auto", width: "100%" }}>
           <div style={{ marginBottom: space(5) }}>
             <div style={{ ...text.h2, color: brand.ink, marginBottom: space(2) }}>
               Risk distribution

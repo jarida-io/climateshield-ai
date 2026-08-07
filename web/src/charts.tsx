@@ -55,13 +55,22 @@ export const diseaseColor: Record<string, string> = {
 const AXIS = "#C9CEDA";
 const GRID = "#E8EBF1";
 
+/**
+ * Axis ticks that ALWAYS reach past the maximum.
+ *
+ * The obvious loop (`v <= max`) stops one step short whenever max falls
+ * between ticks, which makes the top tick smaller than the largest value —
+ * and since bars are scaled against the top tick, they then render taller
+ * than the plot and spill over whatever sits above the chart. Continue until
+ * the ladder covers max.
+ */
 function niceTicks(max: number, count = 4): number[] {
-  if (max <= 0) return [0];
+  if (max <= 0) return [0, 1];
   const raw = max / count;
   const mag = Math.pow(10, Math.floor(Math.log10(raw)));
   const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? mag * 10;
   const out: number[] = [];
-  for (let v = 0; v <= max + step * 0.001; v += step) out.push(Number(v.toFixed(6)));
+  for (let v = 0; v < max + step; v += step) out.push(Number(v.toFixed(6)));
   return out;
 }
 
@@ -98,7 +107,11 @@ export function Columns({
   const ticks = niceTicks(max);
   const top = ticks[ticks.length - 1] ?? 1;
   const plotH = height - 26;
-  const slot = data.length === 0 ? W : W / data.length;
+  // Reserve a gutter for the axis labels, and stop a two-bar chart from
+  // spreading across 1400px of empty surface.
+  const AXIS_W = 46;
+  const plotW = Math.max(120, Math.min(W - AXIS_W, data.length * 110));
+  const slot = data.length === 0 ? plotW : plotW / data.length;
   // Bars are capped at 24px and never fill their slot: the leftover is the
   // 2px-plus surface gap that separates neighbours.
   const barW = Math.min(24, Math.max(3, slot - 6));
@@ -121,22 +134,34 @@ export function Columns({
           {ticks.map((t) => {
             const y = plotH - (t / top) * plotH;
             return (
-              <line
-                key={t}
-                x1="0"
-                x2={W}
-                y1={y}
-                y2={y}
-                stroke={t === 0 ? AXIS : GRID}
-                strokeWidth="1"
-              />
+              <g key={t}>
+                <line
+                  x1={AXIS_W}
+                  x2={AXIS_W + plotW}
+                  y1={y}
+                  y2={y}
+                  stroke={t === 0 ? AXIS : GRID}
+                  strokeWidth="1"
+                />
+                {/* Every tick carries its value: labelling only the top one
+                    leaves the reader unable to place anything in between. */}
+                <text
+                  x={AXIS_W - 8}
+                  y={y + 4}
+                  textAnchor="end"
+                  fill={brand.muted}
+                  style={{ fontSize: 11 }}
+                >
+                  {formatTick(t)}
+                </text>
+              </g>
             );
           })}
 
           {data.map((d, i) => {
             const h = top === 0 ? 0 : (d.value / top) * plotH;
             // 2px surface gap between neighbours comes from the slot padding.
-            const x = i * slot + (slot - barW) / 2;
+            const x = AXIS_W + i * slot + (slot - barW) / 2;
             const isHot = hover === i;
             return (
               <g key={d.label}>
@@ -162,7 +187,7 @@ export function Columns({
                 />
                 {/* Hit target is wider than the mark. */}
                 <rect
-                  x={i * slot}
+                  x={AXIS_W + i * slot}
                   y={0}
                   width={slot}
                   height={plotH}
@@ -176,29 +201,14 @@ export function Columns({
         </svg>
         )}
 
-        {/* Tick values sit in HTML so they inherit page typography. */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            ...text.small,
-            color: brand.muted,
-          }}
-        >
-          <span style={{ position: "absolute", left: 0, top: -6 }}>
-            {top.toLocaleString()}
-            {unit}
-          </span>
-        </div>
       </div>
 
-      <div style={{ display: "flex", marginTop: space(1) }}>
+      <div style={{ display: "flex", marginTop: space(1), paddingLeft: AXIS_W, width: AXIS_W + plotW }}>
         {data.map((d, i) => (
           <div
             key={d.label}
             style={{
-              flex: 1,
+              width: slot,
               textAlign: "center",
               ...text.small,
               color: hover === i || i === peak ? brand.ink : brand.muted,
@@ -471,6 +481,11 @@ export function DistributionStrip({
       </div>
     </figure>
   );
+}
+
+function formatTick(v: number): string {
+  if (Math.abs(v) >= 1000) return `${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k`;
+  return Number.isInteger(v) ? String(v) : v.toFixed(1);
 }
 
 export function Legend({ items }: { items: { name: string; color: string }[] }) {

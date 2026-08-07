@@ -219,8 +219,33 @@ categorical palette used for diseases was checked for colour-vision-deficiency
 separation before use; three of its slots fall below 3:1 against the page
 surface, so every chart ships a table view and none relies on colour alone.
 
+A visual review pass in a real 1440x900 viewport then found four more defects
+that no amount of reasoning had surfaced:
+
+- **Bars rendered past the top of their plot and overlapped the text above.**
+  The axis tick ladder stopped one step below the maximum whenever the max
+  fell between ticks (143 septets against a top tick of 100), and bars are
+  scaled against the top tick. Ticks now always cover the maximum.
+- **Only the top axis tick was labelled**, leaving nothing to read
+  intermediate values against. Every tick now carries its value.
+- **A two- or three-bar chart spread across 1400px** of empty surface. Plot
+  width is now capped at ~110px per category.
+- **The map cropped Mombasa off the east edge** — it claimed five counties
+  while showing four. It now frames its own data with `fitBounds`.
+
+**Basemap resilience.** The dashboard's basemap comes from MapLibre's public
+demo tile server. During review it stalled repeatedly in the test browser with
+NO error event at all — MapLibre parses tiles in Web Workers, and when those
+stall the map reports nothing and simply never loads. The map now (a) frames
+the county markers immediately rather than waiting for a style that may never
+arrive, and (b) after ten seconds says "Basemap unavailable — county markers
+and risk levels below are still accurate" instead of presenting a blank blue
+rectangle. This matters beyond the test environment: any restricted or offline
+deployment hits the same path.
+
 **Not done:** dark mode. The dashboard is light-only, and the charts have not
-been stepped for a dark surface.
+been stepped for a dark surface. Responsive behaviour below ~900px wide is
+also unverified.
 
 ## On calling it a "model"
 

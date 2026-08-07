@@ -57,7 +57,7 @@ export function Page({
   children: ReactNode;
 }) {
   return (
-    <div style={{ padding: space(6), maxWidth: 1180, margin: "0 auto" }}>
+    <div style={{ padding: `${space(6)} ${space(6)} ${space(10)}`, maxWidth: 1180, margin: "0 auto" }}>
       <h1 style={{ ...text.h1, margin: 0, color: brand.ink }}>{title}</h1>
       <p style={{ ...text.body, color: brand.muted, margin: `${space(2)} 0 ${space(5)}` }}>{lede}</p>
       {children}
