@@ -13,6 +13,19 @@ SELECT hmac_key FROM sealed.child_keys WHERE child_id = $1;
 -- name: DestroyChildKey :execrows
 DELETE FROM sealed.child_keys WHERE child_id = $1;
 
+-- name: ListEventsWithoutLeaves :many
+-- Immunization events the ledger has not yet committed to a Merkle leaf.
+SELECT ie.id, ie.child_id, ie.vaccine_code, ie.administered_at, ie.recorded_at
+FROM immunization_events ie
+LEFT JOIN event_leaves el ON el.event_id = ie.id
+WHERE el.event_id IS NULL
+ORDER BY ie.recorded_at, ie.id;
+
+-- name: ScrubChildFromLeaves :execrows
+-- Erasure: sever child->leaf linkage; the anonymous hash stays so daily
+-- roots remain structurally verifiable.
+UPDATE event_leaves SET child_id = NULL WHERE child_id = $1;
+
 -- name: InsertLeaf :exec
 INSERT INTO event_leaves (event_id, child_id, leaf_day, leaf_hash)
 VALUES ($1, $2, $3, $4)

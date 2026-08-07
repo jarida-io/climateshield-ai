@@ -4,9 +4,12 @@
 -- daily root. Leaves are unlinkable pseudonymous hashes: without the child's
 -- key nothing in this schema derives back to a person.
 
+-- child_id is nullable BY DESIGN: ForgetChild scrubs it to sever the
+-- child->leaf linkage while the anonymous leaf hash stays in place, so
+-- previously published daily roots still verify structurally after erasure.
 CREATE TABLE event_leaves (
     event_id uuid PRIMARY KEY,
-    child_id uuid NOT NULL,
+    child_id uuid,
     leaf_day date NOT NULL,
     leaf_hash bytea NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now()

@@ -171,6 +171,49 @@ func (q *Queries) ListAnchorsForDay(ctx context.Context, leafDay pgtype.Date) ([
 	return items, nil
 }
 
+const listEventsWithoutLeaves = `-- name: ListEventsWithoutLeaves :many
+SELECT ie.id, ie.child_id, ie.vaccine_code, ie.administered_at, ie.recorded_at
+FROM immunization_events ie
+LEFT JOIN event_leaves el ON el.event_id = ie.id
+WHERE el.event_id IS NULL
+ORDER BY ie.recorded_at, ie.id
+`
+
+type ListEventsWithoutLeavesRow struct {
+	ID             pgtype.UUID
+	ChildID        pgtype.UUID
+	VaccineCode    string
+	AdministeredAt pgtype.Timestamptz
+	RecordedAt     pgtype.Timestamptz
+}
+
+// Immunization events the ledger has not yet committed to a Merkle leaf.
+func (q *Queries) ListEventsWithoutLeaves(ctx context.Context) ([]ListEventsWithoutLeavesRow, error) {
+	rows, err := q.db.Query(ctx, listEventsWithoutLeaves)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListEventsWithoutLeavesRow
+	for rows.Next() {
+		var i ListEventsWithoutLeavesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ChildID,
+			&i.VaccineCode,
+			&i.AdministeredAt,
+			&i.RecordedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLeafDays = `-- name: ListLeafDays :many
 SELECT DISTINCT leaf_day FROM event_leaves ORDER BY leaf_day
 `
@@ -193,6 +236,20 @@ func (q *Queries) ListLeafDays(ctx context.Context) ([]pgtype.Date, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const scrubChildFromLeaves = `-- name: ScrubChildFromLeaves :execrows
+UPDATE event_leaves SET child_id = NULL WHERE child_id = $1
+`
+
+// Erasure: sever child->leaf linkage; the anonymous hash stays so daily
+// roots remain structurally verifiable.
+func (q *Queries) ScrubChildFromLeaves(ctx context.Context, childID pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, scrubChildFromLeaves, childID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertDailyRoot = `-- name: UpsertDailyRoot :exec

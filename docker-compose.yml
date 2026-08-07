@@ -66,6 +66,21 @@ services:
       timeout: 3s
       retries: 12
 
+  ledger:
+    build:
+      context: .
+      dockerfile: deploy/go.Dockerfile
+      args: { CMD: ledger }
+    environment: *appenv
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8093/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
   registry:
     build:
       context: .
