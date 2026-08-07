@@ -136,5 +136,14 @@ services:
       timeout: 3s
       retries: 12
 
+  web:
+    build:
+      context: ./web
+    ports:
+      - "8081:80"
+    depends_on:
+      publicapi:
+        condition: service_healthy
+
 volumes:
   pgdata:
