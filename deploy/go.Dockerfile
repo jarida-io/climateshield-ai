@@ -12,4 +12,7 @@ FROM alpine:3.22
 RUN apk add --no-cache ca-certificates && adduser -D -u 10001 app
 USER app
 COPY --from=build /out/app /app
+# Golden fixtures ship in every image so the fixture climate source (demo/CI
+# default) works inside containers; CLIMATE_FIXTURE_DIR points here.
+COPY --from=build /src/testdata/golden /testdata/golden
 ENTRYPOINT ["/app"]

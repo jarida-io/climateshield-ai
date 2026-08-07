@@ -19,5 +19,52 @@ services:
       timeout: 3s
       retries: 20
 
+  migrate:
+    build:
+      context: .
+      dockerfile: deploy/go.Dockerfile
+      args: { CMD: migrate }
+    environment: &appenv
+      DATABASE_URL: postgres://${POSTGRES_USER:-climateshield}:${POSTGRES_PASSWORD:-climateshield}@postgres:5432/${POSTGRES_DB:-climateshield}?sslmode=disable
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CLIMATE_FIXTURE_DIR: /testdata/golden
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  ingestor:
+    build:
+      context: .
+      dockerfile: deploy/go.Dockerfile
+      args: { CMD: ingestor }
+    environment:
+      <<: *appenv
+      CLIMATE_SOURCE: ${CLIMATE_SOURCE:-openmeteo}
+      OPENMETEO_BASE_URL: ${OPENMETEO_BASE_URL:-https://api.open-meteo.com}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  predictor:
+    build:
+      context: .
+      dockerfile: deploy/go.Dockerfile
+      args: { CMD: predictor }
+    environment: *appenv
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8091/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
 volumes:
   pgdata:
