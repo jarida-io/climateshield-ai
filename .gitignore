@@ -1,0 +1,16 @@
+# Build and tool outputs
+/bin/
+coverage.out
+coverage.html
+/var/
+
+# Environment — .env.example is committed, real env never is
+.env
+
+# Web
+web/node_modules/
+web/dist/
+
+# OS / editor noise
+.DS_Store
+*.log

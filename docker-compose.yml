@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: Apache-2.0
+# One-command run: cp .env.example .env && docker compose up
+# imresamu/postgis is the multi-arch (amd64+arm64) build of the official
+# PostGIS images; the official postgis/postgis:16-3.4 ships amd64 only.
+services:
+  postgres:
+    image: imresamu/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-climateshield}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-climateshield}
+      POSTGRES_DB: ${POSTGRES_DB:-climateshield}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-climateshield} -d ${POSTGRES_DB:-climateshield}"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
