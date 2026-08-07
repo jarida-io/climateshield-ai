@@ -79,7 +79,7 @@ export function groupByCounty(scores: RiskScore[]): CountyGroup[] {
 
 /** Create the base map centered on Kenya. */
 export function createMap(container: HTMLElement): maplibregl.Map {
-  return new maplibregl.Map({
+  const map = new maplibregl.Map({
     container,
     // Openly-licensed demo style, no API key. If tiles are unreachable the
     // markers still render on a plain background.
@@ -87,6 +87,14 @@ export function createMap(container: HTMLElement): maplibregl.Map {
     center: [37.0, -0.5],
     zoom: 5.6,
   });
+  // The map is created inside a flex child, so its size is not final on the
+  // first frame; without this the canvas keeps its initial (tiny) dimensions
+  // and markers land outside the visible area.
+  map.once("load", () => map.resize());
+  const observer = new ResizeObserver(() => map.resize());
+  observer.observe(container);
+  map.once("remove", () => observer.disconnect());
+  return map;
 }
 
 /** Render one marker per county, colored by its worst risk level. */

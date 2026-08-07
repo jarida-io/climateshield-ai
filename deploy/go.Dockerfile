@@ -9,8 +9,12 @@ COPY . .
 RUN CGO_ENABLED=0 go build -trimpath -o /out/app ./cmd/${CMD}
 
 FROM alpine:3.22
-RUN apk add --no-cache ca-certificates && adduser -D -u 10001 app
-USER app
+# CA certificates come from the build stage rather than `apk add`, so the
+# runtime image needs no package mirror: the build stays reproducible and
+# works on a restricted network. busybox (in the base image) provides the
+# wget used by the compose healthchecks. Numeric UID avoids needing adduser.
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+USER 10001:10001
 COPY --from=build /out/app /app
 # Golden fixtures ship in every image so the fixture climate source (demo/CI
 # default) works inside containers; CLIMATE_FIXTURE_DIR points here.

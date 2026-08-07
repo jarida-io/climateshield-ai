@@ -1,177 +1,94 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Contributing to ClimateShield AI
 
-Thank you for your interest in contributing. ClimateShield AI is an open-source platform that uses climate data to predict disease outbreaks and alert parents of under-vaccinated children in Kenya. Contributions across all components — data science, backend, mobile, frontend, and documentation — are welcome.
+ClimateShield AI is an open-source climate-health early warning system for
+Kenya. Contributions are welcome across backend, data, frontend and
+documentation. Read [CLAUDE.md](CLAUDE.md) first — it records the constraints
+this project is bound by, several of which come from a funding agreement rather
+than from taste.
 
-## Table of Contents
+## Development setup
 
-- [How to Contribute](#how-to-contribute)
-- [Development Setup](#development-setup)
-- [Project Structure](#project-structure)
-- [Coding Standards](#coding-standards)
-- [Pull Request Process](#pull-request-process)
-- [Issue Reporting](#issue-reporting)
-- [Community Guidelines](#community-guidelines)
-
-## How to Contribute
-
-We welcome:
-
-- **ML model improvement** (`ml-predictor/`): Training data, feature engineering, model evaluation
-- **Climate data expansion**: Adding more Kenyan counties or integrating Kenya Met Department data
-- **SMS/USSD gateway integration** (`alert-engine/`): Connect a live mobile gateway (Africa's Talking, Twilio, or equivalent)
-- **Dashboard development** (`dashboard/`): React + Leaflet county heatmap implementation
-- **Immunization integration** (`immunization-integration/`): Open health-data standards integration with the Child Immunization Tracker
-- **Swahili translations**: Review and expand Swahili SMS templates in `alert-engine/sms_scaffold.py`
-- **Documentation**: Architecture docs, API reference, deployment guides
-
-## Development Setup
-
-### Climate Engine
-
-The only dependency is Python 3.x and `requests`.
+Prerequisites: **Go 1.23+**, **Docker** (for the database and tests), and
+**Node 20+** (for the dashboard only). Nothing else needs installing — `buf`,
+`sqlc` and the protobuf plugins are pinned as `go.mod` tool dependencies, and
+`golangci-lint` is fetched into `./bin` by the Makefile at a pinned version.
 
 ```bash
-git clone https://github.com/jarida-io/climateshield-ai.git
-cd climateshield-ai/climate-engine
-pip install -r requirements.txt
-python ingest.py
+git clone https://github.com/jarida-io/climateshield.git
+cd climateshield
+cp .env.example .env
+make up      # full stack, healthy in under a minute
+make demo    # end-to-end pipeline against committed fixtures
+make verify  # everything CI runs
 ```
 
-No API key is required. The climate engine uses the [Open-Meteo API](https://open-meteo.com/), which is free and open.
+`make verify` must pass before you open a pull request. It runs formatting,
+`go vet`, `golangci-lint`, the build, all tests, the coverage gate, `buf lint`,
+the contract checks, `tsc --noEmit` and the web build.
 
-### ML Predictor
+## Non-negotiable rules
 
-```bash
-cd ml-predictor
-pip install -r requirements.txt
-```
+These fail CI, and in most cases they exist because breaking them would breach
+the funding agreement:
 
-Training data is needed to fit the model — see `ml-predictor/README.md` for the expected feature format.
+1. **Dependencies must be open source and free**, and the system must build,
+   test and run with **zero credentials**. CLAUDE.md lists specific forbidden
+   packages (TimescaleDB, Redis 7.4+, Mapbox GL v2+, Fiber, GORM, Codecov and
+   others) with the approved alternative for each. If you think you need one,
+   open an issue rather than substituting silently.
+2. **No output may imply an action that did not happen.** If a mock adapter is
+   active, output says so (`[mock] would send N alerts`). No fabricated
+   benchmarks, accuracy figures or performance claims anywhere — including in
+   comments and documentation.
+3. **No personal data on any public surface**, and no per-child hash. Counts
+   derived from people are k≥10 suppressed.
+4. **Never log PII.** Use the typed wrappers in
+   `internal/platform/logging`.
+5. **Coverage must stay ≥80%** over `./internal/...`, excluding generated code.
+6. **Every first-party source file carries** `SPDX-License-Identifier: Apache-2.0`.
+7. **Do not delete or rename the contract tests** (`TestContract_PIILeak`,
+   `TestContract_KAnonymity`). CI runs them by name.
+8. **Risk thresholds live only in `internal/predict/rules.go`.** They are
+   published in the funding proposal; changing them requires a proposal
+   amendment, not a pull request.
 
-### Alert Engine
+## Coding standards
 
-```bash
-cd alert-engine
-pip install requests  # or add to a requirements.txt
-```
+- Standard Go style: `gofmt`, `go vet` and `golangci-lint` clean.
+- **Test-first for pure logic** — thresholds, Merkle trees, canonical
+  serialization, template rendering, suppression. These are the parts a
+  reviewer must be able to trust by reading a test.
+- **No test may access the network.** Use committed fixtures and `httptest`.
+  Database tests use testcontainers via `internal/store/testdb`.
+- SQL is written by hand in `internal/store/queries` and compiled by sqlc; run
+  `make generate` after changing queries or the protobuf contract, and commit
+  the generated output.
+- Keep `cmd/*/main.go` thin — configuration and signal handling only,
+  delegating to `internal/<service>.Run`.
 
-To test SMS delivery, you will need credentials for a mobile gateway (Africa's Talking sandbox is free for testing).
+## Pull requests
 
-### Dashboard (planned)
+- Use [Conventional Commits](https://www.conventionalcommits.org/):
+  `feat(publicapi): …`, `fix(ledger): …`, `docs: …`, `ci: …`.
+- Explain **why** in the commit body, not just what changed.
+- One logical change per pull request; keep generated-code updates in the same
+  commit as the source change that caused them.
+- Paste your `make verify` output in the description.
+- Update [NOTES.md](NOTES.md) if you change what is real versus stubbed.
 
-```bash
-cd dashboard
-# React + Leaflet — setup instructions coming as implementation progresses
-```
+## Reporting issues
 
-## Project Structure
+Use the issue templates in `.github/ISSUE_TEMPLATE`. For anything with security
+or privacy implications — especially a suspected data leak on a public surface
+— email **hello@jarida.io** instead of filing a public issue.
 
-```
-climateshield-ai/
-├── climate-engine/
-│   ├── ingest.py           # Working: Open-Meteo API fetch + risk scoring
-│   └── requirements.txt
-├── ml-predictor/
-│   ├── model_scaffold.py   # GradientBoosting scaffold
-│   └── requirements.txt
-├── alert-engine/
-│   └── sms_scaffold.py     # SMS/USSD templates (EN + Swahili)
-├── dashboard/              # County heatmap (in development)
-├── immunization-integration/  # Child Immunization Tracker integration spec
-└── docs/
-    ├── architecture.md     # Full data-flow documentation
-    └── api-reference.md    # Function-level API reference
-```
+## Community
 
-## Coding Standards
+Be respectful and constructive. This project handles data about children;
+assume every design discussion carries that weight.
 
-### Python
+## Licence
 
-- Format with [Black](https://black.readthedocs.io/) (`black .`)
-- Type hints on all function signatures
-- Docstrings on all public functions (one-line summary + Args/Returns)
-- No hardcoded credentials — use environment variables or a config file excluded from version control
-
-```python
-def fetch_climate_data(county_name: str, days: int = 14) -> dict:
-    """Fetch weather forecast from Open-Meteo for a Kenyan county.
-
-    Args:
-        county_name: One of the keys in KENYA_COUNTIES.
-        days: Forecast horizon in days (max 16).
-
-    Returns:
-        Dict with 'county', 'fetched_at', and 'forecast' keys.
-    """
-```
-
-### Commit Message Format
-
-Use [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-feat(climate-engine): add Kisii and Garissa counties
-fix(ml-predictor): correct feature normalisation before training
-docs: update architecture diagram with dashboard component
-test(alert-engine): add unit tests for Swahili template rendering
-```
-
-## Pull Request Process
-
-1. Fork the repository and create a branch from `main`:
-   ```bash
-   git checkout -b feat/your-description
-   ```
-2. Make your changes following the coding standards above
-3. Add or update tests where applicable
-4. Describe in the PR:
-   - What you changed and why
-   - How you tested it
-   - Any known limitations
-5. A maintainer will review and merge
-
-### PR Checklist
-
-- [ ] No credentials or API keys committed
-- [ ] Type hints and docstrings on new Python functions
-- [ ] Formatted with Black
-- [ ] PR description explains what was tested and how
-
-## Issue Reporting
-
-### Bug Reports
-
-Please include:
-- Which component (`climate-engine`, `ml-predictor`, `alert-engine`, `dashboard`)
-- What you expected to happen
-- What actually happened
-- Python version and OS
-- Full traceback if applicable
-
-### Feature Requests
-
-Please describe:
-- The problem you are solving
-- Your proposed solution
-- How it fits into the overall ClimateShield AI pipeline
-
-### Security Issues
-
-Do not open a public issue for security vulnerabilities. Email **hello@jarida.io** with details.
-
-## Community Guidelines
-
-- Be respectful and constructive
-- This platform handles child health data — accuracy and correctness matter above all else
-- For significant architectural changes, open an issue to discuss the approach before writing code
-- Public health domain knowledge is as valuable as coding skill — contributions from epidemiologists, CHWs, and health data specialists are very welcome
-
-## Contact
-
-- **Issues and feature requests**: [GitHub Issues](https://github.com/jarida-io/climateshield-ai/issues)
-- **General questions**: [GitHub Discussions](https://github.com/jarida-io/climateshield-ai/discussions)
-- **Security concerns**: hello@jarida.io
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the Apache 2.0 License.
+Contributions are licensed under the [Apache License 2.0](LICENSE).

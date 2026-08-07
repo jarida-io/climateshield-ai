@@ -1,227 +1,343 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # ClimateShield AI
 
-> **⚠️ Repository being rebuilt.** ClimateShield is being rewritten as a Go
-> walking skeleton (six services, Postgres/PostGIS, public read-only API).
-> The Python prototype now lives under [`reference/`](reference/) and is kept
-> for provenance only. Parts of this README describe the old prototype and are
-> stale — in particular the risk-threshold table below; the canonical
-> thresholds are the ones in `reference/climate-engine/ingest.py`. This README
-> will be rewritten when the skeleton lands.
+**Climate-responsive early warning for child immunization in Kenya.**
 
-<div align="center">
+Climate data comes in, a deterministic model scores outbreak risk per county,
+guardians of under-vaccinated children are selected for alerting, immunization
+events are committed to a tamper-evident ledger, and county-level aggregates
+are published on a free, read-only public API.
 
-**AI-Powered Climate-Responsive Child Immunization Platform**
+This repository is a **walking skeleton**: a thin but complete vertical slice.
+Every service is real, tested and runnable; no service is feature-complete.
+See [NOTES.md](NOTES.md) for a blunt account of what is implemented, what is
+stubbed, and what is thin.
 
-> Forecasting climate-triggered disease outbreaks 7–14 days ahead.
-> Alerting parents of under-vaccinated children before the outbreak peaks.
+- **No SMS is ever sent.** The default messaging channel is a mock that writes
+  what it *would* send to a file and says so.
+- **No personal data reaches any public surface.** Aggregates only, with k≥10
+  suppression on any count derived from people.
+- **No credentials required.** `git clone && cp .env.example .env && make up`
+  works on a clean machine, offline.
 
-[![Python](https://img.shields.io/badge/Climate%20Engine-Python%203.x-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active%20Development-yellow.svg)]()
+Licensed under [Apache 2.0](LICENSE).
 
-</div>
+---
 
-## Table of Contents
+## Quick start
 
-- [The Problem](#the-problem)
-- [The Solution](#the-solution)
-- [Architecture](#architecture)
-- [Repository Structure](#repository-structure)
-- [Current Status](#current-status)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Components](#components)
-- [Related Repositories](#related-repositories)
-- [Contributing](#contributing)
-- [Built By](#built-by)
-- [License](#license)
+```bash
+cp .env.example .env
+make up
+make demo
+```
 
-## The Problem
+`make up` builds and starts nine containers and waits for every health check.
+`make demo` seeds a fictional population, runs the pipeline end to end, and
+prints what happened. Then:
 
-Climate change is reshaping child disease patterns across East Africa. Flooding triggers cholera. Drought triggers meningitis. Temperature swings trigger pneumonia and malaria. These patterns are predictable — but immunization campaigns run on fixed calendars, not climate triggers.
+- Public API — <http://localhost:8080/v1/risk/current>
+- Dashboard — <http://localhost:8081>
+- Registry API (internal) — <http://localhost:8082>
 
-The result: outbreaks arrive before vaccination coverage is adequate. Children in under-vaccinated communities face the highest risk precisely during climate events that health systems are least prepared for.
+Tear everything down with `make down` (this deletes the database volume).
 
-## The Solution — 4 Components
+### What `make demo` prints
 
-| Component | What It Does | Status |
-|---|---|---|
-| **Climate Engine** | Ingests 14-day weather forecasts for Kenyan counties via Open-Meteo API and scores outbreak risk per disease | Working |
-| **ML Predictor** | Forecasts outbreak probability 7–14 days ahead using climate features | In development |
-| **Alert Engine** | SMS/USSD reminders to parents of at-risk, under-vaccinated children | Scaffolded |
-| **Dashboard** | County health officer outbreak maps and vaccine demand forecast | Wireframes complete |
+The demo ingests the committed fixture scenario (a Kisumu long-rains window),
+so its output is identical on every machine:
+
+```
+--- Outbreak risk (latest per county x disease) ---
+scored from observations ingested via: fixture (committed demo scenario, not live weather) [5 counties]
+  ⚠ Eldoret  pneumonia   MEDIUM (mean_max_temp_c_14d = 17.2, rules v1.0.0)
+  ⚠ Kisumu   cholera     HIGH   (peak_rainfall_mm_14d = 74.0, rules v1.0.0)
+  ⚠ Kisumu   malaria     HIGH   (peak_rainfall_mm_14d = 74.0, rules v1.0.0)
+  ⚠ Mombasa  cholera     MEDIUM (peak_rainfall_mm_14d = 41.0, rules v1.0.0)
+  ⚠ Mombasa  malaria     HIGH   (peak_rainfall_mm_14d = 41.0, rules v1.0.0)
+5 elevated (HIGH/MEDIUM) county-disease pairs
+
+--- Alerts ---
+  skipped_consent      4
+  would_send           35
+[mock] would send 35 alerts
+(mock channel active: NO SMS was sent; see var/outbox.jsonl for the rendered messages)
+```
+
+`make demo-live` runs the same flow against live Open-Meteo forecasts instead.
+Real weather means real results: the risk levels you see will differ, and the
+output labels the source it actually scored from.
+
+---
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    A[Open-Meteo API] -->|14-day forecast| B[Climate Engine]
-    B -->|Climate features| D[ML Outbreak Predictor]
-    D -->|High risk flag| F[Alert Engine]
-    F -->|Query under-vaccinated children| H[Child Immunization Tracker]
-    H -->|At-risk child records| F
-    F -->|SMS/USSD| I[Parents]
-    F -->|Push alert| J[Community Health Workers]
-    D -->|Risk scores| K[County Dashboard]
-    K --> L[County Health Officer]
+```
+Open-Meteo ──▶ ingestor ──▶ climate_observations
+                              │  (River: risk_predict)
+                              ▼
+                           predictor ──▶ risk_scores
+                              │  (River: alert_dispatch, HIGH/MEDIUM only)
+                              ▼
+   consent_log ──────────▶ notifier ──▶ Channel ──▶ [mock] outbox.jsonl
+   registry (children, KEPI schedule)                smpp (wired, untested)
+                              │                      africastalking (stub)
+                              ▼
+registry ──▶ immunization_events ──▶ ledger ──▶ HMAC leaves ──▶ daily Merkle root ──▶ LocalAnchor
+
+                    risk_scores + aggregate counts
+                              ▼
+                          publicapi ──▶ JSON / CSV / GeoJSON + Connect ──▶ web dashboard
 ```
 
-The Climate Engine is the only fully implemented component today. The rest of the pipeline is actively being developed.
+Six services, one Go module, one Postgres database. Jobs move between services
+through [River](https://riverqueue.com) (Postgres-backed), so no message broker
+is needed.
 
-## Repository Structure
+| Service | Port | Responsibility |
+|---|---|---|
+| `ingestor` | 8090 | Fetch daily forecasts for 5 counties; idempotent upsert |
+| `predictor` | 8091 | Score outbreak risk; enqueue alerts for HIGH/MEDIUM |
+| `notifier` | 8092 | Render bilingual SMS, respect consent + quiet hours, dispatch via a Channel |
+| `ledger` | 8093 | Commit immunization events to per-day Merkle trees; anchor roots |
+| `registry` | 8082 | Children, guardians, KEPI schedule, immunization events (Connect API) |
+| `publicapi` | **8080** | Public read-only aggregates (REST + Connect) |
+| `web` | **8081** | One-page MapLibre risk map |
 
-```
-climateshield-ai/
-├── README.md
-├── LICENSE                         ← Apache 2.0
-├── CONTRIBUTING.md
-├── .github/
-│   └── ISSUE_TEMPLATE/
-│       └── bug_report.md
-├── docs/
-│   ├── architecture.md             ← Full data-flow documentation
-│   └── api-reference.md            ← API reference for all components
-├── climate-engine/                 ← WORKING — see below
-│   ├── README.md
-│   ├── requirements.txt
-│   └── ingest.py
-├── ml-predictor/                   ← In development
-│   ├── README.md
-│   ├── requirements.txt
-│   └── model_scaffold.py
-├── alert-engine/                   ← Scaffolded
-│   ├── README.md
-│   └── sms_scaffold.py
-├── dashboard/                      ← Wireframes complete
-│   └── README.md
-└── immunization-integration/       ← Integration spec
-    └── README.md
-```
+Only `publicapi` and `web` are intended to be publicly exposed.
 
-## Current Status
+### Risk model (v1, deterministic rules)
 
-- [x] Climate data pipeline — fetches 14-day forecasts for 5 Kenyan counties from Open-Meteo API and scores outbreak risk (cholera, malaria, pneumonia, meningitis)
-- [x] Child Immunization Tracker prototype — registered child records, vaccination schedules, role-based access
-- [x] SMS/USSD alert engine scaffold — English and Swahili message templates
-- [x] ML predictor scaffold — GradientBoosting model structure ready for training data
-- [ ] ML outbreak prediction model — in training (requires historical outbreak + climate correlation dataset)
-- [ ] Open health-data standards integration — in development
-- [ ] Full SMS/USSD alert engine — in development (gateway integration pending)
-- [ ] County dashboard — wireframes complete, React + Leaflet implementation pending
+| Disease | Driver | HIGH | MEDIUM |
+|---|---|---|---|
+| Cholera | 14-day peak rainfall | ≥ 60 mm | ≥ 30 mm |
+| Malaria | 14-day peak rainfall | ≥ 40 mm | ≥ 20 mm |
+| Pneumonia | 14-day mean max temp | ≤ 16 °C | ≤ 19 °C |
+| Meningitis | 14-day mean max temp | ≥ 39 °C | ≥ 36 °C |
 
-## Tech Stack
+These thresholds are published in the funding proposal. They live in exactly
+one place — [`internal/predict/rules.go`](internal/predict/rules.go) — and every
+one has at/just-below/just-above boundary tests. **No accuracy, sensitivity or
+specificity claim is made for this ruleset**; it has not been validated against
+outbreak surveillance data. A trained model is future work
+(`internal/predict/onnx.go` is an interface stub that reports `ErrNotImplemented`).
 
-| Layer | Technology |
+Every `risk_scores` row records the predictor name and version that produced
+it, so scores stay auditable across model changes.
+
+---
+
+## Public API
+
+All endpoints are unauthenticated, read-only, and return aggregates only.
+
+| Endpoint | Description |
 |---|---|
-| Climate data | [Open-Meteo API](https://open-meteo.com/) (free, no key required), Kenya Met Department |
-| ML | scikit-learn (GradientBoosting), MediaPipe Tasks (edge/offline inference) |
-| Backend | Python (FastAPI planned), PostgreSQL + PostGIS |
-| Notifications | SMS/USSD via mobile gateway (Africa's Talking or equivalent) |
-| Health data | Child Immunization Tracker (this org), open health-data standards integration planned |
-| Dashboard | React.js + Leaflet.js |
-| Mobile (CHW) | Android / Kotlin — on-device ML (same architecture as KSL Translator) |
+| `GET /health` | `200` with `{"status":"ok"}`; `503` if the database is unreachable |
+| `GET /metrics` | Prometheus metrics |
+| `GET /v1/risk/current` | Latest risk score per county × disease |
+| `GET /v1/risk/history` | Historical scores; filters below |
+| `GET /v1/stats` | Per-county counts derived from people (k≥10 suppressed) |
 
-## Getting Started
+`GET /v1/risk/history` accepts `area` (county name), `disease`
+(`cholera`\|`malaria`\|`pneumonia`\|`meningitis`), `from` and `to`
+(`YYYY-MM-DD`), and `limit` (clamped to 1000).
 
-### Climate Engine (working today)
-
-The climate engine requires only Python 3.x and the `requests` library.
+**Formats.** Add `?format=csv` or `?format=geojson` to any `/v1` endpoint;
+JSON is the default. GeoJSON is available on the risk endpoints only (stats
+have no geometry). Unsupported combinations return `400`, never `500`.
 
 ```bash
-cd climate-engine
-pip install -r requirements.txt
-python ingest.py
+curl -s localhost:8080/v1/risk/current | jq .
+curl -s "localhost:8080/v1/risk/current?format=geojson" | jq .type   # FeatureCollection
+curl -s "localhost:8080/v1/stats?format=csv"
 ```
 
-**Example output:**
+The same messages are served over ConnectRPC at
+`/climateshield.v1.PublicService/{GetCurrentRisk,GetRiskHistory,GetStats}`.
+Protobuf definitions live in [`proto/climateshield/v1`](proto/climateshield/v1);
+the dashboard's TypeScript client is generated from them, so no response type
+is hand-written twice.
 
-```json
-{
-  "county": "Nairobi",
-  "risk_scores": {
-    "cholera": "LOW",
-    "malaria": "LOW",
-    "pneumonia": "LOW",
-    "meningitis": "LOW"
-  },
-  "scored_at": "2026-05-14T09:00:00"
-}
+### Availability behaviour
+
+A public read **never returns 500**. Each endpoint caches its last good
+response; if the database becomes unreachable the cached body is served with:
+
+```
+X-Data-Stale: true
 ```
 
-The engine currently covers 5 counties: **Nairobi, Kisumu, Mombasa, Nakuru, Eldoret**.
-
-### ML Predictor (scaffold)
+On a cold start with a dead database the response is an empty but structurally
+valid payload, still `200`, still flagged stale. `/health` reports `503`
+independently, so monitoring sees the truth while readers keep getting data.
 
 ```bash
-cd ml-predictor
-pip install -r requirements.txt
-# Training data required — see ml-predictor/README.md
+docker compose stop postgres
+curl -si localhost:8080/v1/risk/current | grep -i x-data-stale   # X-Data-Stale: true
+docker compose start postgres
 ```
 
-## Components
+### Privacy guarantees
 
-### Climate Engine (`climate-engine/ingest.py`)
+- Responses contain **no** child or guardian identifiers, names, phones, or
+  dates of birth, and no per-child hash.
+- People-derived counts in `/v1/stats` are suppressed when `0 < n < 10`: the
+  value is omitted and a `*_suppressed: true` flag is set (CSV emits an empty
+  cell). Zero is reported as zero — absence of a population is not
+  individually identifying.
 
-Connects to the [Open-Meteo API](https://open-meteo.com/) — free, no API key required — and pulls 14-day weather forecasts (precipitation, max/min temperature, humidity) for each county. Applies threshold-based risk scoring:
+Both properties are enforced by contract tests (below).
 
-| Disease | Trigger |
+---
+
+## Development
+
+```bash
+make verify   # fmt · vet · lint · build · test · coverage gate · buf lint · contracts · tsc · web build
+make test     # tests only, with coverage profile
+make generate # regenerate protobuf (Go + TS) and sqlc code
+make migrate  # apply migrations against DATABASE_URL
+make help     # list documented targets
+```
+
+`make verify` is the gate that must pass before any change lands.
+
+**Toolchain.** Go 1.23+ is the only prerequisite besides Docker and Node.
+`buf`, `sqlc`, `protoc-gen-go` and `protoc-gen-connect-go` are pinned as
+`go.mod` tool dependencies and run via `go tool`; `golangci-lint` is pinned by
+version and installed into `./bin` by the Makefile. Nothing needs a global
+install, and every version is locked by `go.sum`.
+
+**Tests.** `go test ./...` runs unit tests plus database-backed tests that
+start a throwaway PostGIS container via testcontainers (Docker must be
+running). **No test touches the network**: the Open-Meteo client is tested
+against a local `httptest` server replaying committed golden JSON. Run
+`go test -short ./...` to skip everything that needs Docker.
+
+### Coverage
+
+The gate requires **≥80%** statement coverage over `./internal/...`, enforced
+by [`scripts/covergate`](scripts/covergate) in both `make verify` and CI
+(Codecov is a paid SaaS and therefore not used). Generated code —
+`internal/gen` (protobuf/Connect) and `internal/store/db` (sqlc) — is excluded;
+nothing else is. `cmd/` binaries are thin `main` functions that delegate to
+`internal/<service>.Run`, and are outside the measured set.
+
+Current: **81.1%** (1110/1369 statements). Per-package figures are in
+[NOTES.md](NOTES.md).
+
+### Contract tests — do not delete
+
+Two tests encode commitments rather than behaviour:
+
+| Test | Guarantee |
 |---|---|
-| Cholera | Max 14-day rainfall ≥ 50 mm |
-| Malaria | Max 14-day rainfall ≥ 30 mm |
-| Pneumonia | Average max temperature ≤ 18°C |
-| Meningitis | Average max temperature ≥ 38°C |
+| `TestContract_PIILeak` | No PII value or forbidden field name appears in any public response, in any format, over REST or Connect |
+| `TestContract_KAnonymity` | k≥10 suppression holds for every people-derived count |
 
-The ML predictor will replace these thresholds with probabilistic outbreak forecasts trained on historical data.
+CI runs both **by name** and greps for their `RUN` and `PASS` lines, because
+`go test -run` exits 0 when a test has been deleted or renamed.
+`scripts/contract-checks.sh` additionally fails if either is missing from the
+package, and also verifies SPDX headers and that only the ledger's query file
+references the `sealed` schema.
 
-### ML Predictor (`ml-predictor/model_scaffold.py`)
+### Repository layout
 
-Scaffold for a `GradientBoostingClassifier` (scikit-learn) trained on 14-day climate features. Input features: `precipitation_sum_14d`, `temp_max_avg_14d`, `temp_min_avg_14d`, `humidity_max_avg_14d`. Output: outbreak probability (0–1) and risk level (HIGH / MEDIUM / LOW).
+```
+cmd/            thin service binaries + migrate + demo
+internal/
+  climate/      ClimateSource interface, Open-Meteo + fixture sources, ingestor service
+  predict/      Predictor interface, deterministic rules, ONNX stub, predictor service
+  registry/     children, guardians, KEPI due/overdue, Connect API
+  ledger/       canonical serialization, HMAC leaves, Merkle trees, anchors, erasure
+  notify/       Channel port, mock/smpp/africastalking adapters, GSM-7 templates
+  publicapi/    public REST + Connect, formats, k-anonymity, stale cache
+  store/        migrations, sqlc queries, seed data, testcontainers harness
+  platform/     config, redacting logger, AES-GCM fields, EAT clock, metrics, HTTP
+  integration/  boots all six services against a real database
+proto/          protobuf contract (source of truth for API types)
+testdata/golden Open-Meteo-shaped fixtures encoding the demo scenario
+web/            Vite + React + MapLibre dashboard
+reference/      the original Python prototype, kept for provenance only
+docs/           architecture diagrams and wireframes
+```
 
-### Alert Engine (`alert-engine/sms_scaffold.py`)
+---
 
-SMS delivery scaffold with message templates in English and Swahili. Integrates with any REST-based mobile gateway. Message content includes the disease, risk level, county, child name, and vaccine due.
+## Configuration
 
-### Immunization Integration (`immunization-integration/`)
+Copy `.env.example` to `.env`. Every value there is a working development
+default; none is a credential.
 
-Specification for how the Alert Engine queries the Child Immunization Tracker to identify under-vaccinated children in high-risk counties. Planned integration with open health-data standards for MOH system interoperability.
+| Variable | Default | Meaning |
+|---|---|---|
+| `DATABASE_URL` | `postgres://climateshield:climateshield@localhost:5432/climateshield?sslmode=disable` | Postgres DSN used by host-side tooling |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `climateshield` | Local database container credentials |
+| `PII_KEY_HEX` | 64-char dev value | AES-256-GCM key for encrypted registry columns. **Generate per deployment:** `openssl rand -hex 32` |
+| `CLIMATE_SOURCE` | `fixture` | `fixture` (committed golden JSON, deterministic, offline) or `openmeteo` (live) |
+| `OPENMETEO_BASE_URL` | `https://api.open-meteo.com` | Forecast API origin (no key required) |
+| `CLIMATE_FIXTURE_DIR` | `testdata/golden` | Where the fixture source reads from |
+| `FORECAST_DAYS` | `14` | Forecast window length |
+| `INGEST_INTERVAL` | `6h` | How often the ingestor sweeps all counties |
+| `NOTIFY_CHANNEL` | `mock` | `mock` (writes JSONL, sends nothing) or `smpp` |
+| `MOCK_OUTBOX_PATH` | `var/outbox.jsonl` | Where the mock channel records would-be messages |
+| `SMPP_ADDR` / `SMPP_SYSTEM_ID` / `SMPP_PASSWORD` | dummy | SMPP bind settings; only read when `NOTIFY_CHANNEL=smpp` |
+| `LEDGER_SWEEP_INTERVAL` | `1h` | How often the ledger commits new events and recomputes roots |
+| `ONNX_MODEL_PATH` | *(empty)* | If set, the predictor requires an ONNX model. Not implemented — a non-empty value fails startup rather than silently falling back |
+| `PUBLICAPI_ADDR` | `:8080` | Public API listen address |
+| `REGISTRY_ADDR` | `:8082` | Registry (internal) listen address |
+| `INGESTOR_ADDR` / `PREDICTOR_ADDR` / `NOTIFIER_ADDR` / `LEDGER_ADDR` | `:8090`–`:8093` | Health/metrics listen addresses |
+| `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` — JSON to stdout, PII-redacted |
 
-### County Dashboard (`dashboard/`)
+`.env` is gitignored. No secret is committed to this repository.
 
-Planned React.js + Leaflet.js interface for county health officers showing real-time outbreak risk heatmaps, vaccine demand forecasts, and alert history.
+---
 
-## Related Repositories
+## Operational notes
 
-| Repository | Role in ClimateShield AI |
-|---|---|
-| [Child Immunization Tracker](https://github.com/jarida-io/Child-Immunization-Tracker) | Data source: child records, vaccination status, guardian contact details |
-| [KSL Translator](https://github.com/jarida-io/kenyan_sign_language_app) | Demonstrates Jarida's on-device ML capability — the same MediaPipe Tasks architecture will power the offline CHW module |
+**Messaging honesty.** With `NOTIFY_CHANNEL=mock` (the default), nothing is
+sent anywhere. Alert rows are recorded with status `would_send`, never `sent` —
+only a real carrier adapter may write `sent`. Log lines and demo output say
+`[mock] would send N alerts`.
+
+**Quiet hours.** No alert is dispatched between 21:00 and 07:00 East Africa
+Time (fixed UTC+3; Kenya observes no DST). Jobs landing in that window are
+rescheduled to the next 07:00 rather than dropped.
+
+**Consent.** `consent_log` is an append-only event log and the most recent row
+per guardian decides. A guardian whose latest action is `OPT_OUT` is skipped,
+and the skip is recorded as `skipped_consent`.
+
+**Data protection.** Child names, guardian names, phone numbers and national
+IDs are stored only as AES-256-GCM ciphertext (`internal/platform/crypto`), with
+the key supplied via `PII_KEY_HEX` and never stored in the database. Logging
+goes through a redacting handler that masks phone-shaped strings even when a
+caller forgets the typed wrappers.
+
+**Immutability and erasure.** `immunization_events` is append-only, enforced by
+a database trigger: `UPDATE` is always rejected, and `DELETE` only inside the
+guarded transaction used by right-to-erasure. `ledger.ForgetChild` deletes the
+child's records, scrubs the child linkage from ledger leaves, and destroys the
+child's HMAC key — after which previously published Merkle roots still verify
+structurally, but nothing links those leaves to a person.
+
+**Basemap tiles.** The dashboard fetches its base map style from MapLibre's
+public demo tile server. It needs no API key, but it does require internet
+access; without it the county markers still render over a blank background.
+Everything else in the stack runs fully offline.
+
+---
+
+## Not in scope for this skeleton
+
+USSD, an Android app, ONNX inference, model training, FHIR/DHIS2 integration,
+real SMS delivery, blockchain anchoring, authentication, multi-tenancy,
+Kubernetes, and an admin UI. See [NOTES.md](NOTES.md) for exactly where each
+boundary sits in the code.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Priority areas:
-
-- **Training data**: Historical climate + disease outbreak correlation data for Kenyan counties
-- **ML model**: Improve the outbreak prediction model in `ml-predictor/`
-- **Gateway integration**: Connect a live SMS/USSD gateway to `alert-engine/`
-- **Dashboard**: React + Leaflet county heatmap implementation
-- **Swahili content**: SMS template translations and review
-
-## Built By
-
-**Jarida Open Source** — a youth-led technology startup from Nairobi, Kenya, building open-source tools for public health and inclusive communication.
-
-[jarida.io](https://jarida.io) | [github.com/jarida-io](https://github.com/jarida-io)
-
-## License
-
-Apache 2.0 — see [LICENSE](LICENSE)
-
-```
-Copyright 2024 Jarida Open Source
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md). All first-party files carry
+`SPDX-License-Identifier: Apache-2.0`; `make verify` fails if one is missing.

@@ -16,6 +16,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -68,9 +70,9 @@ func run() error {
 	fmt.Println("============================================================")
 	fmt.Println("ClimateShield AI — walking skeleton demo")
 	if cfg.Source == "fixture" {
-		fmt.Println("source: fixture (committed demo scenario, not live weather)")
+		fmt.Println("requesting ingest from: fixture (committed demo scenario, not live weather)")
 	} else {
-		fmt.Printf("source: %s (live data — results vary with the actual forecast)\n", cfg.Source)
+		fmt.Printf("requesting ingest from: %s (live data — results vary with the actual forecast)\n", cfg.Source)
 	}
 	fmt.Println("============================================================")
 
@@ -172,8 +174,16 @@ func run() error {
 		return err
 	}
 
-	// 5. Report: risk grid.
+	// 5. Report: risk grid. The source label is read back from the
+	// observations these scores were actually computed from — never assumed
+	// from configuration, so the output cannot claim fixture data while
+	// showing live numbers (or the reverse).
 	fmt.Println("\n--- Outbreak risk (latest per county x disease) ---")
+	scoredFrom, err := observedSources(ctx, q)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("scored from observations ingested via: %s\n", scoredFrom)
 	rows, err := q.CurrentRisk(ctx)
 	if err != nil {
 		return err
@@ -245,6 +255,38 @@ func run() error {
 	fmt.Println("\ndemo complete.")
 	fmt.Println("============================================================")
 	return nil
+}
+
+// observedSources reports which climate source produced the latest
+// observation window for each area, as a human-readable summary.
+func observedSources(ctx context.Context, q *db.Queries) (string, error) {
+	areas, err := q.ListAreas(ctx)
+	if err != nil {
+		return "", err
+	}
+	counts := map[string]int{}
+	for _, a := range areas {
+		window, err := q.LatestObservationWindow(ctx, a.ID)
+		if err != nil {
+			return "", err
+		}
+		if len(window) > 0 {
+			counts[window[0].Source]++
+		}
+	}
+	if len(counts) == 0 {
+		return "no observations", nil
+	}
+	parts := make([]string, 0, len(counts))
+	for src, n := range counts {
+		label := src
+		if src == "fixture" {
+			label = "fixture (committed demo scenario, not live weather)"
+		}
+		parts = append(parts, fmt.Sprintf("%s [%d counties]", label, n))
+	}
+	sort.Strings(parts)
+	return strings.Join(parts, ", "), nil
 }
 
 // verifyInclusion proves the recorded event is in its day's anchored root.

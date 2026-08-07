@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import type maplibregl from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -13,6 +14,7 @@ type LoadState =
 
 export default function App(): React.JSX.Element {
   const mapContainer = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
 
   useEffect(() => {
@@ -30,14 +32,24 @@ export default function App(): React.JSX.Element {
     };
   }, []);
 
+  // The map is created once, on mount, and outlives every data update.
+  // Recreating it per render would rebuild the canvas while the container is
+  // mid-layout, which leaves MapLibre stuck at its 400x300 fallback size.
   useEffect(() => {
-    if (state.kind !== "ready" || mapContainer.current === null) return;
+    if (mapContainer.current === null) return;
     const map = createMap(mapContainer.current);
-    const markers = renderMarkers(map, groupByCounty(state.data.scores));
+    mapRef.current = map;
     return () => {
-      markers.forEach((m) => m.remove());
+      mapRef.current = null;
       map.remove();
     };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null || state.kind !== "ready") return;
+    const markers = renderMarkers(map, groupByCounty(state.data.scores));
+    return () => markers.forEach((m) => m.remove());
   }, [state]);
 
   return (
@@ -67,7 +79,9 @@ export default function App(): React.JSX.Element {
             }`}
         </span>
       </header>
-      <div ref={mapContainer} style={{ flex: 1 }} />
+      {/* position:relative + a definite flex basis so MapLibre can measure
+          the element on the first frame. */}
+      <div ref={mapContainer} style={{ flex: "1 1 auto", position: "relative", minHeight: 0 }} />
       <footer style={{ padding: "6px 16px", fontSize: 12, background: "#f5f5f5", display: "flex", gap: 16 }}>
         {(["HIGH", "MEDIUM", "LOW"] as const).map((lvl) => (
           <span key={lvl} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>

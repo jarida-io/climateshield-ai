@@ -54,8 +54,14 @@ generate:
 	go tool buf generate
 	go tool sqlc generate
 
+# Host-side targets read .env the same way docker compose does, so
+# `cp .env.example .env` is the only setup step a reviewer needs.
+define with_env
+	set -a; if [ -f .env ]; then . ./.env; fi; set +a;
+endef
+
 migrate:
-	go run ./cmd/migrate up
+	@$(with_env) go run ./cmd/migrate up
 
 up:
 	docker compose up --build -d --wait
@@ -66,11 +72,11 @@ down:
 
 ## demo: deterministic pipeline demo from committed fixtures (no network).
 demo:
-	go run ./cmd/demo
+	@$(with_env) go run ./cmd/demo
 
 ## demo-live: same demo but ingesting live Open-Meteo data (free, no key).
 demo-live:
-	CLIMATE_SOURCE=openmeteo go run ./cmd/demo
+	@$(with_env) CLIMATE_SOURCE=openmeteo go run ./cmd/demo
 
 help:
 	@grep -E '^##' Makefile | sed 's/^## //'
