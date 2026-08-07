@@ -34,8 +34,10 @@ make demo
 ```
 
 `make up` builds and starts nine containers and waits for every health check.
-`make demo` seeds a fictional population, runs the pipeline end to end, and
-prints what happened. Then:
+The **first** run compiles seven Go binaries and the dashboard, which takes
+several minutes on a cold Docker cache; subsequent runs reach healthy in under
+a minute (57s measured on an M-series Mac). `make demo` then seeds a fictional
+population, runs the pipeline end to end, and prints what happened:
 
 - Public API — <http://localhost:8080/v1/risk/current>
 - Dashboard — <http://localhost:8081>
