@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: Apache-2.0
+syntax = "proto3";
+
+package climateshield.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/jarida-io/climateshield/internal/gen/climateshield/v1;climateshieldv1";
+
+// RegistryService is the INTERNAL immunization registry API. It is not part
+// of the public tier and is never exposed on a public port. It carries opaque
+// identifiers, not names or phone numbers — PII stays encrypted in the
+// registry's own tables.
+service RegistryService {
+  rpc RecordImmunization(RecordImmunizationRequest) returns (RecordImmunizationResponse) {}
+  rpc GetDueSummary(GetDueSummaryRequest) returns (GetDueSummaryResponse) {}
+}
+
+message RecordImmunizationRequest {
+  string child_id = 1;
+  string vaccine_code = 2; // KEPI code, e.g. "measles1"
+  google.protobuf.Timestamp administered_at = 3;
+  string facility = 4;
+}
+
+message RecordImmunizationResponse {
+  string event_id = 1;
+}
+
+message GetDueSummaryRequest {
+  string area_id = 1; // optional; empty = all areas
+}
+
+// DueVaccine is one child x vaccine that is due or overdue. Identifier only —
+// resolving to a person requires registry-internal decryption.
+message DueVaccine {
+  string child_id = 1;
+  string area_id = 2;
+  string vaccine_code = 3;
+  string due_date = 4; // RFC3339 date
+  bool overdue = 5;
+}
+
+message GetDueSummaryResponse {
+  repeated DueVaccine due = 1;
+}

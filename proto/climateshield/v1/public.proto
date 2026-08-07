@@ -1,0 +1,75 @@
+// SPDX-License-Identifier: Apache-2.0
+syntax = "proto3";
+
+package climateshield.v1;
+
+import "climateshield/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/jarida-io/climateshield/internal/gen/climateshield/v1;climateshieldv1";
+
+// PublicService is the read-only public tier. Everything here is aggregate
+// (county x disease x date). It must never expose personal data, and counts
+// derived from people are k>=10 suppressed before they reach a response.
+service PublicService {
+  rpc GetCurrentRisk(GetCurrentRiskRequest) returns (GetCurrentRiskResponse) {}
+  rpc GetRiskHistory(GetRiskHistoryRequest) returns (GetRiskHistoryResponse) {}
+  rpc GetStats(GetStatsRequest) returns (GetStatsResponse) {}
+}
+
+// RiskScore is one county x disease risk assessment for one forecast window.
+message RiskScore {
+  string area = 1; // county name, e.g. "Kisumu"
+  double latitude = 2; // county centroid, for map rendering
+  double longitude = 3;
+  Disease disease = 4;
+  RiskLevel level = 5;
+  string forecast_date = 6; // RFC3339 date (Africa/Nairobi calendar date)
+  string driver = 7; // e.g. "peak_rainfall_mm_14d", "mean_max_temp_c_14d"
+  double driver_value = 8;
+  string predictor = 9; // predictor that produced this row, e.g. "rules"
+  string predictor_version = 10;
+  google.protobuf.Timestamp scored_at = 11;
+}
+
+message GetCurrentRiskRequest {}
+
+message GetCurrentRiskResponse {
+  repeated RiskScore scores = 1;
+  google.protobuf.Timestamp generated_at = 2;
+}
+
+message GetRiskHistoryRequest {
+  string area = 1; // optional county-name filter
+  Disease disease = 2; // optional; DISEASE_UNSPECIFIED = all
+  string from_date = 3; // optional RFC3339 date, inclusive
+  string to_date = 4; // optional RFC3339 date, inclusive
+  int32 limit = 5; // optional; server clamps
+}
+
+message GetRiskHistoryResponse {
+  repeated RiskScore scores = 1;
+  google.protobuf.Timestamp generated_at = 2;
+}
+
+// CountyStats carries people-derived aggregates. Any count in (0, 10) is
+// suppressed: the value is absent and the matching *_suppressed flag is true.
+// Zero and >=10 pass through unchanged.
+message CountyStats {
+  string area = 1;
+  optional int64 children_registered = 2;
+  bool children_registered_suppressed = 3;
+  optional int64 children_due = 4;
+  bool children_due_suppressed = 5;
+  optional int64 children_overdue = 6;
+  bool children_overdue_suppressed = 7;
+  optional int64 alerts_generated = 8;
+  bool alerts_generated_suppressed = 9;
+}
+
+message GetStatsRequest {}
+
+message GetStatsResponse {
+  repeated CountyStats stats = 1;
+  google.protobuf.Timestamp generated_at = 2;
+}

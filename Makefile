@@ -45,7 +45,7 @@ contracts:
 	./scripts/contract-checks.sh
 
 web-verify:
-	@if [ -f web/package.json ]; then \
+	@if [ -f web/vite.config.ts ]; then \
 		cd web && npm ci --no-audit --no-fund && npx tsc --noEmit && npm run build; \
 	else echo "web-verify: no web/ yet, skipping"; fi
 

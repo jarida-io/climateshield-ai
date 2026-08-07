@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: Apache-2.0
+syntax = "proto3";
+
+package climateshield.v1;
+
+option go_package = "github.com/jarida-io/climateshield/internal/gen/climateshield/v1;climateshieldv1";
+
+// RiskLevel is the three-tier outbreak risk classification. Thresholds are
+// defined once, in internal/predict/rules.go, and published in the funding
+// proposal.
+enum RiskLevel {
+  RISK_LEVEL_UNSPECIFIED = 0;
+  RISK_LEVEL_LOW = 1;
+  RISK_LEVEL_MEDIUM = 2;
+  RISK_LEVEL_HIGH = 3;
+}
+
+// Disease is the set of climate-sensitive diseases scored by the predictor.
+enum Disease {
+  DISEASE_UNSPECIFIED = 0;
+  DISEASE_CHOLERA = 1;
+  DISEASE_MALARIA = 2;
+  DISEASE_PNEUMONIA = 3;
+  DISEASE_MENINGITIS = 4;
+}
+
+// Area is a monitored county. Public surface: name and centroid only — never
+// anything person-derived.
+message Area {
+  string id = 1;
+  string name = 2;
+  double latitude = 3;
+  double longitude = 4;
+}
