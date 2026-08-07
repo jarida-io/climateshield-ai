@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -322,4 +323,107 @@ func (s *Server) jobStatuses(ctx context.Context) ([]*climateshieldv1.JobKindSta
 		out = append(out, js)
 	}
 	return out, rows.Err()
+}
+
+// buildClimatology returns the reference distribution for one county-month,
+// with the current forecast window marked on it. This is what makes the
+// climatology model legible: a reviewer sees the decade of history the score
+// was measured against, not just the score.
+func (s *Server) buildClimatology(ctx context.Context, area string, month int) (*climateshieldv1.GetClimatologyResponse, error) {
+	if s.climatology == nil {
+		return nil, errBadRequest{"no reference climatology is loaded"}
+	}
+	if month < 1 || month > 12 {
+		return nil, errBadRequest{fmt.Sprintf("month %d out of range (want 1-12)", month)}
+	}
+	areaID, ok := s.areaIDFor(ctx, area)
+	if !ok {
+		return nil, errBadRequest{fmt.Sprintf("unknown county %q", area)}
+	}
+
+	resp := &climateshieldv1.GetClimatologyResponse{
+		Area:            area,
+		Month:           int32(month),
+		Samples:         int32(s.climatology.Samples(areaID, month)),
+		ReferencePeriod: s.climatology.ReferencePeriod,
+	}
+	if resp.GetSamples() == 0 {
+		return nil, errBadRequest{fmt.Sprintf("no reference data for %s in month %d", area, month)}
+	}
+
+	// The current window, if one has been ingested, so the marker has meaning.
+	observed := map[string]float64{}
+	if rows, err := s.q.LatestSeriesForAllAreas(ctx); err == nil {
+		var peak, sumMax, sumMin float64
+		var n int
+		for _, r := range rows {
+			if r.AreaID != areaID {
+				continue
+			}
+			if r.PrecipitationSumMm > peak {
+				peak = r.PrecipitationSumMm
+			}
+			sumMax += r.TempMaxC
+			sumMin += r.TempMinC
+			n++
+		}
+		if n > 0 {
+			observed["peak_rain_mm"] = peak
+			observed["mean_tmax_c"] = sumMax / float64(n)
+			observed["mean_tmin_c"] = sumMin / float64(n)
+		}
+	}
+
+	for _, d := range []struct {
+		key, label, unit string
+		lowerTail        bool
+	}{
+		{"peak_rain_mm", "14-day peak rainfall", "mm", false},
+		{"mean_tmax_c", "14-day mean maximum temperature", "°C", false},
+		{"mean_tmin_c", "14-day mean minimum temperature", "°C", true},
+	} {
+		q := s.climatology.QuantileLadder(areaID, month, d.key)
+		if len(q) == 0 {
+			continue
+		}
+		dist := &climateshieldv1.ClimatologyDistribution{
+			Driver:            d.label,
+			Unit:              d.unit,
+			Quantiles:         q,
+			PercentileSteps:   int32Slice(s.climatology.QuantileStepsPct),
+			LowerTailIsHazard: d.lowerTail,
+		}
+		if v, ok := observed[d.key]; ok {
+			value := v
+			dist.Observed = &value
+			if exc, err := s.climatology.Exceedance(areaID, month, d.key, v, !d.lowerTail); err == nil {
+				e := exc
+				dist.ObservedExceedance = &e
+			}
+		}
+		resp.Distributions = append(resp.Distributions, dist)
+	}
+	return resp, nil
+}
+
+// areaIDFor maps a display county name back to its identifier.
+func (s *Server) areaIDFor(ctx context.Context, name string) (string, bool) {
+	areas, err := s.q.ListAreas(ctx)
+	if err != nil {
+		return "", false
+	}
+	for _, a := range areas {
+		if strings.EqualFold(a.Name, name) {
+			return a.ID, true
+		}
+	}
+	return "", false
+}
+
+func int32Slice(in []int) []int32 {
+	out := make([]int32, len(in))
+	for i, v := range in {
+		out[i] = int32(v)
+	}
+	return out
 }

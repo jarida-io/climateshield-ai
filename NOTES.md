@@ -17,7 +17,7 @@ unflattering. Everything below was verified by running it, not by intention.
 | Erasure | Real. `ForgetChild` deletes records, scrubs leaf linkage, destroys the HMAC key; tested that roots still verify structurally afterwards. |
 | Notification | Real up to the channel boundary. Bilingual GSM-7 templates, consent gate, quiet hours, per-child-per-score dedup. The mock channel writes JSONL and sends nothing. |
 | Public API | Real. REST (JSON/CSV/GeoJSON) + Connect over the same proto messages, k≥10 suppression, last-good-response stale cache, never-500 reads. |
-| Dashboard | Seven views, each backed by a live endpoint, each carrying an on-screen statement of what it does NOT prove. Types generated from protobuf. |
+| Dashboard | Seven views, each backed by a live endpoint, each carrying an on-screen statement of what it does NOT prove. Filter/preview forms on every view; hand-built SVG charts (no charting dependency). Types generated from protobuf. |
 | Climatology predictor | Real. Empirical per-county, per-month distributions from ~18,200 historical 14-day windows, embedded in the binary. Reports exceedance of the CLIMATE driver, never an outbreak probability. |
 | Threshold validation | Real, and the most useful thing in here. Two of four published cutoffs are unreachable in the monitored counties; see docs/threshold-validation.md. Encoded as a failing-if-untrue test and exposed on /v1/model. |
 | Pipeline | Real. River-backed ingest → predict → alert, plus a ledger sweep, exercised end to end by an integration test that boots all six services. |
@@ -105,11 +105,12 @@ place, with boundary tests.
 
 ## Coverage, per package
 
-**Total: 74.9% (1388/1852 statements). The gate is 80% and is currently RED.**
+**Total: 66.8% (1444/2162 statements). The gate is 80% and is currently RED.**
 Generated code (`internal/gen`, `internal/store/db`) is excluded; nothing else
-is. This branch adds roughly 480 statements — the climatology predictor and the
-evidence API — and about half of the new service-bootstrap paths are not yet
-exercised. The gap is concentrated in `Run` composition roots
+is. This branch adds roughly 790 statements — the climatology predictor, the
+evidence API and the climatology explorer — and the new code has been added
+faster than tests for it. The evidence handlers themselves are covered; the
+gap is service bootstrap plus the long tail of error branches. The gap is concentrated in `Run` composition roots
 (`internal/predict/service.go`, `internal/publicapi/server.go`,
 `internal/climate/ingestor/service.go`), which only the integration test
 touches.
@@ -187,6 +188,39 @@ first.
   after forcing a viewport size, because the embedded browser reports 0×0 and
   will not paint on its own. Responsive behaviour at real window sizes and on
   mobile is therefore unverified. Open it in a normal browser before any demo.
+
+## Dashboard forms and charts
+
+Every form on the dashboard **queries or previews**. None writes. The public
+tier is read-only, and a write path on an unauthenticated public surface would
+breach that, so the controls are filters, selectors and previewers only.
+
+The message previewer accepts free text (a child's first name). It renders
+**entirely in the browser** — nothing typed into it is transmitted, logged or
+stored. That required a second GSM-7 septet counter in TypeScript, mirroring
+`internal/notify/gsm7.go`. The Go one remains authoritative: it is what
+actually refuses to render an over-long message before anything reaches a
+channel. The TypeScript copy is a transcription of the published GSM 03.38
+tables for live feedback. It is a duplication and a drift risk, and is
+recorded here as such.
+
+Charts are hand-built SVG rather than a charting library: the forms are simple
+and a library would add ~150KB to a page with an uptime obligation. Two real
+defects were caught by rendering them and looking, rather than by reasoning:
+a stretched coordinate system (`preserveAspectRatio="none"`) was turning every
+marker circle into a flat ellipse, and markers at a distribution's extreme were
+clipped by the plot edge. Both are fixed by measuring the container and
+drawing in real pixel coordinates.
+
+The status palette was also wrong on accessibility grounds: the original
+MEDIUM amber (#F4A259) sat at 2.07:1 against white label text, far below the
+4.5:1 floor. All three tiers were re-stepped and now clear it. The four-slot
+categorical palette used for diseases was checked for colour-vision-deficiency
+separation before use; three of its slots fall below 3:1 against the page
+surface, so every chart ships a table view and none relies on colour alone.
+
+**Not done:** dark mode. The dashboard is light-only, and the charts have not
+been stepped for a dark surface.
 
 ## On calling it a "model"
 

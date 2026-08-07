@@ -1724,6 +1724,231 @@ func (x *GetPipelineStatusResponse) GetGeneratedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+type GetClimatologyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Area          string                 `protobuf:"bytes,1,opt,name=area,proto3" json:"area,omitempty"`    // county name
+	Month         int32                  `protobuf:"varint,2,opt,name=month,proto3" json:"month,omitempty"` // 1-12
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetClimatologyRequest) Reset() {
+	*x = GetClimatologyRequest{}
+	mi := &file_climateshield_v1_public_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetClimatologyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetClimatologyRequest) ProtoMessage() {}
+
+func (x *GetClimatologyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_climateshield_v1_public_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetClimatologyRequest.ProtoReflect.Descriptor instead.
+func (*GetClimatologyRequest) Descriptor() ([]byte, []int) {
+	return file_climateshield_v1_public_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *GetClimatologyRequest) GetArea() string {
+	if x != nil {
+		return x.Area
+	}
+	return ""
+}
+
+func (x *GetClimatologyRequest) GetMonth() int32 {
+	if x != nil {
+		return x.Month
+	}
+	return 0
+}
+
+// ClimatologyDistribution is the empirical distribution of one driver for one
+// county-month, as measured over the reference period. It describes weather,
+// not people.
+type ClimatologyDistribution struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Driver string                 `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
+	Unit   string                 `protobuf:"bytes,2,opt,name=unit,proto3" json:"unit,omitempty"`
+	// quantiles at the percentile steps reported alongside, ascending.
+	Quantiles         []float64 `protobuf:"fixed64,3,rep,packed,name=quantiles,proto3" json:"quantiles,omitempty"`
+	PercentileSteps   []int32   `protobuf:"varint,4,rep,packed,name=percentile_steps,json=percentileSteps,proto3" json:"percentile_steps,omitempty"`
+	LowerTailIsHazard bool      `protobuf:"varint,5,opt,name=lower_tail_is_hazard,json=lowerTailIsHazard,proto3" json:"lower_tail_is_hazard,omitempty"`
+	// observed is the current forecast window's value, when one exists.
+	Observed           *float64 `protobuf:"fixed64,6,opt,name=observed,proto3,oneof" json:"observed,omitempty"`
+	ObservedExceedance *float64 `protobuf:"fixed64,7,opt,name=observed_exceedance,json=observedExceedance,proto3,oneof" json:"observed_exceedance,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ClimatologyDistribution) Reset() {
+	*x = ClimatologyDistribution{}
+	mi := &file_climateshield_v1_public_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClimatologyDistribution) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClimatologyDistribution) ProtoMessage() {}
+
+func (x *ClimatologyDistribution) ProtoReflect() protoreflect.Message {
+	mi := &file_climateshield_v1_public_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClimatologyDistribution.ProtoReflect.Descriptor instead.
+func (*ClimatologyDistribution) Descriptor() ([]byte, []int) {
+	return file_climateshield_v1_public_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ClimatologyDistribution) GetDriver() string {
+	if x != nil {
+		return x.Driver
+	}
+	return ""
+}
+
+func (x *ClimatologyDistribution) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
+func (x *ClimatologyDistribution) GetQuantiles() []float64 {
+	if x != nil {
+		return x.Quantiles
+	}
+	return nil
+}
+
+func (x *ClimatologyDistribution) GetPercentileSteps() []int32 {
+	if x != nil {
+		return x.PercentileSteps
+	}
+	return nil
+}
+
+func (x *ClimatologyDistribution) GetLowerTailIsHazard() bool {
+	if x != nil {
+		return x.LowerTailIsHazard
+	}
+	return false
+}
+
+func (x *ClimatologyDistribution) GetObserved() float64 {
+	if x != nil && x.Observed != nil {
+		return *x.Observed
+	}
+	return 0
+}
+
+func (x *ClimatologyDistribution) GetObservedExceedance() float64 {
+	if x != nil && x.ObservedExceedance != nil {
+		return *x.ObservedExceedance
+	}
+	return 0
+}
+
+type GetClimatologyResponse struct {
+	state           protoimpl.MessageState     `protogen:"open.v1"`
+	Area            string                     `protobuf:"bytes,1,opt,name=area,proto3" json:"area,omitempty"`
+	Month           int32                      `protobuf:"varint,2,opt,name=month,proto3" json:"month,omitempty"`
+	Samples         int32                      `protobuf:"varint,3,opt,name=samples,proto3" json:"samples,omitempty"`
+	ReferencePeriod string                     `protobuf:"bytes,4,opt,name=reference_period,json=referencePeriod,proto3" json:"reference_period,omitempty"`
+	Distributions   []*ClimatologyDistribution `protobuf:"bytes,5,rep,name=distributions,proto3" json:"distributions,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *GetClimatologyResponse) Reset() {
+	*x = GetClimatologyResponse{}
+	mi := &file_climateshield_v1_public_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetClimatologyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetClimatologyResponse) ProtoMessage() {}
+
+func (x *GetClimatologyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_climateshield_v1_public_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetClimatologyResponse.ProtoReflect.Descriptor instead.
+func (*GetClimatologyResponse) Descriptor() ([]byte, []int) {
+	return file_climateshield_v1_public_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *GetClimatologyResponse) GetArea() string {
+	if x != nil {
+		return x.Area
+	}
+	return ""
+}
+
+func (x *GetClimatologyResponse) GetMonth() int32 {
+	if x != nil {
+		return x.Month
+	}
+	return 0
+}
+
+func (x *GetClimatologyResponse) GetSamples() int32 {
+	if x != nil {
+		return x.Samples
+	}
+	return 0
+}
+
+func (x *GetClimatologyResponse) GetReferencePeriod() string {
+	if x != nil {
+		return x.ReferencePeriod
+	}
+	return ""
+}
+
+func (x *GetClimatologyResponse) GetDistributions() []*ClimatologyDistribution {
+	if x != nil {
+		return x.Distributions
+	}
+	return nil
+}
+
 var File_climateshield_v1_public_proto protoreflect.FileDescriptor
 
 const file_climateshield_v1_public_proto_rawDesc = "" +
@@ -1875,7 +2100,26 @@ const file_climateshield_v1_public_proto_rawDesc = "" +
 	"riskScores\x12N\n" +
 	"\x15latest_observation_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x13latestObservationAt\x12'\n" +
 	"\x0fingest_interval\x18\x05 \x01(\tR\x0eingestInterval\x12=\n" +
-	"\fgenerated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vgeneratedAt2\xc7\x06\n" +
+	"\fgenerated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vgeneratedAt\"A\n" +
+	"\x15GetClimatologyRequest\x12\x12\n" +
+	"\x04area\x18\x01 \x01(\tR\x04area\x12\x14\n" +
+	"\x05month\x18\x02 \x01(\x05R\x05month\"\xbb\x02\n" +
+	"\x17ClimatologyDistribution\x12\x16\n" +
+	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x12\n" +
+	"\x04unit\x18\x02 \x01(\tR\x04unit\x12\x1c\n" +
+	"\tquantiles\x18\x03 \x03(\x01R\tquantiles\x12)\n" +
+	"\x10percentile_steps\x18\x04 \x03(\x05R\x0fpercentileSteps\x12/\n" +
+	"\x14lower_tail_is_hazard\x18\x05 \x01(\bR\x11lowerTailIsHazard\x12\x1f\n" +
+	"\bobserved\x18\x06 \x01(\x01H\x00R\bobserved\x88\x01\x01\x124\n" +
+	"\x13observed_exceedance\x18\a \x01(\x01H\x01R\x12observedExceedance\x88\x01\x01B\v\n" +
+	"\t_observedB\x16\n" +
+	"\x14_observed_exceedance\"\xd8\x01\n" +
+	"\x16GetClimatologyResponse\x12\x12\n" +
+	"\x04area\x18\x01 \x01(\tR\x04area\x12\x14\n" +
+	"\x05month\x18\x02 \x01(\x05R\x05month\x12\x18\n" +
+	"\asamples\x18\x03 \x01(\x05R\asamples\x12)\n" +
+	"\x10reference_period\x18\x04 \x01(\tR\x0freferencePeriod\x12O\n" +
+	"\rdistributions\x18\x05 \x03(\v2).climateshield.v1.ClimatologyDistributionR\rdistributions2\xae\a\n" +
 	"\rPublicService\x12e\n" +
 	"\x0eGetCurrentRisk\x12'.climateshield.v1.GetCurrentRiskRequest\x1a(.climateshield.v1.GetCurrentRiskResponse\"\x00\x12e\n" +
 	"\x0eGetRiskHistory\x12'.climateshield.v1.GetRiskHistoryRequest\x1a(.climateshield.v1.GetRiskHistoryResponse\"\x00\x12S\n" +
@@ -1884,7 +2128,8 @@ const file_climateshield_v1_public_proto_rawDesc = "" +
 	"\x10GetClimateSeries\x12).climateshield.v1.GetClimateSeriesRequest\x1a*.climateshield.v1.GetClimateSeriesResponse\"\x00\x12k\n" +
 	"\x10GetLedgerSummary\x12).climateshield.v1.GetLedgerSummaryRequest\x1a*.climateshield.v1.GetLedgerSummaryResponse\"\x00\x12h\n" +
 	"\x0fGetAlertSummary\x12(.climateshield.v1.GetAlertSummaryRequest\x1a).climateshield.v1.GetAlertSummaryResponse\"\x00\x12n\n" +
-	"\x11GetPipelineStatus\x12*.climateshield.v1.GetPipelineStatusRequest\x1a+.climateshield.v1.GetPipelineStatusResponse\"\x00BRZPgithub.com/jarida-io/climateshield/internal/gen/climateshield/v1;climateshieldv1b\x06proto3"
+	"\x11GetPipelineStatus\x12*.climateshield.v1.GetPipelineStatusRequest\x1a+.climateshield.v1.GetPipelineStatusResponse\"\x00\x12e\n" +
+	"\x0eGetClimatology\x12'.climateshield.v1.GetClimatologyRequest\x1a(.climateshield.v1.GetClimatologyResponse\"\x00BRZPgithub.com/jarida-io/climateshield/internal/gen/climateshield/v1;climateshieldv1b\x06proto3"
 
 var (
 	file_climateshield_v1_public_proto_rawDescOnce sync.Once
@@ -1898,7 +2143,7 @@ func file_climateshield_v1_public_proto_rawDescGZIP() []byte {
 	return file_climateshield_v1_public_proto_rawDescData
 }
 
-var file_climateshield_v1_public_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_climateshield_v1_public_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_climateshield_v1_public_proto_goTypes = []any{
 	(*RiskScore)(nil),                 // 0: climateshield.v1.RiskScore
 	(*GetCurrentRiskRequest)(nil),     // 1: climateshield.v1.GetCurrentRiskRequest
@@ -1925,57 +2170,63 @@ var file_climateshield_v1_public_proto_goTypes = []any{
 	(*GetPipelineStatusRequest)(nil),  // 22: climateshield.v1.GetPipelineStatusRequest
 	(*JobKindStatus)(nil),             // 23: climateshield.v1.JobKindStatus
 	(*GetPipelineStatusResponse)(nil), // 24: climateshield.v1.GetPipelineStatusResponse
-	(Disease)(0),                      // 25: climateshield.v1.Disease
-	(RiskLevel)(0),                    // 26: climateshield.v1.RiskLevel
-	(*timestamppb.Timestamp)(nil),     // 27: google.protobuf.Timestamp
+	(*GetClimatologyRequest)(nil),     // 25: climateshield.v1.GetClimatologyRequest
+	(*ClimatologyDistribution)(nil),   // 26: climateshield.v1.ClimatologyDistribution
+	(*GetClimatologyResponse)(nil),    // 27: climateshield.v1.GetClimatologyResponse
+	(Disease)(0),                      // 28: climateshield.v1.Disease
+	(RiskLevel)(0),                    // 29: climateshield.v1.RiskLevel
+	(*timestamppb.Timestamp)(nil),     // 30: google.protobuf.Timestamp
 }
 var file_climateshield_v1_public_proto_depIdxs = []int32{
-	25, // 0: climateshield.v1.RiskScore.disease:type_name -> climateshield.v1.Disease
-	26, // 1: climateshield.v1.RiskScore.level:type_name -> climateshield.v1.RiskLevel
-	27, // 2: climateshield.v1.RiskScore.scored_at:type_name -> google.protobuf.Timestamp
+	28, // 0: climateshield.v1.RiskScore.disease:type_name -> climateshield.v1.Disease
+	29, // 1: climateshield.v1.RiskScore.level:type_name -> climateshield.v1.RiskLevel
+	30, // 2: climateshield.v1.RiskScore.scored_at:type_name -> google.protobuf.Timestamp
 	0,  // 3: climateshield.v1.GetCurrentRiskResponse.scores:type_name -> climateshield.v1.RiskScore
-	27, // 4: climateshield.v1.GetCurrentRiskResponse.generated_at:type_name -> google.protobuf.Timestamp
-	25, // 5: climateshield.v1.GetRiskHistoryRequest.disease:type_name -> climateshield.v1.Disease
+	30, // 4: climateshield.v1.GetCurrentRiskResponse.generated_at:type_name -> google.protobuf.Timestamp
+	28, // 5: climateshield.v1.GetRiskHistoryRequest.disease:type_name -> climateshield.v1.Disease
 	0,  // 6: climateshield.v1.GetRiskHistoryResponse.scores:type_name -> climateshield.v1.RiskScore
-	27, // 7: climateshield.v1.GetRiskHistoryResponse.generated_at:type_name -> google.protobuf.Timestamp
+	30, // 7: climateshield.v1.GetRiskHistoryResponse.generated_at:type_name -> google.protobuf.Timestamp
 	5,  // 8: climateshield.v1.GetStatsResponse.stats:type_name -> climateshield.v1.CountyStats
-	27, // 9: climateshield.v1.GetStatsResponse.generated_at:type_name -> google.protobuf.Timestamp
+	30, // 9: climateshield.v1.GetStatsResponse.generated_at:type_name -> google.protobuf.Timestamp
 	9,  // 10: climateshield.v1.GetModelInfoResponse.rules:type_name -> climateshield.v1.ThresholdRule
-	27, // 11: climateshield.v1.CountySeries.issued_at:type_name -> google.protobuf.Timestamp
+	30, // 11: climateshield.v1.CountySeries.issued_at:type_name -> google.protobuf.Timestamp
 	12, // 12: climateshield.v1.CountySeries.days:type_name -> climateshield.v1.ClimateDay
 	13, // 13: climateshield.v1.GetClimateSeriesResponse.series:type_name -> climateshield.v1.CountySeries
-	27, // 14: climateshield.v1.GetClimateSeriesResponse.generated_at:type_name -> google.protobuf.Timestamp
-	27, // 15: climateshield.v1.DailyRoot.anchored_at:type_name -> google.protobuf.Timestamp
+	30, // 14: climateshield.v1.GetClimateSeriesResponse.generated_at:type_name -> google.protobuf.Timestamp
+	30, // 15: climateshield.v1.DailyRoot.anchored_at:type_name -> google.protobuf.Timestamp
 	16, // 16: climateshield.v1.GetLedgerSummaryResponse.roots:type_name -> climateshield.v1.DailyRoot
-	27, // 17: climateshield.v1.GetLedgerSummaryResponse.generated_at:type_name -> google.protobuf.Timestamp
+	30, // 17: climateshield.v1.GetLedgerSummaryResponse.generated_at:type_name -> google.protobuf.Timestamp
 	19, // 18: climateshield.v1.GetAlertSummaryResponse.statuses:type_name -> climateshield.v1.AlertStatusCount
 	20, // 19: climateshield.v1.GetAlertSummaryResponse.templates:type_name -> climateshield.v1.TemplateSample
-	27, // 20: climateshield.v1.GetAlertSummaryResponse.generated_at:type_name -> google.protobuf.Timestamp
-	27, // 21: climateshield.v1.JobKindStatus.last_finished_at:type_name -> google.protobuf.Timestamp
+	30, // 20: climateshield.v1.GetAlertSummaryResponse.generated_at:type_name -> google.protobuf.Timestamp
+	30, // 21: climateshield.v1.JobKindStatus.last_finished_at:type_name -> google.protobuf.Timestamp
 	23, // 22: climateshield.v1.GetPipelineStatusResponse.jobs:type_name -> climateshield.v1.JobKindStatus
-	27, // 23: climateshield.v1.GetPipelineStatusResponse.latest_observation_at:type_name -> google.protobuf.Timestamp
-	27, // 24: climateshield.v1.GetPipelineStatusResponse.generated_at:type_name -> google.protobuf.Timestamp
-	1,  // 25: climateshield.v1.PublicService.GetCurrentRisk:input_type -> climateshield.v1.GetCurrentRiskRequest
-	3,  // 26: climateshield.v1.PublicService.GetRiskHistory:input_type -> climateshield.v1.GetRiskHistoryRequest
-	6,  // 27: climateshield.v1.PublicService.GetStats:input_type -> climateshield.v1.GetStatsRequest
-	8,  // 28: climateshield.v1.PublicService.GetModelInfo:input_type -> climateshield.v1.GetModelInfoRequest
-	11, // 29: climateshield.v1.PublicService.GetClimateSeries:input_type -> climateshield.v1.GetClimateSeriesRequest
-	15, // 30: climateshield.v1.PublicService.GetLedgerSummary:input_type -> climateshield.v1.GetLedgerSummaryRequest
-	18, // 31: climateshield.v1.PublicService.GetAlertSummary:input_type -> climateshield.v1.GetAlertSummaryRequest
-	22, // 32: climateshield.v1.PublicService.GetPipelineStatus:input_type -> climateshield.v1.GetPipelineStatusRequest
-	2,  // 33: climateshield.v1.PublicService.GetCurrentRisk:output_type -> climateshield.v1.GetCurrentRiskResponse
-	4,  // 34: climateshield.v1.PublicService.GetRiskHistory:output_type -> climateshield.v1.GetRiskHistoryResponse
-	7,  // 35: climateshield.v1.PublicService.GetStats:output_type -> climateshield.v1.GetStatsResponse
-	10, // 36: climateshield.v1.PublicService.GetModelInfo:output_type -> climateshield.v1.GetModelInfoResponse
-	14, // 37: climateshield.v1.PublicService.GetClimateSeries:output_type -> climateshield.v1.GetClimateSeriesResponse
-	17, // 38: climateshield.v1.PublicService.GetLedgerSummary:output_type -> climateshield.v1.GetLedgerSummaryResponse
-	21, // 39: climateshield.v1.PublicService.GetAlertSummary:output_type -> climateshield.v1.GetAlertSummaryResponse
-	24, // 40: climateshield.v1.PublicService.GetPipelineStatus:output_type -> climateshield.v1.GetPipelineStatusResponse
-	33, // [33:41] is the sub-list for method output_type
-	25, // [25:33] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	30, // 23: climateshield.v1.GetPipelineStatusResponse.latest_observation_at:type_name -> google.protobuf.Timestamp
+	30, // 24: climateshield.v1.GetPipelineStatusResponse.generated_at:type_name -> google.protobuf.Timestamp
+	26, // 25: climateshield.v1.GetClimatologyResponse.distributions:type_name -> climateshield.v1.ClimatologyDistribution
+	1,  // 26: climateshield.v1.PublicService.GetCurrentRisk:input_type -> climateshield.v1.GetCurrentRiskRequest
+	3,  // 27: climateshield.v1.PublicService.GetRiskHistory:input_type -> climateshield.v1.GetRiskHistoryRequest
+	6,  // 28: climateshield.v1.PublicService.GetStats:input_type -> climateshield.v1.GetStatsRequest
+	8,  // 29: climateshield.v1.PublicService.GetModelInfo:input_type -> climateshield.v1.GetModelInfoRequest
+	11, // 30: climateshield.v1.PublicService.GetClimateSeries:input_type -> climateshield.v1.GetClimateSeriesRequest
+	15, // 31: climateshield.v1.PublicService.GetLedgerSummary:input_type -> climateshield.v1.GetLedgerSummaryRequest
+	18, // 32: climateshield.v1.PublicService.GetAlertSummary:input_type -> climateshield.v1.GetAlertSummaryRequest
+	22, // 33: climateshield.v1.PublicService.GetPipelineStatus:input_type -> climateshield.v1.GetPipelineStatusRequest
+	25, // 34: climateshield.v1.PublicService.GetClimatology:input_type -> climateshield.v1.GetClimatologyRequest
+	2,  // 35: climateshield.v1.PublicService.GetCurrentRisk:output_type -> climateshield.v1.GetCurrentRiskResponse
+	4,  // 36: climateshield.v1.PublicService.GetRiskHistory:output_type -> climateshield.v1.GetRiskHistoryResponse
+	7,  // 37: climateshield.v1.PublicService.GetStats:output_type -> climateshield.v1.GetStatsResponse
+	10, // 38: climateshield.v1.PublicService.GetModelInfo:output_type -> climateshield.v1.GetModelInfoResponse
+	14, // 39: climateshield.v1.PublicService.GetClimateSeries:output_type -> climateshield.v1.GetClimateSeriesResponse
+	17, // 40: climateshield.v1.PublicService.GetLedgerSummary:output_type -> climateshield.v1.GetLedgerSummaryResponse
+	21, // 41: climateshield.v1.PublicService.GetAlertSummary:output_type -> climateshield.v1.GetAlertSummaryResponse
+	24, // 42: climateshield.v1.PublicService.GetPipelineStatus:output_type -> climateshield.v1.GetPipelineStatusResponse
+	27, // 43: climateshield.v1.PublicService.GetClimatology:output_type -> climateshield.v1.GetClimatologyResponse
+	35, // [35:44] is the sub-list for method output_type
+	26, // [26:35] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_climateshield_v1_public_proto_init() }
@@ -1988,13 +2239,14 @@ func file_climateshield_v1_public_proto_init() {
 	file_climateshield_v1_public_proto_msgTypes[5].OneofWrappers = []any{}
 	file_climateshield_v1_public_proto_msgTypes[16].OneofWrappers = []any{}
 	file_climateshield_v1_public_proto_msgTypes[19].OneofWrappers = []any{}
+	file_climateshield_v1_public_proto_msgTypes[26].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_climateshield_v1_public_proto_rawDesc), len(file_climateshield_v1_public_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   25,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

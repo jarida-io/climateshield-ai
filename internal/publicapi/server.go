@@ -145,6 +145,17 @@ func (s *Server) Router(healthy httpx.HealthFunc, metricsHandler http.Handler) c
 			return s.buildAlertSummary(ctx)
 		}, &climateshieldv1.GetAlertSummaryResponse{})
 	})
+	r.Get("/v1/climatology", func(w http.ResponseWriter, req *http.Request) {
+		area := req.URL.Query().Get("area")
+		month, err := strconv.Atoi(req.URL.Query().Get("month"))
+		if err != nil {
+			http.Error(w, "month must be an integer 1-12", http.StatusBadRequest)
+			return
+		}
+		s.serveREST(w, req, "climatology", func(ctx context.Context) (proto.Message, error) {
+			return s.buildClimatology(ctx, area, month)
+		}, &climateshieldv1.GetClimatologyResponse{})
+	})
 	r.Get("/v1/pipeline", func(w http.ResponseWriter, req *http.Request) {
 		s.serveREST(w, req, "pipeline", func(ctx context.Context) (proto.Message, error) {
 			return s.buildPipelineStatus(ctx)
@@ -201,6 +212,22 @@ func (s *Server) GetAlertSummary(
 		return staleConnect[climateshieldv1.GetAlertSummaryResponse](s, "connect:alerts")
 	}
 	s.cache.storeProto("connect:alerts", msg)
+	return connect.NewResponse(msg), nil
+}
+
+// GetClimatology implements climateshieldv1connect.PublicServiceHandler.
+func (s *Server) GetClimatology(
+	ctx context.Context, req *connect.Request[climateshieldv1.GetClimatologyRequest],
+) (*connect.Response[climateshieldv1.GetClimatologyResponse], error) {
+	msg, err := s.buildClimatology(ctx, req.Msg.GetArea(), int(req.Msg.GetMonth()))
+	if err != nil {
+		var bad errBadRequest
+		if errors.As(err, &bad) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, bad)
+		}
+		return staleConnect[climateshieldv1.GetClimatologyResponse](s, "connect:climatology")
+	}
+	s.cache.storeProto("connect:climatology", msg)
 	return connect.NewResponse(msg), nil
 }
 

@@ -7,12 +7,11 @@ import maplibregl from "maplibre-gl";
 import { Disease, RiskLevel } from "./gen/climateshield/v1/common_pb";
 import type { RiskScore } from "./gen/climateshield/v1/public_pb";
 
-export const levelColors: Record<string, string> = {
-  HIGH: "#d7263d",
-  MEDIUM: "#f4a259",
-  LOW: "#2a9d8f",
-  NONE: "#8d99ae",
-};
+// Imported from the design system so the map and the charts can never drift
+// apart on what HIGH looks like.
+import { levelColor } from "./ui";
+
+export const levelColors = levelColor;
 
 export function levelName(l: RiskLevel): "HIGH" | "MEDIUM" | "LOW" | "NONE" {
   switch (l) {

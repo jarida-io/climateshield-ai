@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { useState } from "react";
+
 import { publicClient } from "../api";
+import { Columns, TableView } from "../charts";
+import { TextInput } from "../forms";
 import { Caveat, Card, Failed, Loading, Page, StatTile, Table, Td, TileRow, brand, space, text } from "../ui";
 import { ts, useApi } from "../useApi";
 
@@ -9,6 +13,7 @@ import { ts, useApi } from "../useApi";
  * Deliberately does NOT say "blockchain" — none exists in this system.
  */
 export function LedgerView() {
+  const [filter, setFilter] = useState("");
   const ledger = useApi(() => publicClient.getLedgerSummary({}), []);
 
   if (ledger.kind === "loading") return <Loading what="ledger summary" />;
@@ -53,9 +58,50 @@ export function LedgerView() {
         </ol>
       </Card>
 
+      {l.roots.some((r) => !r.leafCountSuppressed) && (
+        <Card title="Events committed per day">
+          <p style={{ ...text.body, color: brand.muted, marginTop: 0 }}>
+            Days where the count is below the suppression threshold are omitted
+            from this chart rather than shown as zero — absence here means
+            withheld, not empty.
+          </p>
+          <Columns
+            height={150}
+            unit=" leaves"
+            data={l.roots
+              .filter((r) => !r.leafCountSuppressed)
+              .slice(0, 30)
+              .reverse()
+              .map((r) => ({
+                label: r.day.slice(5),
+                value: Number(r.leafCount ?? 0n),
+                detail: `${r.day}: ${String(r.leafCount ?? 0n)} leaves committed`,
+              }))}
+          />
+          <TableView
+            head={["Day", "Leaves"]}
+            rows={l.roots
+              .filter((r) => !r.leafCountSuppressed)
+              .map((r) => [r.day, String(r.leafCount ?? 0n)])}
+          />
+        </Card>
+      )}
+
       <Card title={`Daily roots (${l.algorithm})`}>
+        <form
+          onSubmit={(e) => e.preventDefault()}
+          style={{ display: "flex", gap: space(4), flexWrap: "wrap", marginBottom: space(4) }}
+        >
+          <TextInput
+            label="Find a day"
+            value={filter}
+            onChange={setFilter}
+            placeholder="2026-08-07"
+            hint="filters the roots below by date"
+          />
+        </form>
         <Table head={["Day", "Merkle root", "Leaves", "Anchor", "Anchored at"]}>
-          {l.roots.map((r) => (
+          {l.roots.filter((r) => filter === "" || r.day.includes(filter)).map((r) => (
             <tr key={r.day}>
               <Td mono>{r.day}</Td>
               <Td mono>

@@ -16,9 +16,12 @@ export const brand = {
   line: "#E3E6ED",
   surface: "#FFFFFF",
   canvas: "#F7F8FB",
-  high: "#D7263D",
-  medium: "#F4A259",
-  low: "#2A9D8F",
+  // Status palette, darkened from the original so white label text clears
+  // 4.5:1 on every tier. The previous amber sat at 2.07:1 — unreadable, and
+  // this is a public health tool.
+  high: "#C1121F",
+  medium: "#B45309",
+  low: "#12715F",
   warn: "#8A6100",
   warnBg: "#FFF6E0",
 } as const;
@@ -37,8 +40,11 @@ export const levelColor: Record<string, string> = {
   HIGH: brand.high,
   MEDIUM: brand.medium,
   LOW: brand.low,
-  NONE: "#8D99AE",
+  NONE: "#5C6478",
 };
+
+/** Risk order, worst first — used to sort and to lay out legends. */
+export const LEVELS = ["HIGH", "MEDIUM", "LOW"] as const;
 
 /** Page shell: a title, a one-line purpose, and the body. */
 export function Page({

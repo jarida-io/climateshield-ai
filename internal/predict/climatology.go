@@ -165,3 +165,17 @@ func (c *Climatology) Samples(areaID string, month int) int {
 	}
 	return m.Samples
 }
+
+// QuantileLadder returns the stored quantiles for one county, month and
+// driver, or nil when there is no reference distribution for them.
+func (c *Climatology) QuantileLadder(areaID string, month int, driver string) []float64 {
+	county, ok := c.Counties[areaID]
+	if !ok {
+		return nil
+	}
+	m, ok := county.Months[fmt.Sprintf("%d", month)]
+	if !ok {
+		return nil
+	}
+	return m.Quantiles[driver]
+}

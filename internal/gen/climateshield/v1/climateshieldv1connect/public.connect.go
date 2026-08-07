@@ -58,6 +58,9 @@ const (
 	// PublicServiceGetPipelineStatusProcedure is the fully-qualified name of the PublicService's
 	// GetPipelineStatus RPC.
 	PublicServiceGetPipelineStatusProcedure = "/climateshield.v1.PublicService/GetPipelineStatus"
+	// PublicServiceGetClimatologyProcedure is the fully-qualified name of the PublicService's
+	// GetClimatology RPC.
+	PublicServiceGetClimatologyProcedure = "/climateshield.v1.PublicService/GetClimatology"
 )
 
 // PublicServiceClient is a client for the climateshield.v1.PublicService service.
@@ -72,6 +75,7 @@ type PublicServiceClient interface {
 	GetLedgerSummary(context.Context, *connect.Request[v1.GetLedgerSummaryRequest]) (*connect.Response[v1.GetLedgerSummaryResponse], error)
 	GetAlertSummary(context.Context, *connect.Request[v1.GetAlertSummaryRequest]) (*connect.Response[v1.GetAlertSummaryResponse], error)
 	GetPipelineStatus(context.Context, *connect.Request[v1.GetPipelineStatusRequest]) (*connect.Response[v1.GetPipelineStatusResponse], error)
+	GetClimatology(context.Context, *connect.Request[v1.GetClimatologyRequest]) (*connect.Response[v1.GetClimatologyResponse], error)
 }
 
 // NewPublicServiceClient constructs a client for the climateshield.v1.PublicService service. By
@@ -133,6 +137,12 @@ func NewPublicServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(publicServiceMethods.ByName("GetPipelineStatus")),
 			connect.WithClientOptions(opts...),
 		),
+		getClimatology: connect.NewClient[v1.GetClimatologyRequest, v1.GetClimatologyResponse](
+			httpClient,
+			baseURL+PublicServiceGetClimatologyProcedure,
+			connect.WithSchema(publicServiceMethods.ByName("GetClimatology")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -146,6 +156,7 @@ type publicServiceClient struct {
 	getLedgerSummary  *connect.Client[v1.GetLedgerSummaryRequest, v1.GetLedgerSummaryResponse]
 	getAlertSummary   *connect.Client[v1.GetAlertSummaryRequest, v1.GetAlertSummaryResponse]
 	getPipelineStatus *connect.Client[v1.GetPipelineStatusRequest, v1.GetPipelineStatusResponse]
+	getClimatology    *connect.Client[v1.GetClimatologyRequest, v1.GetClimatologyResponse]
 }
 
 // GetCurrentRisk calls climateshield.v1.PublicService.GetCurrentRisk.
@@ -188,6 +199,11 @@ func (c *publicServiceClient) GetPipelineStatus(ctx context.Context, req *connec
 	return c.getPipelineStatus.CallUnary(ctx, req)
 }
 
+// GetClimatology calls climateshield.v1.PublicService.GetClimatology.
+func (c *publicServiceClient) GetClimatology(ctx context.Context, req *connect.Request[v1.GetClimatologyRequest]) (*connect.Response[v1.GetClimatologyResponse], error) {
+	return c.getClimatology.CallUnary(ctx, req)
+}
+
 // PublicServiceHandler is an implementation of the climateshield.v1.PublicService service.
 type PublicServiceHandler interface {
 	GetCurrentRisk(context.Context, *connect.Request[v1.GetCurrentRiskRequest]) (*connect.Response[v1.GetCurrentRiskResponse], error)
@@ -200,6 +216,7 @@ type PublicServiceHandler interface {
 	GetLedgerSummary(context.Context, *connect.Request[v1.GetLedgerSummaryRequest]) (*connect.Response[v1.GetLedgerSummaryResponse], error)
 	GetAlertSummary(context.Context, *connect.Request[v1.GetAlertSummaryRequest]) (*connect.Response[v1.GetAlertSummaryResponse], error)
 	GetPipelineStatus(context.Context, *connect.Request[v1.GetPipelineStatusRequest]) (*connect.Response[v1.GetPipelineStatusResponse], error)
+	GetClimatology(context.Context, *connect.Request[v1.GetClimatologyRequest]) (*connect.Response[v1.GetClimatologyResponse], error)
 }
 
 // NewPublicServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -257,6 +274,12 @@ func NewPublicServiceHandler(svc PublicServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(publicServiceMethods.ByName("GetPipelineStatus")),
 		connect.WithHandlerOptions(opts...),
 	)
+	publicServiceGetClimatologyHandler := connect.NewUnaryHandler(
+		PublicServiceGetClimatologyProcedure,
+		svc.GetClimatology,
+		connect.WithSchema(publicServiceMethods.ByName("GetClimatology")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/climateshield.v1.PublicService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PublicServiceGetCurrentRiskProcedure:
@@ -275,6 +298,8 @@ func NewPublicServiceHandler(svc PublicServiceHandler, opts ...connect.HandlerOp
 			publicServiceGetAlertSummaryHandler.ServeHTTP(w, r)
 		case PublicServiceGetPipelineStatusProcedure:
 			publicServiceGetPipelineStatusHandler.ServeHTTP(w, r)
+		case PublicServiceGetClimatologyProcedure:
+			publicServiceGetClimatologyHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -314,4 +339,8 @@ func (UnimplementedPublicServiceHandler) GetAlertSummary(context.Context, *conne
 
 func (UnimplementedPublicServiceHandler) GetPipelineStatus(context.Context, *connect.Request[v1.GetPipelineStatusRequest]) (*connect.Response[v1.GetPipelineStatusResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("climateshield.v1.PublicService.GetPipelineStatus is not implemented"))
+}
+
+func (UnimplementedPublicServiceHandler) GetClimatology(context.Context, *connect.Request[v1.GetClimatologyRequest]) (*connect.Response[v1.GetClimatologyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("climateshield.v1.PublicService.GetClimatology is not implemented"))
 }

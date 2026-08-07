@@ -23,6 +23,7 @@ service PublicService {
   rpc GetLedgerSummary(GetLedgerSummaryRequest) returns (GetLedgerSummaryResponse) {}
   rpc GetAlertSummary(GetAlertSummaryRequest) returns (GetAlertSummaryResponse) {}
   rpc GetPipelineStatus(GetPipelineStatusRequest) returns (GetPipelineStatusResponse) {}
+  rpc GetClimatology(GetClimatologyRequest) returns (GetClimatologyResponse) {}
 }
 
 // RiskScore is one county x disease risk assessment for one forecast window.
@@ -220,4 +221,32 @@ message GetPipelineStatusResponse {
   google.protobuf.Timestamp latest_observation_at = 4;
   string ingest_interval = 5;
   google.protobuf.Timestamp generated_at = 6;
+}
+
+message GetClimatologyRequest {
+  string area = 1;  // county name
+  int32 month = 2;  // 1-12
+}
+
+// ClimatologyDistribution is the empirical distribution of one driver for one
+// county-month, as measured over the reference period. It describes weather,
+// not people.
+message ClimatologyDistribution {
+  string driver = 1;
+  string unit = 2;
+  // quantiles at the percentile steps reported alongside, ascending.
+  repeated double quantiles = 3;
+  repeated int32 percentile_steps = 4;
+  bool lower_tail_is_hazard = 5;
+  // observed is the current forecast window's value, when one exists.
+  optional double observed = 6;
+  optional double observed_exceedance = 7;
+}
+
+message GetClimatologyResponse {
+  string area = 1;
+  int32 month = 2;
+  int32 samples = 3;
+  string reference_period = 4;
+  repeated ClimatologyDistribution distributions = 5;
 }

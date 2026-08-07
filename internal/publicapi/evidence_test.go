@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -253,5 +254,65 @@ func TestEvidenceEndpointsNeverFailWhenBackendIsDown(t *testing.T) {
 		_, _ = io.Copy(io.Discard, resp.Body)
 		_ = resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "%s must not 500", path)
+	}
+}
+
+func TestClimatologyExplorerReturnsDistributionsAndMarker(t *testing.T) {
+	pool := testdb.Pool(t)
+	q := db.New(pool)
+	ingestFixtureWindow(t, q, "kisumu")
+
+	srv := publicapi.NewServer(pool, logging.New(io.Discard, "info")).
+		WithDeployment("climatology", predict.ClimatologyVersion, "mock", "6h")
+	ts := httptest.NewServer(srv.Router(nil, nil))
+	t.Cleanup(ts.Close)
+
+	status, body := get(t, ts, "/v1/climatology?area=Kisumu&month=8")
+	require.Equal(t, http.StatusOK, status)
+
+	var msg climateshieldv1.GetClimatologyResponse
+	require.NoError(t, protojson.Unmarshal([]byte(body), &msg))
+	require.Equal(t, "Kisumu", msg.GetArea())
+	require.EqualValues(t, 8, msg.GetMonth())
+	require.Positive(t, msg.GetSamples())
+	require.Equal(t, "2015-01-01..2024-12-31", msg.GetReferencePeriod())
+	require.Len(t, msg.GetDistributions(), 3)
+
+	byDriver := map[string]*climateshieldv1.ClimatologyDistribution{}
+	for _, d := range msg.GetDistributions() {
+		byDriver[d.GetDriver()] = d
+		require.NotEmpty(t, d.GetQuantiles())
+		require.Len(t, d.GetPercentileSteps(), len(d.GetQuantiles()))
+		require.True(t, sort.Float64sAreSorted(d.GetQuantiles()), "%s ladder must ascend", d.GetDriver())
+	}
+
+	// Cold stress is the only lower-tail driver.
+	require.True(t, byDriver["14-day mean minimum temperature"].GetLowerTailIsHazard())
+	require.False(t, byDriver["14-day peak rainfall"].GetLowerTailIsHazard())
+
+	// The ingested window is marked on the distribution: the committed Kisumu
+	// scenario is 74mm, beyond anything in the reference decade.
+	rain := byDriver["14-day peak rainfall"]
+	require.NotNil(t, rain.Observed)
+	require.InDelta(t, 74.0, rain.GetObserved(), 1e-9)
+	require.NotNil(t, rain.ObservedExceedance)
+	require.Zero(t, rain.GetObservedExceedance())
+}
+
+func TestClimatologyExplorerRejectsBadInput(t *testing.T) {
+	pool := testdb.Pool(t)
+	srv := publicapi.NewServer(pool, logging.New(io.Discard, "info"))
+	ts := httptest.NewServer(srv.Router(nil, nil))
+	t.Cleanup(ts.Close)
+
+	for _, path := range []string{
+		"/v1/climatology?area=Kisumu",           // no month
+		"/v1/climatology?area=Kisumu&month=abc", // unparseable
+		"/v1/climatology?area=Kisumu&month=0",   // out of range
+		"/v1/climatology?area=Kisumu&month=13",
+		"/v1/climatology?area=Atlantis&month=3", // unknown county
+	} {
+		status, _ := get(t, ts, path)
+		require.Equal(t, http.StatusBadRequest, status, "%s must be a client error, not a 500", path)
 	}
 }

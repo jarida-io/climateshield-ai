@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { useEffect, useState } from "react";
+
 import { publicClient } from "../api";
-import { Caveat, Card, Failed, Loading, Page, StatTile, Table, Td, TileRow, brand, space, text } from "../ui";
+import { Columns, TableView } from "../charts";
+import { Toggle } from "../forms";
+import { Caveat, Card, Failed, Loading, Page, StatTile, Table, Td, TileRow, brand, levelColor, space, text } from "../ui";
 import { ts, useApi } from "../useApi";
 
 /**
@@ -9,7 +13,18 @@ import { ts, useApi } from "../useApi";
  * ran on its own — nobody pressed a button.
  */
 export function PipelineView() {
-  const pipeline = useApi(() => publicClient.getPipelineStatus({}), []);
+  const [live, setLive] = useState(false);
+  const [tick, setTick] = useState(0);
+
+  // Auto-refresh makes the "it runs on its own" claim checkable in the room:
+  // leave it on and the counts move without anyone touching anything.
+  useEffect(() => {
+    if (!live) return;
+    const id = setInterval(() => setTick((t) => t + 1), 5000);
+    return () => clearInterval(id);
+  }, [live]);
+
+  const pipeline = useApi(() => publicClient.getPipelineStatus({}), [tick]);
 
   if (pipeline.kind === "loading") return <Loading what="pipeline status" />;
   if (pipeline.kind === "error") return <Failed what="pipeline status" error={pipeline.message} />;
@@ -53,7 +68,26 @@ export function PipelineView() {
         </Card>
       )}
 
+      <Card title="Jobs run, by kind">
+        <Columns
+          height={160}
+          data={p.jobs.map((j) => ({
+            label: j.kind.replace(/_/g, " "),
+            value: Number(j.count),
+            color: j.state === "completed" ? levelColor["LOW"] : levelColor["HIGH"],
+            detail: `${j.kind} (${j.state}): ${j.count} run${Number(j.count) === 1 ? "" : "s"}`,
+          }))}
+        />
+        <TableView
+          head={["Kind", "State", "Count"]}
+          rows={p.jobs.map((j) => [j.kind, j.state, String(j.count)])}
+        />
+      </Card>
+
       <Card title="Job history">
+        <div style={{ marginBottom: space(3) }}>
+          <Toggle label="Auto-refresh every 5 seconds" checked={live} onChange={setLive} />
+        </div>
         {p.jobs.length === 0 ? (
           <p style={{ ...text.body, color: brand.muted, margin: 0 }}>
             No jobs have run yet in this deployment.

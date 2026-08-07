@@ -1,8 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { useState } from "react";
+
 import { publicClient } from "../api";
-import { Caveat, Card, Code, Failed, Loading, Page, StatTile, Table, Td, TileRow, brand, space, text } from "../ui";
+import { Columns, TableView } from "../charts";
+import { Select, TextInput } from "../forms";
+import { septets } from "../gsm7";
+import { Caveat, Card, Code, Failed, Loading, Page, StatTile, Table, Td, TileRow, brand, levelColor, space, text } from "../ui";
 import { useApi } from "../useApi";
+
+const COUNTIES = ["Nairobi", "Kisumu", "Mombasa", "Nakuru", "Eldoret"];
+const VACCINES = [
+  "BCG", "OPV 1", "OPV 2", "OPV 3", "DPT-HepB-Hib 1", "DPT-HepB-Hib 3",
+  "PCV 3", "IPV", "Measles-Rubella 1", "Measles-Rubella 2",
+];
 
 /**
  * Proves: the messaging path is complete and bilingual — and states plainly
@@ -56,6 +67,32 @@ export function AlertsView() {
         </Table>
       </Card>
 
+      <Card title="Message length by outcome">
+        <p style={{ ...text.body, color: brand.muted, marginTop: 0 }}>
+          Every alert must fit a single GSM-7 segment. Anything longer costs two
+          messages and can fail on basic handsets.
+        </p>
+        <Columns
+          data={a.templates.map((t) => ({
+            label: t.lang === "sw" ? "Kiswahili" : "English",
+            value: t.septets,
+            color: t.septets <= t.maxSeptets ? levelColor["LOW"] : levelColor["HIGH"],
+            detail: `${t.lang === "sw" ? "Kiswahili" : "English"}: ${t.septets} of ${t.maxSeptets} septets`,
+          }))}
+          unit=" septets"
+          height={140}
+        />
+        <TableView
+          head={["Language", "Septets", "Budget", "Fits one segment"]}
+          rows={a.templates.map((t) => [
+            t.lang === "sw" ? "Kiswahili" : "English",
+            t.septets, t.maxSeptets, t.septets <= t.maxSeptets ? "yes" : "no",
+          ])}
+        />
+      </Card>
+
+      <MessagePreview />
+
       <Card title="Message templates">
         <p style={{ ...text.body, color: brand.muted, marginTop: 0 }}>
           Rendered with placeholders. Each must fit one GSM-7 segment so it costs one message and
@@ -98,6 +135,81 @@ export function AlertsView() {
         </ul>
       </Card>
     </Page>
+  );
+}
+
+/**
+ * Live template previewer. Everything here runs in the browser: the values
+ * you type are never sent to the server, never logged and never stored. It
+ * exists so a reviewer can push the templates to their limits — a long name,
+ * a long vaccine, the longest county — and watch the GSM-7 budget respond.
+ */
+function MessagePreview() {
+  const [lang, setLang] = useState("en");
+  const [level, setLevel] = useState("HIGH");
+  const [county, setCounty] = useState("Kisumu");
+  const [vaccine, setVaccine] = useState("Measles-Rubella 1");
+  const [name, setName] = useState("Amina");
+
+  const body =
+    lang === "sw"
+      ? `ClimateShield: Hatari ya mlipuko ni ${level} katika ${county}. ${name} anahitaji chanjo ya ${vaccine}. Tembelea kliniki. Jibu STOP kujiondoa.`
+      : `ClimateShield: Outbreak risk is ${level} in ${county}. ${name} is due for ${vaccine}. Visit your nearest clinic. Reply STOP to opt out.`;
+
+  const count = septets(body);
+  const over = count.ok && count.septets > 160;
+
+  return (
+    <Card title="Preview a message">
+      <p style={{ ...text.body, color: brand.muted, marginTop: 0 }}>
+        Rendered in your browser only — nothing typed here is transmitted or stored.
+      </p>
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        style={{ display: "flex", gap: space(4), flexWrap: "wrap", marginBottom: space(4) }}
+      >
+        <Select
+          label="Language" value={lang} onChange={setLang}
+          options={[{ value: "en", label: "English" }, { value: "sw", label: "Kiswahili" }]}
+        />
+        <Select
+          label="Risk level" value={level} onChange={setLevel}
+          options={["HIGH", "MEDIUM"].map((v) => ({ value: v, label: v }))}
+        />
+        <Select
+          label="County" value={county} onChange={setCounty}
+          options={COUNTIES.map((v) => ({ value: v, label: v }))}
+        />
+        <Select
+          label="Vaccine due" value={vaccine} onChange={setVaccine}
+          options={VACCINES.map((v) => ({ value: v, label: v }))}
+        />
+        <TextInput
+          label="Child first name" value={name} onChange={setName} maxLength={24}
+          hint="first name only — never a surname"
+        />
+      </form>
+
+      <Code>{body}</Code>
+
+      <div style={{ ...text.small, marginTop: space(3), display: "flex", gap: space(4), flexWrap: "wrap" }}>
+        {count.ok ? (
+          <>
+            <span style={{ color: over ? brand.high : brand.low, fontWeight: 700 }}>
+              {count.septets} / 160 septets — {over ? "TOO LONG, would split into 2 messages" : "fits one segment"}
+            </span>
+            <span style={{ color: brand.muted }}>
+              {count.extended > 0 && `${count.extended} character(s) cost 2 septets each`}
+            </span>
+          </>
+        ) : (
+          <span style={{ color: brand.high, fontWeight: 700 }}>
+            “{count.offending}” cannot be encoded in GSM-7 — this message would be
+            rejected at render time rather than sent as a costly multi-part message.
+          </span>
+        )}
+      </div>
+    </Card>
   );
 }
 
