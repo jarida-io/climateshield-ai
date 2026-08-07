@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: Apache-2.0
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Warm the testcontainers image so DB tests don't eat their timeout
+      # pulling PostGIS.
+      - name: Pre-pull PostGIS image
+        run: docker pull imresamu/postgis:16-3.4
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Lint
+        run: make lint
+
+      - name: Buf lint
+        run: go tool buf lint
+
+      - name: Contract checks (SPDX, sealed-schema isolation, contract tests)
+        run: ./scripts/contract-checks.sh
+
+      - name: Codegen drift (sqlc)
+        run: |
+          go tool sqlc generate
+          git diff --exit-code -- internal/store/db
+
+      - name: Test (unit + testcontainers, no external network)
+        run: go test ./... -coverprofile=coverage.out -covermode=atomic -coverpkg=./internal/...
+
+      # Coverage gate is observational while the skeleton is under
+      # construction; the final CI commit removes continue-on-error and makes
+      # it a hard gate.
+      - name: Coverage gate (>=80%)
+        run: go run ./scripts/covergate -profile coverage.out -threshold 80
+        continue-on-error: true
+
+      # Publish the coverage report (funding agreement: reports published).
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
