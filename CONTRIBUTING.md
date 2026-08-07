@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# Contributing to ClimateShield AI
+# Contributing to ClimateShield
 
-ClimateShield AI is an open-source climate-health early warning system for
+ClimateShield is an open-source climate-health early warning system for
 Kenya. Contributions are welcome across backend, data, frontend and
 documentation. Read [CLAUDE.md](CLAUDE.md) first — it records the constraints
 this project is bound by, several of which come from a funding agreement rather

@@ -1,6 +1,6 @@
 # Parent Alert Journey
 
-What happens, step by step, when ClimateShield AI detects an outbreak risk in a parent's county.
+What happens, step by step, when ClimateShield detects an outbreak risk in a parent's county.
 
 ```mermaid
 sequenceDiagram

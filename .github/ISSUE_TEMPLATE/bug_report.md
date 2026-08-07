@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a bug to help us improve ClimateShield AI
+about: Report a bug to help us improve ClimateShield
 title: '[BUG] '
 labels: bug
 assignees: ''

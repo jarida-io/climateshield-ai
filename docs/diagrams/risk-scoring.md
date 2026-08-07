@@ -1,6 +1,6 @@
 # Outbreak Risk Scoring Logic
 
-How ClimateShield AI decides whether a county is at HIGH, MEDIUM, or LOW outbreak risk for each disease.
+How ClimateShield decides whether a county is at HIGH, MEDIUM, or LOW outbreak risk for each disease.
 
 ```mermaid
 flowchart TD

@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# ClimateShield AI
+# ClimateShield
 
 **Climate-responsive early warning for child immunization in Kenya.**
 

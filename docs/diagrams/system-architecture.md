@@ -1,4 +1,4 @@
-# ClimateShield AI — System Architecture
+# ClimateShield — System Architecture
 
 End-to-end view of how climate data, the immunization tracker, and the alert pipeline connect.
 
@@ -10,7 +10,7 @@ flowchart TB
         MOH[Ministry of Health<br/>KEPI vaccine schedule]
     end
 
-    subgraph ENGINE["🧠 ClimateShield AI Engine"]
+    subgraph ENGINE["🧠 ClimateShield Engine"]
         ING[ingest.py<br/>fetches forecasts]
         SCORE[Risk Scoring<br/>HIGH / MEDIUM / LOW<br/>cholera · malaria · pneumonia · meningitis]
         ML[ML Predictor<br/>outbreak probability<br/>7-14 day window]

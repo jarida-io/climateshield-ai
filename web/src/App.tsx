@@ -5,6 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import { publicClient } from "./api";
 import type { GetCurrentRiskResponse } from "./gen/climateshield/v1/public_pb";
+import { Logo } from "./Logo";
 import { createMap, groupByCounty, levelColors, renderMarkers } from "./map";
 
 type LoadState =
@@ -60,11 +61,13 @@ export default function App(): React.JSX.Element {
           background: "#14213d",
           color: "#ffffff",
           display: "flex",
-          alignItems: "baseline",
-          gap: 12,
+          // center, not baseline: an SVG mark has no text baseline to sit on
+          alignItems: "center",
+          gap: 10,
         }}
       >
-        <strong style={{ fontSize: 18 }}>ClimateShield AI</strong>
+        <Logo size={22} />
+        <strong style={{ fontSize: 19, letterSpacing: "0.01em" }}>ClimateShield</strong>
         <span style={{ opacity: 0.85, fontSize: 13 }}>
           Climate-linked outbreak risk — public county aggregates
         </span>

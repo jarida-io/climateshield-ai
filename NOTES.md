@@ -164,11 +164,12 @@ first.
 - **Alert selection is naive.** Every child with any due dose in an affected
   county is alerted; there is no prioritisation by risk, distance to a clinic,
   or how overdue they are.
-- **Visual verification of the dashboard was partial.** Marker placement,
-  colours, and data binding were confirmed against the running stack, but the
-  embedded browser used for checking reports a 0×0 viewport and never completes
-  a paint, so basemap tile rendering could not be confirmed there. It should be
-  opened in a normal browser before any demo.
+- **The dashboard was verified in an embedded browser, not a real one.** Marker
+  placement, colours, data binding, basemap tile rendering, the Comfortaa
+  wordmark and the logo were all confirmed against the running stack, but only
+  after forcing a viewport size, because the embedded browser reports 0×0 and
+  will not paint on its own. Responsive behaviour at real window sizes and on
+  mobile is therefore unverified. Open it in a normal browser before any demo.
 
 ## The three things I would do next
 

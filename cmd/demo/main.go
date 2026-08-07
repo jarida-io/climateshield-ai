@@ -68,7 +68,7 @@ func run() error {
 	defer cancel()
 
 	fmt.Println("============================================================")
-	fmt.Println("ClimateShield AI — walking skeleton demo")
+	fmt.Println("ClimateShield — walking skeleton demo")
 	if cfg.Source == "fixture" {
 		fmt.Println("requesting ingest from: fixture (committed demo scenario, not live weather)")
 	} else {

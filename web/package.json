@@ -13,6 +13,7 @@
     "@bufbuild/protobuf": "^2.10.1",
     "@connectrpc/connect": "^2.1.0",
     "@connectrpc/connect-web": "^2.1.0",
+    "@fontsource/comfortaa": "^5.3.0",
     "maplibre-gl": "^5.9.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

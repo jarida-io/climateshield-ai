@@ -1,4 +1,4 @@
-# CLAUDE.md — ClimateShield AI build rules
+# CLAUDE.md — ClimateShield build rules
 
 Re-read this file whenever you lose context. It encodes a signed funding
 agreement, not preferences.

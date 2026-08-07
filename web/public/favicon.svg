@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100">
+  <path d="M53 25 L120 0 L120 100 L53 75 Z" fill="#7C4DFF"/>
+  <path d="M0 0 L67 25 L67 75 L0 100 Z" fill="#7C4DFF" stroke="rgba(255,255,255,0.45)" stroke-width="1.4" stroke-linejoin="round"/>
+</svg>

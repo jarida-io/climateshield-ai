@@ -80,6 +80,6 @@ HAVING missed_doses > 0;
 {
   "to": "+254733000004",
   "from": "Jarida",
-  "message": "🚨 High cholera risk in Kisumu (next 7-14 days). Your child Zuri has 8 missed doses. Visit Kisumu County Hospital. — ClimateShield AI"
+  "message": "🚨 High cholera risk in Kisumu (next 7-14 days). Your child Zuri has 8 missed doses. Visit Kisumu County Hospital. — ClimateShield"
 }
 ```
