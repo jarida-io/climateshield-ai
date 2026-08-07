@@ -119,5 +119,22 @@ services:
       timeout: 3s
       retries: 12
 
+  publicapi:
+    build:
+      context: .
+      dockerfile: deploy/go.Dockerfile
+      args: { CMD: publicapi }
+    environment: *appenv
+    ports:
+      - "8080:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
 volumes:
   pgdata:
