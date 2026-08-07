@@ -50,6 +50,23 @@ func (q *Queries) GetDailyRoot(ctx context.Context, leafDay pgtype.Date) (DailyR
 	return i, err
 }
 
+const getLeaf = `-- name: GetLeaf :one
+SELECT event_id, child_id, leaf_day, leaf_hash, created_at FROM event_leaves WHERE event_id = $1
+`
+
+func (q *Queries) GetLeaf(ctx context.Context, eventID pgtype.UUID) (EventLeafe, error) {
+	row := q.db.QueryRow(ctx, getLeaf, eventID)
+	var i EventLeafe
+	err := row.Scan(
+		&i.EventID,
+		&i.ChildID,
+		&i.LeafDay,
+		&i.LeafHash,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const insertAnchor = `-- name: InsertAnchor :exec
 INSERT INTO anchors (leaf_day, anchor_type, reference)
 VALUES ($1, $2, $3)

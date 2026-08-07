@@ -31,6 +31,9 @@ INSERT INTO event_leaves (event_id, child_id, leaf_day, leaf_hash)
 VALUES ($1, $2, $3, $4)
 ON CONFLICT (event_id) DO NOTHING;
 
+-- name: GetLeaf :one
+SELECT * FROM event_leaves WHERE event_id = $1;
+
 -- name: LeavesForDay :many
 SELECT event_id, leaf_hash
 FROM event_leaves
