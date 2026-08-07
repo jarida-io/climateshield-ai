@@ -53,7 +53,9 @@ credentials**.
    `TestContract_PIILeak` (internal/publicapi/pii_contract_test.go) and the
    k-anonymity test. CI runs them by name and fails if absent.
 8. **Append-only:** `immunization_events` has a DB trigger blocking
-   UPDATE/DELETE. Never add sqlc queries that update/delete it.
+   UPDATE/DELETE. UPDATE is never allowed; DELETE only via the guarded
+   erasure path (`store.WithErasure`, used by ForgetChild). Never add other
+   mutating queries.
 9. **`sealed.child_keys`** may be referenced only from
    `internal/store/queries/ledger.sql` (grep-enforced).
 10. Risk thresholds live in `internal/predict/rules.go` ONLY (cholera ≥60/≥30mm,
