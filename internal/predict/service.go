@@ -107,14 +107,17 @@ type predictWorker struct {
 		db.DBTX
 	}
 	predictor Predictor
-	log       *slog.Logger
+	// inserter is an insert-only River client: alert_dispatch belongs to the
+	// notifier's Workers bundle, and a queue-working client may only insert
+	// kinds it can also work.
+	inserter *river.Client[pgx.Tx]
+	log      *slog.Logger
 }
 
 // Work implements river.Worker.
 func (w *predictWorker) Work(ctx context.Context, job *river.Job[jobs.RiskPredictArgs]) error {
-	client := river.ClientFromContext[pgx.Tx](ctx)
 	enqueue := func(ctx context.Context, args river.JobArgs, queue string) error {
-		_, err := client.Insert(ctx, args, &river.InsertOpts{Queue: queue})
+		_, err := w.inserter.Insert(ctx, args, &river.InsertOpts{Queue: queue})
 		return err
 	}
 	_, err := scoreArea(ctx, db.New(w.pool), w.predictor, job.Args.AreaID, enqueue, w.log)
@@ -141,8 +144,12 @@ func Run(ctx context.Context) error {
 	}
 	defer pool.Close()
 
+	inserter, err := river.NewClient(riverpgxv5.New(pool), &river.Config{})
+	if err != nil {
+		return err
+	}
 	workers := river.NewWorkers()
-	river.AddWorker(workers, &predictWorker{pool: pool, predictor: predictor, log: log})
+	river.AddWorker(workers, &predictWorker{pool: pool, predictor: predictor, inserter: inserter, log: log})
 
 	riverClient, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues:  map[string]river.QueueConfig{jobs.QueuePredict: {MaxWorkers: 2}},

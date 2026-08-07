@@ -50,6 +50,18 @@ func main() {
 	fmt.Printf("covergate: OK — coverage %.1f%% >= %.0f%% (%d/%d statements)\n", pct, *threshold, covered, total)
 }
 
+// block identifies one coverage block: file plus source span.
+type block struct {
+	location string // "pkg/file.go:startLine.startCol,endLine.endCol"
+	stmts    int64
+}
+
+// tally merges the profile the way `go tool cover` does. With -coverpkg,
+// EVERY test binary reports every instrumented block, so the same block
+// appears many times — once per package under test. Summing those repeats
+// would inflate the denominator and count a block as uncovered in each
+// binary that did not exercise it. Merging by block and keeping the highest
+// hit count yields the true statement coverage.
 func tally(path string) (covered, total int64, err error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -57,6 +69,7 @@ func tally(path string) (covered, total int64, err error) {
 	}
 	defer func() { _ = f.Close() }() // read-only file; close error carries no signal
 
+	hitsByBlock := map[block]int64{}
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		line := sc.Text()
@@ -79,12 +92,24 @@ func tally(path string) (covered, total int64, err error) {
 		if err != nil {
 			return 0, 0, fmt.Errorf("malformed hit count in %q: %w", line, err)
 		}
-		total += stmts
-		if hits > 0 {
-			covered += stmts
+		b := block{location: fields[0], stmts: stmts}
+		// Insert unconditionally so blocks that are never hit by any binary
+		// still land in the denominator, then keep the highest count seen.
+		if prev, seen := hitsByBlock[b]; !seen || hits > prev {
+			hitsByBlock[b] = hits
 		}
 	}
-	return covered, total, sc.Err()
+	if err := sc.Err(); err != nil {
+		return 0, 0, err
+	}
+
+	for b, hits := range hitsByBlock {
+		total += b.stmts
+		if hits > 0 {
+			covered += b.stmts
+		}
+	}
+	return covered, total, nil
 }
 
 func excluded(line string) bool {

@@ -66,15 +66,6 @@ func Run(ctx context.Context) error {
 	riverClient, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues:  map[string]river.QueueConfig{jobs.QueueLedger: {MaxWorkers: 1}},
 		Workers: workers,
-		PeriodicJobs: []*river.PeriodicJob{
-			river.NewPeriodicJob(
-				river.PeriodicInterval(cfg.SweepInterval),
-				func() (river.JobArgs, *river.InsertOpts) {
-					return jobs.LedgerDailyRootArgs{}, &river.InsertOpts{Queue: jobs.QueueLedger}
-				},
-				&river.PeriodicJobOpts{RunOnStart: true},
-			),
-		},
 	})
 	if err != nil {
 		return err
@@ -83,6 +74,16 @@ func Run(ctx context.Context) error {
 		return err
 	}
 	defer func() { _ = riverClient.Stop(context.Background()) }()
+
+	// Own schedule rather than a River periodic job — see jobs.Schedule for
+	// why leader-elected scheduling does not work across services.
+	go jobs.Schedule(ctx, log, jobs.LedgerDailyRootArgs{}.Kind(), cfg.SweepInterval, func(c context.Context) error {
+		_, err := riverClient.Insert(c, jobs.LedgerDailyRootArgs{}, &river.InsertOpts{
+			Queue:      jobs.QueueLedger,
+			UniqueOpts: river.UniqueOpts{ByArgs: true, ByPeriod: cfg.SweepInterval},
+		})
+		return err
+	})
 
 	log.Info("ledger started", "sweep_interval", cfg.SweepInterval.String())
 	return httpx.Serve(ctx, cfg.Addr, httpx.NewRouter(func(c context.Context) error {

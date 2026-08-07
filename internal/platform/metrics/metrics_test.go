@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,6 +18,22 @@ func TestHandlerServesMetrics(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Contains(t, rec.Body.String(), "go_goroutines")
+}
+
+func TestRegistryAcceptsServiceCollectors(t *testing.T) {
+	// Services register their own collectors on this registry; if it were
+	// nil or shared, a second service would panic on duplicate registration.
+	m := New("test")
+	reg := m.Registry()
+	require.NotNil(t, reg)
+
+	c := prometheus.NewCounter(prometheus.CounterOpts{Name: "climateshield_test_total"})
+	require.NoError(t, reg.Register(c))
+	c.Inc()
+
+	rec := httptest.NewRecorder()
+	m.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	require.Contains(t, rec.Body.String(), "climateshield_test_total 1")
 }
 
 func TestMiddlewareRecordsDuration(t *testing.T) {

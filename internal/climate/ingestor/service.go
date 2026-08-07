@@ -96,7 +96,12 @@ type ingestWorker struct {
 	pool interface {
 		db.DBTX
 	}
-	log *slog.Logger
+	// inserter is an insert-only River client. A client that works a queue
+	// may only insert kinds registered in its own Workers bundle, so
+	// cross-service enqueues (here: risk_predict, owned by the predictor)
+	// go through a worker-less client instead.
+	inserter *river.Client[pgx.Tx]
+	log      *slog.Logger
 }
 
 // Work implements river.Worker.
@@ -109,9 +114,8 @@ func (w *ingestWorker) Work(ctx context.Context, job *river.Job[jobs.ClimateInge
 	if err != nil {
 		return err
 	}
-	client := river.ClientFromContext[pgx.Tx](ctx)
 	enqueue := func(ctx context.Context, args river.JobArgs, queue string) error {
-		_, err := client.Insert(ctx, args, &river.InsertOpts{Queue: queue})
+		_, err := w.inserter.Insert(ctx, args, &river.InsertOpts{Queue: queue})
 		return err
 	}
 	return runIngestSweep(ctx, db.New(w.pool), src, w.cfg.ForecastDays, enqueue, w.log)
@@ -133,21 +137,16 @@ func Run(ctx context.Context) error {
 	}
 	defer pool.Close()
 
+	inserter, err := river.NewClient(riverpgxv5.New(pool), &river.Config{})
+	if err != nil {
+		return err
+	}
 	workers := river.NewWorkers()
-	river.AddWorker(workers, &ingestWorker{cfg: cfg, pool: pool, log: log})
+	river.AddWorker(workers, &ingestWorker{cfg: cfg, pool: pool, inserter: inserter, log: log})
 
 	riverClient, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues:  map[string]river.QueueConfig{jobs.QueueIngest: {MaxWorkers: 1}},
 		Workers: workers,
-		PeriodicJobs: []*river.PeriodicJob{
-			river.NewPeriodicJob(
-				river.PeriodicInterval(cfg.IngestInterval),
-				func() (river.JobArgs, *river.InsertOpts) {
-					return jobs.ClimateIngestArgs{}, &river.InsertOpts{Queue: jobs.QueueIngest}
-				},
-				&river.PeriodicJobOpts{RunOnStart: true},
-			),
-		},
 	})
 	if err != nil {
 		return err
@@ -156,6 +155,16 @@ func Run(ctx context.Context) error {
 		return err
 	}
 	defer func() { _ = riverClient.Stop(context.Background()) }()
+
+	// The ingestor owns its own schedule; uniqueness by period means extra
+	// replicas (or a restart) cannot double-ingest the same window.
+	go jobs.Schedule(ctx, log, jobs.ClimateIngestArgs{}.Kind(), cfg.IngestInterval, func(c context.Context) error {
+		_, err := riverClient.Insert(c, jobs.ClimateIngestArgs{}, &river.InsertOpts{
+			Queue:      jobs.QueueIngest,
+			UniqueOpts: river.UniqueOpts{ByArgs: true, ByPeriod: cfg.IngestInterval},
+		})
+		return err
+	})
 
 	log.Info("ingestor started", "source", cfg.Source, "interval", cfg.IngestInterval.String())
 	return httpx.Serve(ctx, cfg.Addr, httpx.NewRouter(func(c context.Context) error {

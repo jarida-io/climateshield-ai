@@ -45,12 +45,24 @@ jobs:
       - name: Test (unit + testcontainers, no external network)
         run: go test ./... -coverprofile=coverage.out -covermode=atomic -coverpkg=./internal/...
 
-      # Coverage gate is observational while the skeleton is under
-      # construction; the final CI commit removes continue-on-error and makes
-      # it a hard gate.
       - name: Coverage gate (>=80%)
         run: go run ./scripts/covergate -profile coverage.out -threshold 80
-        continue-on-error: true
+
+      # Contract tests are run BY NAME so that deleting or renaming one fails
+      # the build. `go test -run` exits 0 when nothing matches, so the output
+      # is grepped for the RUN line: a vanished test is a red build, not a
+      # silently green one.
+      - name: Contract test — no PII on public surfaces
+        run: |
+          go test -run '^TestContract_PIILeak$' ./internal/publicapi -v 2>&1 | tee /tmp/pii.log
+          grep -q '^=== RUN   TestContract_PIILeak$' /tmp/pii.log
+          grep -q '^--- PASS: TestContract_PIILeak' /tmp/pii.log
+
+      - name: Contract test — k>=10 anonymity suppression
+        run: |
+          go test -run '^TestContract_KAnonymity$' ./internal/publicapi -v 2>&1 | tee /tmp/kanon.log
+          grep -q '^=== RUN   TestContract_KAnonymity$' /tmp/kanon.log
+          grep -q '^--- PASS: TestContract_KAnonymity' /tmp/kanon.log
 
       # Publish the coverage report (funding agreement: reports published).
       - name: Upload coverage report

@@ -4,11 +4,14 @@ package logging
 
 import (
 	"bytes"
+	"log/slog"
 	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+func slogGroup(key string, args ...any) slog.Attr { return slog.Group(key, args...) }
 
 // containsPhoneShaped is the auditor's view: does anything phone-shaped (9+
 // digits, allowing space/dash separators) survive into the log stream?
@@ -60,6 +63,35 @@ func TestRawStringAttrsAreScrubbed(t *testing.T) {
 
 	require.False(t, containsPhoneShaped(buf.String()),
 		"log output contains a phone-shaped string: %s", buf.String())
+}
+
+func TestGroupsAndNestedAttrsAreScrubbed(t *testing.T) {
+	// Grouped attributes are a common way PII sneaks past a naive redactor.
+	var buf bytes.Buffer
+	log := New(&buf, "info")
+
+	log.WithGroup("guardian").Info("nested",
+		"contact", "+254712345678",
+		"typed", Phone("+254712345678"),
+	)
+	log.Info("inline group",
+		slogGroup("child", "phone", "0722123456", "note", "no digits here"),
+	)
+
+	out := buf.String()
+	require.False(t, containsPhoneShaped(out), "phone survived a group: %s", out)
+	require.Contains(t, out, "no digits here", "non-PII text must survive intact")
+}
+
+func TestNonStringAttrsPassThrough(t *testing.T) {
+	var buf bytes.Buffer
+	log := New(&buf, "info")
+	log.Info("counts", "alerts", 12, "ratio", 0.5, "ok", true)
+
+	out := buf.String()
+	require.Contains(t, out, `"alerts":12`)
+	require.Contains(t, out, `"ratio":0.5`)
+	require.Contains(t, out, `"ok":true`)
 }
 
 func TestLogsAreJSONAndLeveled(t *testing.T) {
