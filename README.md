@@ -1,5 +1,13 @@
 # ClimateShield AI
 
+> **⚠️ Repository being rebuilt.** ClimateShield is being rewritten as a Go
+> walking skeleton (six services, Postgres/PostGIS, public read-only API).
+> The Python prototype now lives under [`reference/`](reference/) and is kept
+> for provenance only. Parts of this README describe the old prototype and are
+> stale — in particular the risk-threshold table below; the canonical
+> thresholds are the ones in `reference/climate-engine/ingest.py`. This README
+> will be rewritten when the skeleton lands.
+
 <div align="center">
 
 **AI-Powered Climate-Responsive Child Immunization Platform**
