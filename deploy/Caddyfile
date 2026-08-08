@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Caddy is the only internet-facing process. With a real domain in
+# SITE_ADDRESS it obtains and renews a Let's Encrypt certificate on its own,
+# with no configuration beyond this file.
+#
+# A bare IP cannot get a public certificate — there is no way to prove
+# ownership of one to a CA — so set SITE_ADDRESS=:80 for an IP-only demo and
+# accept that it is plain HTTP. Point a domain at the host to get HTTPS.
+
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	# The public read-only API: aggregates, k>=10 suppressed, never 500.
+	handle /v1/* {
+		reverse_proxy publicapi:8080
+	}
+
+	# ConnectRPC, same messages, same guarantees.
+	handle /climateshield.v1.PublicService/* {
+		reverse_proxy publicapi:8080
+	}
+
+	handle /health {
+		reverse_proxy publicapi:8080
+	}
+
+	# Prometheus metrics are operational data, not public data. Restrict to
+	# private ranges; open it up deliberately if you add real monitoring.
+	handle /metrics {
+		@notprivate not remote_ip private_ranges
+		respond @notprivate 403
+		reverse_proxy publicapi:8080
+	}
+
+	# Everything else is the dashboard.
+	handle {
+		reverse_proxy web:80
+	}
+
+	header {
+		# The dashboard loads its basemap from MapLibre's public tile server
+		# and nothing else off-origin; the API is same-origin by design.
+		Referrer-Policy "no-referrer"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

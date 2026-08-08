@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -28,6 +29,27 @@ var ErrDecrypt = errors.New("crypto: decryption failed")
 
 // Key is a 32-byte AES-256 key.
 type Key [keySize]byte
+
+// DevKeyHex is the placeholder shipped in .env.example. It is published in a
+// public repository, so anything encrypted under it is effectively plaintext.
+const DevKeyHex = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+// ErrDevKey is returned when the published placeholder key is used without an
+// explicit opt-in. The check fails CLOSED: a deployment that forgets to set a
+// real key does not start, rather than starting and quietly protecting
+// nothing. This is the guard against a demo silently becoming production.
+var ErrDevKey = errors.New(
+	"crypto: PII_KEY_HEX is the placeholder published in .env.example and protects nothing; " +
+		"generate one with `openssl rand -hex 32`, or set PII_ALLOW_DEV_KEY=true for local development")
+
+// KeyFromHexChecked parses a key and rejects the published placeholder unless
+// local development has explicitly opted in.
+func KeyFromHexChecked(s string, allowDevKey bool) (Key, error) {
+	if !allowDevKey && strings.EqualFold(strings.TrimSpace(s), DevKeyHex) {
+		return Key{}, ErrDevKey
+	}
+	return KeyFromHex(s)
+}
 
 // KeyFromHex parses a 64-character hex string into a Key.
 func KeyFromHex(s string) (Key, error) {

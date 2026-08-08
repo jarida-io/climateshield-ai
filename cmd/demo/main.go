@@ -42,10 +42,11 @@ import (
 type demoConfig struct {
 	config.Common
 	config.DB
-	PIIKeyHex    string `env:"PII_KEY_HEX,required"`
-	Source       string `env:"CLIMATE_SOURCE" envDefault:"fixture"`
-	RegistryURL  string `env:"REGISTRY_URL" envDefault:"http://localhost:8082"`
-	PublicAPIURL string `env:"PUBLICAPI_URL" envDefault:"http://localhost:8080"`
+	PIIKeyHex      string `env:"PII_KEY_HEX,required"`
+	AllowDevPIIKey bool   `env:"PII_ALLOW_DEV_KEY" envDefault:"false"`
+	Source         string `env:"CLIMATE_SOURCE" envDefault:"fixture"`
+	RegistryURL    string `env:"REGISTRY_URL" envDefault:"http://localhost:8082"`
+	PublicAPIURL   string `env:"PUBLICAPI_URL" envDefault:"http://localhost:8080"`
 }
 
 func main() {
@@ -60,7 +61,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	key, err := crypto.KeyFromHex(cfg.PIIKeyHex)
+	key, err := crypto.KeyFromHexChecked(cfg.PIIKeyHex, cfg.AllowDevPIIKey)
 	if err != nil {
 		return err
 	}

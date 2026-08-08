@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Production overlay for a public host. Apply on top of the base file:
+#
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d
+#
+# What this changes versus local development:
+#   * Postgres no longer publishes a port. On a public IP the base file's
+#     "5432:5432" is an internet-facing database; here it is reachable only
+#     from the compose network.
+#   * publicapi and web no longer publish to the host either — Caddy is the
+#     only thing that faces the internet, and it terminates TLS.
+#   * The registry API stops being published at all. It is the internal
+#     service that touches encrypted PII columns and has no business on a
+#     public interface.
+#   * Secrets come from the host environment. There are no defaults, so a
+#     missing value fails the deploy instead of silently using the published
+#     placeholder from .env.example.
+services:
+  postgres:
+    ports: !override []
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:?set POSTGRES_USER in .env}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?generate one with openssl rand -hex 24}"
+      POSTGRES_DB: "${POSTGRES_DB:?set POSTGRES_DB in .env}"
+
+  registry:
+    ports: !override []
+
+  publicapi:
+    ports: !override []
+
+  web:
+    ports: !override []
+
+  # The only container with a public interface. Caddy obtains and renews TLS
+  # certificates automatically.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      SITE_ADDRESS: "${SITE_ADDRESS:?set SITE_ADDRESS - a domain for real TLS, or :80 for a plain-HTTP demo}"
+    depends_on:
+      publicapi:
+        condition: service_healthy
+      web:
+        condition: service_started
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -3,7 +3,9 @@
 package crypto
 
 import (
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -111,4 +113,28 @@ func TestStringerNeverLeaks(t *testing.T) {
 	require.Equal(t, "[encrypted]", fmt.Sprintf("%v", enc))
 	require.Equal(t, "[encrypted]", enc.String())
 	require.NotContains(t, fmt.Sprintf("%+v", enc), "top-secret-name")
+}
+
+// The published placeholder must be refused unless local development opts in.
+// A deployment that forgets to generate a key has to fail loudly rather than
+// run with encryption that protects nothing.
+func TestDevKeyRejectedUnlessExplicitlyAllowed(t *testing.T) {
+	_, err := KeyFromHexChecked(DevKeyHex, false)
+	require.ErrorIs(t, err, ErrDevKey)
+	require.Contains(t, err.Error(), "openssl rand -hex 32")
+
+	// Whitespace or case must not smuggle it past the check.
+	_, err = KeyFromHexChecked("  "+strings.ToUpper(DevKeyHex)+"\n", false)
+	require.ErrorIs(t, err, ErrDevKey)
+
+	// Local development opts in explicitly.
+	k, err := KeyFromHexChecked(DevKeyHex, true)
+	require.NoError(t, err)
+	require.NotEqual(t, Key{}, k)
+
+	// A generated key passes either way.
+	real, err := NewRandomKey()
+	require.NoError(t, err)
+	_, err = KeyFromHexChecked(hex.EncodeToString(real[:]), false)
+	require.NoError(t, err)
 }

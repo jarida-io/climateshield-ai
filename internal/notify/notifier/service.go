@@ -42,6 +42,7 @@ type ServiceConfig struct {
 	Channel        string `env:"NOTIFY_CHANNEL" envDefault:"mock"`
 	MockOutboxPath string `env:"MOCK_OUTBOX_PATH" envDefault:"var/outbox.jsonl"`
 	PIIKeyHex      string `env:"PII_KEY_HEX,required"`
+	AllowDevPIIKey bool   `env:"PII_ALLOW_DEV_KEY" envDefault:"false"`
 	SMPPAddr       string `env:"SMPP_ADDR" envDefault:"localhost:2775"`
 	SMPPSystemID   string `env:"SMPP_SYSTEM_ID" envDefault:"climateshield"`
 	SMPPPassword   string `env:"SMPP_PASSWORD" envDefault:""`
@@ -336,7 +337,7 @@ func Run(ctx context.Context) error {
 	log := logging.New(os.Stdout, cfg.LogLevel)
 	m := metrics.New("notifier")
 
-	key, err := crypto.KeyFromHex(cfg.PIIKeyHex)
+	key, err := crypto.KeyFromHexChecked(cfg.PIIKeyHex, cfg.AllowDevPIIKey)
 	if err != nil {
 		return err
 	}
