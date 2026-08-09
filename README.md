@@ -13,7 +13,7 @@
 
 </div>
 
-## Table of Contents
+## Table of Content
 
 - [The Problem](#the-problem)
 - [The Solution](#the-solution)
