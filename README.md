@@ -1,4 +1,4 @@
-# ClimateShield AI
+# ClimateShield
 
 <div align="center">
 
