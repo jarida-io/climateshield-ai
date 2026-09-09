@@ -22,6 +22,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
 
+	"github.com/jarida-io/climateshield/internal/briefing"
+	"github.com/jarida-io/climateshield/internal/briefing/mock"
 	"github.com/jarida-io/climateshield/internal/platform/crypto"
 	"github.com/jarida-io/climateshield/internal/platform/logging"
 	"github.com/jarida-io/climateshield/internal/publicapi"
@@ -99,6 +101,17 @@ func seedWithSentinels(t *testing.T) *httptest.Server {
 	})
 	require.NoError(t, err)
 
+	// Generate the briefings for real, from this seeded database, so the PII
+	// probe covers text that was WRITTEN rather than assembled from fields.
+	counties := make([]string, 0, len(seed.Counties))
+	for _, c := range seed.Counties {
+		counties = append(counties, c.Name)
+	}
+	sweeper := briefing.NewSweeper(
+		q, mock.New(), counties, "mock", 0, logging.New(io.Discard, "error"))
+	_, err = sweeper.Sweep(ctx, "")
+	require.NoError(t, err)
+
 	srv := publicapi.NewServer(pool, logging.New(io.Discard, "info"))
 	ts := httptest.NewServer(srv.Router(nil, nil))
 	t.Cleanup(ts.Close)
@@ -143,6 +156,12 @@ func TestContract_PIILeak(t *testing.T) {
 		"/v1/ledger/anchors/verify?day=" + time.Now().UTC().Format("2006-01-02"),
 		"/v1/alerts/summary",
 		"/v1/pipeline",
+		// Briefings publish generated prose AND the fact sheet it was
+		// generated from. Both are aggregate by construction, and this
+		// contract is what keeps them that way.
+		"/v1/briefings",
+		"/v1/briefings?area=Kisumu&lang=en",
+		"/v1/briefings?area=Kisumu&lang=sw",
 	}
 	sentinels := []string{
 		sentinelChildName, sentinelGuardianName, sentinelPhone, sentinelNationalID,
@@ -168,6 +187,7 @@ func TestContract_PIILeak(t *testing.T) {
 	for _, procedure := range []string{
 		"GetCurrentRisk", "GetStats", "GetModelInfo", "GetClimateSeries",
 		"GetLedgerSummary", "GetAnchorVerification", "GetAlertSummary", "GetPipelineStatus",
+		"GetBriefing",
 	} {
 		resp, err := http.Post(
 			ts.URL+"/climateshield.v1.PublicService/"+procedure,

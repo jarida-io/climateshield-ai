@@ -5,8 +5,21 @@ import { useEffect, useState } from "react";
 import { publicClient } from "../api";
 import { Columns, TableView } from "../charts";
 import { Toggle } from "../forms";
-import { Caveat, Card, Failed, Loading, Page, StatTile, Table, Td, TileRow, brand, levelColor, space, text } from "../ui";
+import { Caveat, Card, Disclosure, Failed, Loading, Page, StatTile, Table, Td, TileRow, brand, levelColor, space, text } from "../ui";
 import { ts, useApi } from "../useApi";
+
+/**
+ * Colour by what the state means, not by whether it says "completed".
+ *
+ * Painting every non-completed state red made a queue of ten *scheduled*
+ * alert jobs look like ten failures — a red bar on a health dashboard is a
+ * claim, and that one was not true. Only retryable and discarded are trouble.
+ */
+function jobColor(state: string): string {
+  if (state === "completed") return levelColor["LOW"] ?? brand.low;
+  if (state === "retryable" || state === "discarded") return levelColor["HIGH"] ?? brand.high;
+  return brand.purple;
+}
 
 /**
  * Proves: the system runs unattended. Every row here is a job the scheduler
@@ -35,15 +48,27 @@ export function PipelineView() {
 
   return (
     <Page
-      title="Continuous operation"
-      lede="Durable job history from the queue: what ran, how often, and when it last finished."
+      title="It keeps running when nobody is watching"
+      lede="Nobody presses a button here. Every row below is a job the scheduler ran on its own — what ran, how often, and when it last finished."
     >
-      <Caveat>
+      {failing.length > 0 && (
+        <Caveat>
+          <strong>
+            {failing.reduce((n, j) => n + Number(j.count), 0)} job
+            {failing.reduce((n, j) => n + Number(j.count), 0) === 1 ? "" : "s"} in this deployment
+            are retrying or were discarded.
+          </strong>{" "}
+          They are listed below with their kind and state. Figures on other views may be behind
+          until those jobs succeed.
+        </Caveat>
+      )}
+
+      <Disclosure>
         These are Postgres-backed jobs with real retry history, not a cron script assumed to have
         worked. Ingestion runs every {p.ingestInterval} and fans out to scoring and alerting on its
         own. <strong>What this does not show</strong> is uptime over time: this deployment has been
         running for minutes, not months, and no availability figure is claimed anywhere.
-      </Caveat>
+      </Disclosure>
 
       <TileRow>
         <StatTile label="Jobs completed" value={String(completed)} />
@@ -74,7 +99,7 @@ export function PipelineView() {
           data={p.jobs.map((j) => ({
             label: j.kind.replace(/_/g, " "),
             value: Number(j.count),
-            color: j.state === "completed" ? levelColor["LOW"] : levelColor["HIGH"],
+            color: jobColor(j.state),
             detail: `${j.kind} (${j.state}): ${j.count} run${Number(j.count) === 1 ? "" : "s"}`,
           }))}
         />

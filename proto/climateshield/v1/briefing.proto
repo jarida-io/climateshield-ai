@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: Apache-2.0
+syntax = "proto3";
+
+package climateshield.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/jarida-io/climateshield/internal/gen/climateshield/v1;climateshieldv1";
+
+// County risk briefings: the aggregate facts this system already publishes,
+// restated in plain language for a county health officer, in English and
+// Kiswahili.
+//
+// Everything in this file is aggregate. The fact sheet a generator is given is
+// the same fact sheet published here beside the text, so every number in a
+// briefing can be checked against the numbers it was allowed to use. No
+// message here carries a child, guardian, phone number, per-child hash, or any
+// people-derived count below the k>=10 threshold.
+
+// BriefingScore is one county x disease score as the generator received it.
+message BriefingScore {
+  string disease = 1;
+  string level = 2; // "HIGH" | "MEDIUM" | "LOW"
+  string driver = 3;
+  double driver_value = 4;
+  // exceedance is how unusual the driver value is for this county and month
+  // against the reference record. It describes the WEATHER; it is not a
+  // probability that an outbreak will occur. Absent for the rules predictor.
+  optional double exceedance = 5;
+  string explanation = 6;
+  string predictor = 7;
+  string predictor_version = 8;
+}
+
+// BriefingAlertCount is one messaging outcome count, k>=10 suppressed exactly
+// as GET /v1/alerts/summary suppresses it.
+message BriefingAlertCount {
+  string status = 1;
+  optional int64 count = 2;
+  bool suppressed = 3;
+}
+
+// BriefingFacts is the complete fact sheet the briefing was generated from.
+message BriefingFacts {
+  string area = 1;
+  string window_from = 2; // first forecast day, YYYY-MM-DD
+  string window_to = 3; // last forecast day, YYYY-MM-DD
+  string window_source = 4; // "fixture" or "openmeteo", read back from the data
+  int32 window_days = 5;
+  repeated BriefingScore scores = 6;
+  // alerts_all_counties are system-wide messaging counts, not this county's:
+  // per-county alert counts are people-derived and stay on GET /v1/stats where
+  // they are suppressed per county.
+  repeated BriefingAlertCount alerts_all_counties = 7;
+  bool channel_sends = 8;
+  string channel_note = 9;
+}
+
+// GroundingNote is one reason a generated draft was refused. Kinds are stable
+// identifiers (unknown_number, foreign_county, level_mismatch,
+// unknown_disease, forbidden_claim, possible_name, possible_phone). The
+// excerpt is omitted for kinds whose offending text could itself be a
+// fabricated name or number belonging to a person.
+message GroundingNote {
+  string kind = 1;
+  string detail = 2;
+  string excerpt = 3;
+}
+
+message GetBriefingRequest {
+  string area = 1; // county name, e.g. "Kisumu"
+  string lang = 2; // "en" (default) or "sw"
+}
+
+message GetBriefingResponse {
+  string area = 1;
+  string lang = 2;
+  // body is the text actually served. When a language model's draft failed
+  // the grounding check, or no model ran, body is the deterministic template
+  // and says so in its first line — model-labelled text that no model produced
+  // is never served.
+  string body = 3;
+  string generator = 4; // "mock", "openai-compatible" or "anthropic"
+  string model = 5; // "none" when no language model ran
+  string prompt_version = 6;
+  string facts_hash_hex = 7;
+  bool grounded = 8;
+  repeated GroundingNote grounding_notes = 9;
+  // status is "served" (this generator produced the body and it passed the
+  // grounding check), "rejected" (a model draft failed the check and the
+  // template is being served instead), "unavailable" (the generator could not
+  // be reached and the template is being served instead), or "none" (nothing
+  // has been generated for this county and language yet).
+  string status = 10;
+  google.protobuf.Timestamp created_at = 11;
+  BriefingFacts facts = 12;
+  // provenance is the one-line, human-readable statement of what produced the
+  // body: generator, model, prompt version, fact-sheet hash and grounding
+  // outcome. It is computed from the stored row, never from configuration.
+  string provenance = 13;
+  string note = 14;
+  repeated string available_areas = 15;
+  repeated string available_langs = 16;
+  google.protobuf.Timestamp generated_at = 17;
+}

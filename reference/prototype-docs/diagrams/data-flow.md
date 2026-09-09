@@ -1,3 +1,8 @@
+> **Superseded prototype artefact.** This describes the original Python/PHP
+> prototype, not the system that runs today. Its calibration and delivery claims
+> were never substantiated — see [../README.md](../README.md) and
+> [docs/architecture.md](../../../docs/architecture.md).
+
 # Data Flow
 
 How a single record moves through the system, from weather forecast to parent's phone.

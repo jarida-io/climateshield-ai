@@ -3,20 +3,36 @@
 import { useState } from "react";
 
 import { Button, Select } from "../forms";
-import { Caveat, Card, Code, Page, Table, Td, brand, space, text } from "../ui";
+import { Card, Code, Disclosure, Page, Table, Td, brand, space, text } from "../ui";
 
-const ENDPOINTS: { path: string; what: string; formats: string }[] = [
+interface Endpoint {
+  path: string;
+  what: string;
+  formats: string;
+  /** Query parameters without which the endpoint answers 400, if any. */
+  requires?: string;
+  /** A query that actually works, used for the link and the explorer. */
+  example?: string;
+}
+
+const ENDPOINTS: Endpoint[] = [
   { path: "/v1/risk/current", what: "Latest risk per county × disease", formats: "JSON · CSV · GeoJSON" },
   { path: "/v1/risk/history", what: "Historical scores, filterable by county, disease and date", formats: "JSON · CSV · GeoJSON" },
   { path: "/v1/stats", what: "Per-county counts derived from people (k≥10 suppressed)", formats: "JSON · CSV" },
   { path: "/v1/model", what: "Active predictor, published thresholds, reference record", formats: "JSON" },
   { path: "/v1/climate/series", what: "The forecast window each score was computed from", formats: "JSON" },
+  { path: "/v1/climatology", what: "Reference distribution for one county-month, with the current window marked", formats: "JSON", requires: "?area=&month=", example: "?area=Kisumu&month=8" },
+  { path: "/v1/briefings", what: "County briefing plus the fact sheet it was written from, and what produced it", formats: "JSON", requires: "?area=&lang=", example: "?area=Kisumu&lang=en" },
   { path: "/v1/ledger/summary", what: "Daily Merkle roots and anchors", formats: "JSON" },
+  { path: "/v1/ledger/anchors/verify", what: "Live re-read of one day's root from the anchor contract", formats: "JSON", requires: "?day=YYYY-MM-DD" },
   { path: "/v1/alerts/summary", what: "Messaging outcomes and templates", formats: "JSON" },
   { path: "/v1/pipeline", what: "Job history and data volumes", formats: "JSON" },
   { path: "/health", what: "Readiness; 503 when the database is unreachable", formats: "JSON" },
   { path: "/metrics", what: "Prometheus metrics", formats: "text" },
 ];
+
+/** Endpoints the explorer can call without the reader supplying a value. */
+const EXPLORABLE = ENDPOINTS.filter((e) => e.requires === undefined || e.example !== undefined);
 
 /**
  * Proves: the data is genuinely open and the system is replicable — free
@@ -27,15 +43,15 @@ export function DataView() {
 
   return (
     <Page
-      title="Open data & replication"
-      lede="Every number on this dashboard is available to anyone, unauthenticated, in machine-readable form."
+      title="Anyone can check this, and anyone can rebuild it"
+      lede="Every number on this dashboard is available to anyone, unauthenticated, in machine-readable form — the same endpoints this page reads, with no key and no account."
     >
-      <Caveat>
+      <Disclosure>
         <strong>These are derived outputs, not a training dataset.</strong> There is no training
         corpus to publish because no model has been trained on health outcomes. What is published
         is the climate reference record, the scores computed from it, and the aggregate counts —
         with any count that could identify a child withheld.
-      </Caveat>
+      </Disclosure>
 
       <Card title="Endpoints">
         <p style={{ ...text.body, color: brand.muted, marginTop: 0 }}>
@@ -45,13 +61,32 @@ export function DataView() {
         <Table head={["Endpoint", "What it returns", "Formats", ""]}>
           {ENDPOINTS.map((e) => (
             <tr key={e.path}>
-              <Td mono>{e.path}</Td>
+              <Td mono>
+                {e.path}
+                {e.requires !== undefined && (
+                  <span style={{ color: brand.muted }}>{e.requires}</span>
+                )}
+              </Td>
               <Td>{e.what}</Td>
               <Td>{e.formats}</Td>
               <Td>
-                <a href={`${origin}${e.path}`} target="_blank" rel="noreferrer" style={{ color: brand.purple }}>
-                  open
-                </a>
+                {e.requires !== undefined && e.example === undefined ? (
+                  <span style={{ ...text.small, color: brand.muted }}>
+                    needs a day —{" "}
+                    <a href="#/ledger" style={{ color: brand.purple }}>
+                      run it on History
+                    </a>
+                  </span>
+                ) : (
+                  <a
+                    href={`${origin}${e.path}${e.example ?? ""}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: brand.purple }}
+                  >
+                    open
+                  </a>
+                )}
               </Td>
             </tr>
           ))}
@@ -104,7 +139,10 @@ function ApiExplorer({ origin }: { origin: string }) {
   const [busy, setBusy] = useState(false);
 
   const supportsFormat = path.startsWith("/v1/risk") || path === "/v1/stats";
-  const url = supportsFormat && format !== "json" ? `${path}?format=${format}` : path;
+  // An endpoint that needs parameters is offered with a working example, so
+  // "Send request" always demonstrates a real answer rather than a 400.
+  const example = EXPLORABLE.find((e) => e.path === path)?.example ?? "";
+  const url = supportsFormat && format !== "json" ? `${path}?format=${format}` : `${path}${example}`;
 
   const run = () => {
     setBusy(true);
@@ -136,7 +174,7 @@ function ApiExplorer({ origin }: { origin: string }) {
           label="Endpoint"
           value={path}
           onChange={setPath}
-          options={ENDPOINTS.map((e) => ({ value: e.path, label: e.path }))}
+          options={EXPLORABLE.map((e) => ({ value: e.path, label: `${e.path}${e.example ?? ""}` }))}
         />
         <Select
           label="Format"

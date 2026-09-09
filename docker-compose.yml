@@ -14,7 +14,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-climateshield} -d ${POSTGRES_DB:-climateshield}"]
+      # -h 127.0.0.1 forces a TCP check. Without it pg_isready talks over the
+      # unix socket and succeeds against the temporary server initdb runs on a
+      # first boot, so compose starts the migration against a database that is
+      # not yet listening on the port the services use.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-climateshield} -d ${POSTGRES_DB:-climateshield}"]
       interval: 2s
       timeout: 3s
       retries: 20
@@ -99,7 +103,10 @@ services:
     environment:
       <<: *appenv
       ANCHOR_MODE: ${ANCHOR_MODE:-evm}
-      ANCHOR_RPC_URL: ${ANCHOR_RPC_URL:-http://anvil:8545}
+      # The service name, not ${ANCHOR_RPC_URL}: .env's value is the HOST-side
+      # URL that `make demo` and the tests use, exactly as its DATABASE_URL
+      # points at localhost while this file points at the postgres service.
+      ANCHOR_RPC_URL: http://anvil:8545
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -136,6 +143,30 @@ services:
       timeout: 3s
       retries: 12
 
+  # County risk briefings. The DEFAULT generator is a deterministic template
+  # that labels itself "[mock] no language model ran": this service reaches no
+  # model, no network and no credential unless a deployment opts in. The
+  # optional `ai` profile in deploy/docker-compose.ai.yml runs a small
+  # open-weights model beside it; `make up` never does.
+  briefing:
+    build:
+      context: .
+      dockerfile: deploy/go.Dockerfile
+      args: { CMD: briefing }
+    environment:
+      <<: *appenv
+      BRIEFING_GENERATOR: ${BRIEFING_GENERATOR:-mock}
+      BRIEFING_SWEEP_INTERVAL: ${BRIEFING_SWEEP_INTERVAL:-15m}
+      NOTIFY_CHANNEL: ${NOTIFY_CHANNEL:-mock}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8094/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
   registry:
     build:
       context: .
@@ -163,7 +194,10 @@ services:
       # Read-only: the public API re-reads roots from the chain to answer
       # GET /v1/ledger/anchors/verify. It never writes to it.
       ANCHOR_MODE: ${ANCHOR_MODE:-evm}
-      ANCHOR_RPC_URL: ${ANCHOR_RPC_URL:-http://anvil:8545}
+      # The service name, not ${ANCHOR_RPC_URL}: .env's value is the HOST-side
+      # URL that `make demo` and the tests use, exactly as its DATABASE_URL
+      # points at localhost while this file points at the postgres service.
+      ANCHOR_RPC_URL: http://anvil:8545
       PREDICTOR: ${PREDICTOR:-rules}
     ports:
       - "8080:8080"

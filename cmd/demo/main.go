@@ -200,6 +200,9 @@ func run() error {
 			marker, r.AreaName, r.Disease, r.Level, r.Driver, r.DriverValue, r.Predictor, r.PredictorVersion)
 	}
 	fmt.Printf("%d elevated (HIGH/MEDIUM) county-disease pairs\n", elevated)
+	if err := reportBothScorers(ctx, q, DemoScorerCounty, os.Stdout); err != nil {
+		return err
+	}
 
 	// 6. Report: alerts, with the honesty line.
 	fmt.Println("\n--- Alerts ---")
@@ -255,6 +258,11 @@ func run() error {
 	_ = resp.Body.Close()
 	fmt.Printf("  GET %s/v1/risk/current -> %d (%d bytes JSON)\n", cfg.PublicAPIURL, resp.StatusCode, len(body))
 	fmt.Printf("  dashboard: http://localhost:8081\n")
+
+	// 9. Report: the county briefing, with the provenance of its words.
+	if err := reportBriefing(ctx, riverClient, cfg.PublicAPIURL, "Kisumu"); err != nil {
+		return err
+	}
 
 	fmt.Println("\ndemo complete.")
 	fmt.Println("============================================================")

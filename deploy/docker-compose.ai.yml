@@ -1,0 +1,78 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# OPTIONAL overlay: run the county briefings through a small open-weights
+# language model instead of the deterministic template.
+#
+#   make up-ai      # docker compose -f docker-compose.yml -f deploy/docker-compose.ai.yml --profile ai up
+#
+# What this costs you, stated plainly:
+#   - The FIRST run needs internet: the ollama image (~1 GB) and the model
+#     (~1 GB for qwen2.5:1.5b) are downloaded. Later runs are offline, because
+#     the ollama volume persists them.
+#   - Roughly 2 GB of RAM while a briefing is being written.
+#   - Docker Desktop on macOS passes no GPU through, so generation runs on the
+#     CPU and takes tens of seconds per county and language. That is exactly
+#     why briefings are written by a background job and never in a request.
+#
+# What it does NOT change:
+#   - No credential is involved. Ollama is served locally and the bearer token
+#     the adapter sends is a placeholder the local server ignores.
+#   - Every draft still goes through the grounding check. A draft that states a
+#     number, county, disease or risk tier the fact sheet does not support is
+#     refused, and the deterministic template is served in its place with the
+#     reasons published on GET /v1/briefings.
+#
+# Model choice is a licence decision: qwen2.5:1.5b is Apache-2.0. Gemma (Gemma
+# Terms of Use), Llama (community licence) and qwen2.5:3b (Qwen research
+# licence) are not OSI-approved and are deliberately not defaulted to here.
+#
+# Language quality is NOT a licence decision: Qwen2.5's model card does not
+# list Kiswahili, so its Kiswahili output is unverified. The grounding check
+# catches invented facts; it does not judge grammar. The human-written template
+# remains the reference Kiswahili text until a Kiswahili speaker reviews it.
+services:
+  ollama:
+    image: ollama/ollama:0.33.3@sha256:32931b46719f673c05fdbaa81ccb26da18ea4a1c57590a754874ab28ba269eb2
+    profiles: ["ai"]
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      # Loopback only: this is a local model server, not a service anyone else
+      # should be able to reach.
+      - "127.0.0.1:11434:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+
+  # One-shot: pull the model into the volume, then exit. `briefing` waits for
+  # this to complete successfully, so the first generation does not race the
+  # download.
+  ollama-pull:
+    image: ollama/ollama:0.33.3@sha256:32931b46719f673c05fdbaa81ccb26da18ea4a1c57590a754874ab28ba269eb2
+    profiles: ["ai"]
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama"]
+    command: ["pull", "${BRIEFING_MODEL:-qwen2.5:1.5b}"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  briefing:
+    environment:
+      BRIEFING_GENERATOR: openai
+      BRIEFING_OPENAI_BASE_URL: http://ollama:11434/v1
+      BRIEFING_MODEL: ${BRIEFING_MODEL:-qwen2.5:1.5b}
+      # A CPU-bound 1.5B model needs room; the job is asynchronous, so a long
+      # timeout costs nobody a page load.
+      BRIEFING_TIMEOUT: ${BRIEFING_TIMEOUT:-180s}
+      BRIEFING_SWEEP_INTERVAL: ${BRIEFING_SWEEP_INTERVAL:-15m}
+    depends_on:
+      ollama-pull:
+        condition: service_completed_successfully
+
+volumes:
+  ollama:

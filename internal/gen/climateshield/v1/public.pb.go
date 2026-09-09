@@ -42,7 +42,13 @@ type RiskScore struct {
 	// against the reference climatology: 0.02 means the most extreme 2% of the
 	// reference decade. It describes the WEATHER. It is NOT a probability that
 	// an outbreak will occur — this system holds no outbreak surveillance data
-	// and does not estimate that. Absent for the fixed-threshold predictor.
+	// and does not estimate that.
+	//
+	// Under the fixed-threshold predictor it is an ANNOTATION on this driver
+	// value and did not decide the level; the published cutoffs did. Under the
+	// climatology predictor it is what decided the level. See
+	// GetModelInfoResponse.exceedance_role for the wording of the live case.
+	// Absent when no reference distribution covers this county and month.
 	Exceedance *float64 `protobuf:"fixed64,12,opt,name=exceedance,proto3,oneof" json:"exceedance,omitempty"`
 	// explanation is a one-line reason a health officer can act on or dispute.
 	Explanation   string `protobuf:"bytes,13,opt,name=explanation,proto3" json:"explanation,omitempty"`
@@ -733,6 +739,22 @@ type GetModelInfoResponse struct {
 	MediumExceedance float64 `protobuf:"fixed64,10,opt,name=medium_exceedance,json=mediumExceedance,proto3" json:"medium_exceedance,omitempty"`
 	// Plain-language statement of what the number does and does not mean.
 	Interpretation string `protobuf:"bytes,11,opt,name=interpretation,proto3" json:"interpretation,omitempty"`
+	// Provenance of the reference climatology artifact, so a reviewer can
+	// recompute it instead of trusting it. reference_generator is the command
+	// that builds the file; reference_sha256 is the SHA-256 of the exact bytes
+	// embedded in this binary.
+	ReferenceFile      string `protobuf:"bytes,12,opt,name=reference_file,json=referenceFile,proto3" json:"reference_file,omitempty"`
+	ReferenceSha256    string `protobuf:"bytes,13,opt,name=reference_sha256,json=referenceSha256,proto3" json:"reference_sha256,omitempty"`
+	ReferenceGenerator string `protobuf:"bytes,14,opt,name=reference_generator,json=referenceGenerator,proto3" json:"reference_generator,omitempty"`
+	// reference_windows is how many 14-day reference windows were measured in
+	// total, summed over every county and calendar month.
+	ReferenceWindows int64 `protobuf:"varint,15,opt,name=reference_windows,json=referenceWindows,proto3" json:"reference_windows,omitempty"`
+	// quantile_steps is how many percentile points each stored distribution has.
+	QuantileSteps int32 `protobuf:"varint,16,opt,name=quantile_steps,json=quantileSteps,proto3" json:"quantile_steps,omitempty"`
+	// exceedance_role states, in plain language, what the exceedance figure
+	// attached to a score does: whether it decided the tier or merely annotates
+	// a tier the published thresholds decided.
+	ExceedanceRole string `protobuf:"bytes,17,opt,name=exceedance_role,json=exceedanceRole,proto3" json:"exceedance_role,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -840,6 +862,48 @@ func (x *GetModelInfoResponse) GetMediumExceedance() float64 {
 func (x *GetModelInfoResponse) GetInterpretation() string {
 	if x != nil {
 		return x.Interpretation
+	}
+	return ""
+}
+
+func (x *GetModelInfoResponse) GetReferenceFile() string {
+	if x != nil {
+		return x.ReferenceFile
+	}
+	return ""
+}
+
+func (x *GetModelInfoResponse) GetReferenceSha256() string {
+	if x != nil {
+		return x.ReferenceSha256
+	}
+	return ""
+}
+
+func (x *GetModelInfoResponse) GetReferenceGenerator() string {
+	if x != nil {
+		return x.ReferenceGenerator
+	}
+	return ""
+}
+
+func (x *GetModelInfoResponse) GetReferenceWindows() int64 {
+	if x != nil {
+		return x.ReferenceWindows
+	}
+	return 0
+}
+
+func (x *GetModelInfoResponse) GetQuantileSteps() int32 {
+	if x != nil {
+		return x.QuantileSteps
+	}
+	return 0
+}
+
+func (x *GetModelInfoResponse) GetExceedanceRole() string {
+	if x != nil {
+		return x.ExceedanceRole
 	}
 	return ""
 }
@@ -2224,7 +2288,7 @@ var File_climateshield_v1_public_proto protoreflect.FileDescriptor
 
 const file_climateshield_v1_public_proto_rawDesc = "" +
 	"\n" +
-	"\x1dclimateshield/v1/public.proto\x12\x10climateshield.v1\x1a\x1dclimateshield/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xfb\x03\n" +
+	"\x1dclimateshield/v1/public.proto\x12\x10climateshield.v1\x1a\x1fclimateshield/v1/briefing.proto\x1a\x1dclimateshield/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xfb\x03\n" +
 	"\tRiskScore\x12\x12\n" +
 	"\x04area\x18\x01 \x01(\tR\x04area\x12\x1a\n" +
 	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x1c\n" +
@@ -2282,7 +2346,7 @@ const file_climateshield_v1_public_proto_rawDesc = "" +
 	"\x06medium\x18\x04 \x01(\x01R\x06medium\x12&\n" +
 	"\x0fhigher_is_worse\x18\x05 \x01(\bR\rhigherIsWorse\x12A\n" +
 	"\x1dreachable_in_reference_period\x18\x06 \x01(\bR\x1areachableInReferencePeriod\x12\x12\n" +
-	"\x04note\x18\a \x01(\tR\x04note\"\xf4\x03\n" +
+	"\x04note\x18\a \x01(\tR\x04note\"\xf4\x05\n" +
 	"\x14GetModelInfoResponse\x12)\n" +
 	"\x10active_predictor\x18\x01 \x01(\tR\x0factivePredictor\x12%\n" +
 	"\x0eactive_version\x18\x02 \x01(\tR\ractiveVersion\x121\n" +
@@ -2296,7 +2360,13 @@ const file_climateshield_v1_public_proto_rawDesc = "" +
 	"\x0fhigh_exceedance\x18\t \x01(\x01R\x0ehighExceedance\x12+\n" +
 	"\x11medium_exceedance\x18\n" +
 	" \x01(\x01R\x10mediumExceedance\x12&\n" +
-	"\x0einterpretation\x18\v \x01(\tR\x0einterpretation\"-\n" +
+	"\x0einterpretation\x18\v \x01(\tR\x0einterpretation\x12%\n" +
+	"\x0ereference_file\x18\f \x01(\tR\rreferenceFile\x12)\n" +
+	"\x10reference_sha256\x18\r \x01(\tR\x0freferenceSha256\x12/\n" +
+	"\x13reference_generator\x18\x0e \x01(\tR\x12referenceGenerator\x12+\n" +
+	"\x11reference_windows\x18\x0f \x01(\x03R\x10referenceWindows\x12%\n" +
+	"\x0equantile_steps\x18\x10 \x01(\x05R\rquantileSteps\x12'\n" +
+	"\x0fexceedance_role\x18\x11 \x01(\tR\x0eexceedanceRole\"-\n" +
 	"\x17GetClimateSeriesRequest\x12\x12\n" +
 	"\x04area\x18\x01 \x01(\tR\x04area\"\x87\x01\n" +
 	"\n" +
@@ -2423,7 +2493,7 @@ const file_climateshield_v1_public_proto_rawDesc = "" +
 	"\x05month\x18\x02 \x01(\x05R\x05month\x12\x18\n" +
 	"\asamples\x18\x03 \x01(\x05R\asamples\x12)\n" +
 	"\x10reference_period\x18\x04 \x01(\tR\x0freferencePeriod\x12O\n" +
-	"\rdistributions\x18\x05 \x03(\v2).climateshield.v1.ClimatologyDistributionR\rdistributions2\xaa\b\n" +
+	"\rdistributions\x18\x05 \x03(\v2).climateshield.v1.ClimatologyDistributionR\rdistributions2\x88\t\n" +
 	"\rPublicService\x12e\n" +
 	"\x0eGetCurrentRisk\x12'.climateshield.v1.GetCurrentRiskRequest\x1a(.climateshield.v1.GetCurrentRiskResponse\"\x00\x12e\n" +
 	"\x0eGetRiskHistory\x12'.climateshield.v1.GetRiskHistoryRequest\x1a(.climateshield.v1.GetRiskHistoryResponse\"\x00\x12S\n" +
@@ -2434,7 +2504,8 @@ const file_climateshield_v1_public_proto_rawDesc = "" +
 	"\x0fGetAlertSummary\x12(.climateshield.v1.GetAlertSummaryRequest\x1a).climateshield.v1.GetAlertSummaryResponse\"\x00\x12n\n" +
 	"\x11GetPipelineStatus\x12*.climateshield.v1.GetPipelineStatusRequest\x1a+.climateshield.v1.GetPipelineStatusResponse\"\x00\x12e\n" +
 	"\x0eGetClimatology\x12'.climateshield.v1.GetClimatologyRequest\x1a(.climateshield.v1.GetClimatologyResponse\"\x00\x12z\n" +
-	"\x15GetAnchorVerification\x12..climateshield.v1.GetAnchorVerificationRequest\x1a/.climateshield.v1.GetAnchorVerificationResponse\"\x00BRZPgithub.com/jarida-io/climateshield/internal/gen/climateshield/v1;climateshieldv1b\x06proto3"
+	"\x15GetAnchorVerification\x12..climateshield.v1.GetAnchorVerificationRequest\x1a/.climateshield.v1.GetAnchorVerificationResponse\"\x00\x12\\\n" +
+	"\vGetBriefing\x12$.climateshield.v1.GetBriefingRequest\x1a%.climateshield.v1.GetBriefingResponse\"\x00BRZPgithub.com/jarida-io/climateshield/internal/gen/climateshield/v1;climateshieldv1b\x06proto3"
 
 var (
 	file_climateshield_v1_public_proto_rawDescOnce sync.Once
@@ -2483,6 +2554,8 @@ var file_climateshield_v1_public_proto_goTypes = []any{
 	(Disease)(0),                          // 30: climateshield.v1.Disease
 	(RiskLevel)(0),                        // 31: climateshield.v1.RiskLevel
 	(*timestamppb.Timestamp)(nil),         // 32: google.protobuf.Timestamp
+	(*GetBriefingRequest)(nil),            // 33: climateshield.v1.GetBriefingRequest
+	(*GetBriefingResponse)(nil),           // 34: climateshield.v1.GetBriefingResponse
 }
 var file_climateshield_v1_public_proto_depIdxs = []int32{
 	30, // 0: climateshield.v1.RiskScore.disease:type_name -> climateshield.v1.Disease
@@ -2523,18 +2596,20 @@ var file_climateshield_v1_public_proto_depIdxs = []int32{
 	24, // 35: climateshield.v1.PublicService.GetPipelineStatus:input_type -> climateshield.v1.GetPipelineStatusRequest
 	27, // 36: climateshield.v1.PublicService.GetClimatology:input_type -> climateshield.v1.GetClimatologyRequest
 	18, // 37: climateshield.v1.PublicService.GetAnchorVerification:input_type -> climateshield.v1.GetAnchorVerificationRequest
-	2,  // 38: climateshield.v1.PublicService.GetCurrentRisk:output_type -> climateshield.v1.GetCurrentRiskResponse
-	4,  // 39: climateshield.v1.PublicService.GetRiskHistory:output_type -> climateshield.v1.GetRiskHistoryResponse
-	7,  // 40: climateshield.v1.PublicService.GetStats:output_type -> climateshield.v1.GetStatsResponse
-	10, // 41: climateshield.v1.PublicService.GetModelInfo:output_type -> climateshield.v1.GetModelInfoResponse
-	14, // 42: climateshield.v1.PublicService.GetClimateSeries:output_type -> climateshield.v1.GetClimateSeriesResponse
-	17, // 43: climateshield.v1.PublicService.GetLedgerSummary:output_type -> climateshield.v1.GetLedgerSummaryResponse
-	23, // 44: climateshield.v1.PublicService.GetAlertSummary:output_type -> climateshield.v1.GetAlertSummaryResponse
-	26, // 45: climateshield.v1.PublicService.GetPipelineStatus:output_type -> climateshield.v1.GetPipelineStatusResponse
-	29, // 46: climateshield.v1.PublicService.GetClimatology:output_type -> climateshield.v1.GetClimatologyResponse
-	19, // 47: climateshield.v1.PublicService.GetAnchorVerification:output_type -> climateshield.v1.GetAnchorVerificationResponse
-	38, // [38:48] is the sub-list for method output_type
-	28, // [28:38] is the sub-list for method input_type
+	33, // 38: climateshield.v1.PublicService.GetBriefing:input_type -> climateshield.v1.GetBriefingRequest
+	2,  // 39: climateshield.v1.PublicService.GetCurrentRisk:output_type -> climateshield.v1.GetCurrentRiskResponse
+	4,  // 40: climateshield.v1.PublicService.GetRiskHistory:output_type -> climateshield.v1.GetRiskHistoryResponse
+	7,  // 41: climateshield.v1.PublicService.GetStats:output_type -> climateshield.v1.GetStatsResponse
+	10, // 42: climateshield.v1.PublicService.GetModelInfo:output_type -> climateshield.v1.GetModelInfoResponse
+	14, // 43: climateshield.v1.PublicService.GetClimateSeries:output_type -> climateshield.v1.GetClimateSeriesResponse
+	17, // 44: climateshield.v1.PublicService.GetLedgerSummary:output_type -> climateshield.v1.GetLedgerSummaryResponse
+	23, // 45: climateshield.v1.PublicService.GetAlertSummary:output_type -> climateshield.v1.GetAlertSummaryResponse
+	26, // 46: climateshield.v1.PublicService.GetPipelineStatus:output_type -> climateshield.v1.GetPipelineStatusResponse
+	29, // 47: climateshield.v1.PublicService.GetClimatology:output_type -> climateshield.v1.GetClimatologyResponse
+	19, // 48: climateshield.v1.PublicService.GetAnchorVerification:output_type -> climateshield.v1.GetAnchorVerificationResponse
+	34, // 49: climateshield.v1.PublicService.GetBriefing:output_type -> climateshield.v1.GetBriefingResponse
+	39, // [39:50] is the sub-list for method output_type
+	28, // [28:39] is the sub-list for method input_type
 	28, // [28:28] is the sub-list for extension type_name
 	28, // [28:28] is the sub-list for extension extendee
 	0,  // [0:28] is the sub-list for field type_name
@@ -2545,6 +2620,7 @@ func file_climateshield_v1_public_proto_init() {
 	if File_climateshield_v1_public_proto != nil {
 		return
 	}
+	file_climateshield_v1_briefing_proto_init()
 	file_climateshield_v1_common_proto_init()
 	file_climateshield_v1_public_proto_msgTypes[0].OneofWrappers = []any{}
 	file_climateshield_v1_public_proto_msgTypes[5].OneofWrappers = []any{}

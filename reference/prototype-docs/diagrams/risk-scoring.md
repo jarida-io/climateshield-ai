@@ -1,3 +1,8 @@
+> **Superseded prototype artefact.** This describes the original Python/PHP
+> prototype, not the system that runs today. Its calibration and delivery claims
+> were never substantiated — see [../README.md](../README.md) and
+> [docs/architecture.md](../../../docs/architecture.md).
+
 # Outbreak Risk Scoring Logic
 
 How ClimateShield decides whether a county is at HIGH, MEDIUM, or LOW outbreak risk for each disease.

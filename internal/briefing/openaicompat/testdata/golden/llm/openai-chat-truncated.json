@@ -1,0 +1,23 @@
+{
+  "id": "chatcmpl-briefing-truncated",
+  "object": "chat.completion",
+  "created": 1789084800,
+  "model": "qwen2.5:1.5b",
+  "system_fingerprint": "fp_ollama",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"briefing\": \"Kisumu is in a wet forecast window from 2026-09-10 to 2026-09"
+      },
+      "logprobs": null,
+      "finish_reason": "length"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 812,
+    "completion_tokens": 32,
+    "total_tokens": 844
+  }
+}

@@ -3,6 +3,7 @@ syntax = "proto3";
 
 package climateshield.v1;
 
+import "climateshield/v1/briefing.proto";
 import "climateshield/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -29,6 +30,9 @@ service PublicService {
   // in the database. It answers "unavailable" with a reason — never a
   // fabricated match — when no chain is configured or reachable.
   rpc GetAnchorVerification(GetAnchorVerificationRequest) returns (GetAnchorVerificationResponse) {}
+  // GetBriefing returns one county's plain-language risk briefing together
+  // with the exact fact sheet it was generated from (see briefing.proto).
+  rpc GetBriefing(GetBriefingRequest) returns (GetBriefingResponse) {}
 }
 
 // RiskScore is one county x disease risk assessment for one forecast window.
@@ -49,7 +53,13 @@ message RiskScore {
   // against the reference climatology: 0.02 means the most extreme 2% of the
   // reference decade. It describes the WEATHER. It is NOT a probability that
   // an outbreak will occur — this system holds no outbreak surveillance data
-  // and does not estimate that. Absent for the fixed-threshold predictor.
+  // and does not estimate that.
+  //
+  // Under the fixed-threshold predictor it is an ANNOTATION on this driver
+  // value and did not decide the level; the published cutoffs did. Under the
+  // climatology predictor it is what decided the level. See
+  // GetModelInfoResponse.exceedance_role for the wording of the live case.
+  // Absent when no reference distribution covers this county and month.
   optional double exceedance = 12;
 
   // explanation is a one-line reason a health officer can act on or dispute.
@@ -133,6 +143,24 @@ message GetModelInfoResponse {
   double medium_exceedance = 10;
   // Plain-language statement of what the number does and does not mean.
   string interpretation = 11;
+
+  // Provenance of the reference climatology artifact, so a reviewer can
+  // recompute it instead of trusting it. reference_generator is the command
+  // that builds the file; reference_sha256 is the SHA-256 of the exact bytes
+  // embedded in this binary.
+  string reference_file = 12;
+  string reference_sha256 = 13;
+  string reference_generator = 14;
+  // reference_windows is how many 14-day reference windows were measured in
+  // total, summed over every county and calendar month.
+  int64 reference_windows = 15;
+  // quantile_steps is how many percentile points each stored distribution has.
+  int32 quantile_steps = 16;
+
+  // exceedance_role states, in plain language, what the exceedance figure
+  // attached to a score does: whether it decided the tier or merely annotates
+  // a tier the published thresholds decided.
+  string exceedance_role = 17;
 }
 
 message GetClimateSeriesRequest {

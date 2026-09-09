@@ -82,6 +82,12 @@ export interface Column {
   detail?: string | undefined;
 }
 
+/** A cutoff line drawn across a plot, labelled with where it came from. */
+export interface Threshold {
+  value: number;
+  label: string;
+}
+
 /**
  * Column chart for magnitude across a small set of labelled slots.
  * Hover gives an exact readout; the extreme is directly labelled.
@@ -92,18 +98,28 @@ export function Columns({
   unit = "",
   color = brand.purple,
   labelEvery = 1,
+  threshold,
 }: {
   data: Column[];
   height?: number;
   unit?: string;
   color?: string;
   labelEvery?: number;
+  /**
+   * One or more published cutoffs drawn across the plot. Values must come from
+   * the API's own rules — a number typed into a chart is a claim about a
+   * contractual threshold that nothing would check.
+   */
+  threshold?: Threshold | Threshold[] | undefined;
 }) {
   const [hover, setHover] = useState<number | null>(null);
   const [wrap, W] = useWidth<HTMLDivElement>();
   const titleId = useId();
 
-  const max = Math.max(...data.map((d) => d.value), 0);
+  const lines = threshold === undefined ? [] : Array.isArray(threshold) ? threshold : [threshold];
+  // The axis has to reach the cutoffs as well as the data, or a series that
+  // never comes near a line would be drawn as though it had crossed it.
+  const max = Math.max(...data.map((d) => d.value), ...lines.map((t) => t.value), 0);
   const ticks = niceTicks(max);
   const top = ticks[ticks.length - 1] ?? 1;
   const plotH = height - 26;
@@ -129,7 +145,11 @@ export function Columns({
           aria-labelledby={titleId}
           style={{ width: "100%", height, display: "block", overflow: "visible" }}
         >
-          <title id={titleId}>Column chart, {data.length} values, peak {max.toFixed(1)}{unit}</title>
+          <title id={titleId}>
+            Column chart, {data.length} values, peak {max.toFixed(1)}
+            {unit}
+            {lines.length === 0 ? "" : `, with ${lines.map((t) => t.label).join(" and ")} marked`}
+          </title>
 
           {ticks.map((t) => {
             const y = plotH - (t / top) * plotH;
@@ -198,6 +218,32 @@ export function Columns({
               </g>
             );
           })}
+
+          {top > 0 &&
+            lines.map((t) => {
+              const y = plotH - (t.value / top) * plotH;
+              return (
+                <g key={`${t.label}-${t.value}`}>
+                  <line
+                    x1={AXIS_W}
+                    x2={AXIS_W + plotW}
+                    y1={y}
+                    y2={y}
+                    stroke={brand.high}
+                    strokeWidth="1.5"
+                    strokeDasharray="5 4"
+                  />
+                  <text
+                    x={AXIS_W + 4}
+                    y={y - 5}
+                    fill={brand.high}
+                    style={{ fontSize: 11, fontWeight: 700 }}
+                  >
+                    {t.label}
+                  </text>
+                </g>
+              );
+            })}
         </svg>
         )}
 

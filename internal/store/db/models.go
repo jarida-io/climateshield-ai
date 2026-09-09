@@ -54,6 +54,22 @@ type Area struct {
 	Centroid interface{}
 }
 
+type Briefing struct {
+	ID             int64
+	AreaID         string
+	Lang           string
+	FactsHash      []byte
+	FactsJson      []byte
+	Generator      string
+	Model          string
+	PromptVersion  string
+	Body           string
+	Grounded       bool
+	GroundingNotes []byte
+	Status         string
+	CreatedAt      pgtype.Timestamptz
+}
+
 type Child struct {
 	ID          pgtype.UUID
 	GuardianID  pgtype.UUID

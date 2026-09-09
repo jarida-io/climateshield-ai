@@ -1,3 +1,8 @@
+> **Superseded prototype artefact.** This describes the original Python/PHP
+> prototype, not the system that runs today. Its calibration and delivery claims
+> were never substantiated — see [../README.md](../README.md) and
+> [docs/architecture.md](../../../docs/architecture.md).
+
 # ClimateShield — System Architecture
 
 End-to-end view of how climate data, the immunization tracker, and the alert pipeline connect.

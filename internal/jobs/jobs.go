@@ -11,6 +11,10 @@ const (
 	QueuePredict = "predict"
 	QueueNotify  = "notify"
 	QueueLedger  = "ledger"
+	// QueueBriefing carries county briefing regeneration. Briefings are never
+	// generated in a request path: a language model on a laptop CPU takes tens
+	// of seconds, and a public read must not wait on one.
+	QueueBriefing = "briefing"
 )
 
 // ClimateIngestArgs triggers a full ingestion sweep over all areas.
@@ -41,6 +45,17 @@ type AlertDispatchArgs struct {
 
 // Kind implements river.JobArgs.
 func (AlertDispatchArgs) Kind() string { return "alert_dispatch" }
+
+// BriefingSweepArgs regenerates county briefings whose facts have changed.
+// An empty AreaID sweeps every monitored county. The job is idempotent: a
+// county whose fact sheet still hashes the same is skipped, so running the
+// sweep more often costs a hash comparison and nothing else.
+type BriefingSweepArgs struct {
+	AreaID string `json:"area_id,omitempty"`
+}
+
+// Kind implements river.JobArgs.
+func (BriefingSweepArgs) Kind() string { return "briefing_sweep" }
 
 // LedgerDailyRootArgs recomputes Merkle roots for all days with leaves.
 type LedgerDailyRootArgs struct{}

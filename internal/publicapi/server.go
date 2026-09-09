@@ -176,6 +176,13 @@ func (s *Server) Router(healthy httpx.HealthFunc, metricsHandler http.Handler) c
 			return s.buildClimatology(ctx, area, month)
 		}, &climateshieldv1.GetClimatologyResponse{})
 	})
+	r.Get("/v1/briefings", func(w http.ResponseWriter, req *http.Request) {
+		area := req.URL.Query().Get("area")
+		lang := req.URL.Query().Get("lang")
+		s.serveREST(w, req, "briefing", func(ctx context.Context) (proto.Message, error) {
+			return s.buildBriefing(ctx, area, lang)
+		}, &climateshieldv1.GetBriefingResponse{})
+	})
 	r.Get("/v1/pipeline", func(w http.ResponseWriter, req *http.Request) {
 		s.serveREST(w, req, "pipeline", func(ctx context.Context) (proto.Message, error) {
 			return s.buildPipelineStatus(ctx)
@@ -236,6 +243,22 @@ func (s *Server) GetAnchorVerification(
 		return staleConnect[climateshieldv1.GetAnchorVerificationResponse](s, "connect:anchorverify")
 	}
 	s.cache.storeProto("connect:anchorverify", msg)
+	return connect.NewResponse(msg), nil
+}
+
+// GetBriefing implements climateshieldv1connect.PublicServiceHandler.
+func (s *Server) GetBriefing(
+	ctx context.Context, req *connect.Request[climateshieldv1.GetBriefingRequest],
+) (*connect.Response[climateshieldv1.GetBriefingResponse], error) {
+	msg, err := s.buildBriefing(ctx, req.Msg.GetArea(), req.Msg.GetLang())
+	if err != nil {
+		var bad errBadRequest
+		if errors.As(err, &bad) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, bad)
+		}
+		return staleConnect[climateshieldv1.GetBriefingResponse](s, "connect:briefing")
+	}
+	s.cache.storeProto("connect:briefing", msg)
 	return connect.NewResponse(msg), nil
 }
 

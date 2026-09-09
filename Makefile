@@ -5,7 +5,10 @@ GOLANGCI_LINT_VERSION := v2.12.2
 COVERAGE_THRESHOLD := 80
 
 .PHONY: verify fmt-check vet lint build test covergate buf-lint contracts \
-        web-verify generate contract up down demo demo-live migrate tools help
+        web-verify generate contract climatology climatology-digest \
+        up up-ai down demo demo-live demo-ai migrate tools help
+
+AI_COMPOSE := -f docker-compose.yml -f deploy/docker-compose.ai.yml
 
 ## verify: everything the Definition of Done requires. Must exit 0.
 verify: fmt-check vet lint build test covergate buf-lint contracts web-verify
@@ -60,6 +63,19 @@ generate:
 contract:
 	./scripts/build-contract.sh
 
+## climatology: rebuild the reference climatology from the Open-Meteo archive
+## (developer only; free and keyless, but the ONLY outbound request this repo
+## makes). Prints the SHA-256 of what it wrote — compare it with
+## reference_sha256 on GET /v1/model. Nothing in `make up`, `make demo`, the
+## tests or CI runs this.
+climatology:
+	go run ./cmd/buildclimatology
+
+## climatology-digest: print the SHA-256 of the committed reference
+## climatology. Makes no network request.
+climatology-digest:
+	go run ./cmd/buildclimatology -digest
+
 # Host-side targets read .env the same way docker compose does, so
 # `cp .env.example .env` is the only setup step a reviewer needs.
 define with_env
@@ -73,8 +89,18 @@ up:
 	docker compose up --build -d --wait
 	@echo "All services up. Public API: http://localhost:8080  Dashboard: http://localhost:8081"
 
+## up-ai: same stack, but briefings are written by a small open-weights model
+## (Ollama + qwen2.5:1.5b, Apache-2.0) instead of the deterministic template.
+## The FIRST run downloads an image and the model and therefore needs internet;
+## later runs are offline. Still zero credentials. Every draft still goes
+## through the grounding check, and a refused draft still falls back to the
+## labelled template. See deploy/docker-compose.ai.yml.
+up-ai:
+	docker compose $(AI_COMPOSE) --profile ai up --build -d --wait
+	@echo "All services up with the ai profile. Public API: http://localhost:8080  Dashboard: http://localhost:8081"
+
 down:
-	docker compose down -v
+	docker compose $(AI_COMPOSE) --profile ai down -v
 
 ## demo: deterministic pipeline demo from committed fixtures (no network).
 demo:
@@ -83,6 +109,15 @@ demo:
 ## demo-live: same demo but ingesting live Open-Meteo data (free, no key).
 demo-live:
 	@$(with_env) CLIMATE_SOURCE=openmeteo go run ./cmd/demo
+
+## demo-ai: the same demo against a stack started with `make up-ai`. The
+## briefing step then prints text written by the local model — or, if the
+## grounding check refused it, the template plus the reasons it was refused.
+demo-ai: demo
+	@echo
+	@echo "The briefing above states which generator and model wrote it."
+	@echo "Full response, including the fact sheet every number must come from:"
+	@echo "  curl -s 'http://localhost:8080/v1/briefings?area=Kisumu&lang=en' | jq ."
 
 help:
 	@grep -E '^##' Makefile | sed 's/^## //'

@@ -13,11 +13,13 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/jarida-io/climateshield/internal/briefing"
 	ingestorsvc "github.com/jarida-io/climateshield/internal/climate/ingestor"
 	"github.com/jarida-io/climateshield/internal/ledger"
 	"github.com/jarida-io/climateshield/internal/notify"
@@ -58,9 +60,10 @@ func waitHealthy(t *testing.T, addr string) {
 	}, 30*time.Second, 200*time.Millisecond, "service at %s never became healthy", addr)
 }
 
-// TestAllServicesBootAndRunThePipeline starts all six services, lets the
+// TestAllServicesBootAndRunThePipeline starts all seven services, lets the
 // periodic ingest job fire, and asserts data flows all the way through:
-// observations -> risk scores -> alerts -> ledger leaves -> public API.
+// observations -> risk scores -> alerts -> ledger leaves -> briefings ->
+// public API.
 func TestAllServicesBootAndRunThePipeline(t *testing.T) {
 	pool, dsn := testdb.PoolDSN(t)
 	q := db.New(pool)
@@ -82,6 +85,7 @@ func TestAllServicesBootAndRunThePipeline(t *testing.T) {
 		"LEDGER_ADDR":    freePort(t),
 		"REGISTRY_ADDR":  freePort(t),
 		"PUBLICAPI_ADDR": freePort(t),
+		"BRIEFING_ADDR":  freePort(t),
 	}
 	env := map[string]string{
 		"DATABASE_URL":          dsn,
@@ -94,6 +98,11 @@ func TestAllServicesBootAndRunThePipeline(t *testing.T) {
 		"MOCK_OUTBOX_PATH":      outbox,
 		"LEDGER_SWEEP_INTERVAL": "5s",
 		"INGEST_INTERVAL":       "1h", // RunOnStart fires the sweep immediately
+		// The briefing service defaults to the deterministic template: this
+		// test, like `make up`, reaches no language model and needs no
+		// credential.
+		"BRIEFING_GENERATOR":      "mock",
+		"BRIEFING_SWEEP_INTERVAL": "5s",
 	}
 	for k, v := range env {
 		t.Setenv(k, v)
@@ -111,6 +120,7 @@ func TestAllServicesBootAndRunThePipeline(t *testing.T) {
 		"ledger":    ledger.Run,
 		"registry":  registry.Run,
 		"publicapi": publicapi.Run,
+		"briefing":  briefing.Run,
 	} {
 		go func(name string, run func(context.Context) error) {
 			if err := run(runCtx); err != nil {
@@ -219,6 +229,26 @@ func TestAllServicesBootAndRunThePipeline(t *testing.T) {
 		require.NotEmpty(t, anchors, "each root must be anchored")
 	}
 
+	// Briefings: the briefing service writes one per county and language from
+	// the fact sheet, and — with no language model configured, which is the
+	// default — every one of them says so on its first line.
+	require.Eventually(t, func() bool {
+		row, err := q.LatestBriefing(ctx, db.LatestBriefingParams{AreaID: "kisumu", Lang: "en"})
+		return err == nil && row.Status == "served"
+	}, 60*time.Second, 500*time.Millisecond, "no briefing was generated for Kisumu")
+
+	for _, lang := range []string{"en", "sw"} {
+		row, err := q.LatestBriefing(ctx, db.LatestBriefingParams{AreaID: "kisumu", Lang: lang})
+		require.NoError(t, err)
+		require.Equal(t, "mock", row.Generator)
+		require.Equal(t, "none", row.Model, "no language model may be claimed when none ran")
+		require.True(t, row.Grounded)
+		require.True(t, strings.HasPrefix(row.Body, "[mock]"),
+			"a briefing written without a model must say so first: %q", row.Body)
+		require.Contains(t, row.Body, "Kisumu")
+		require.NotContains(t, row.Body, "+2547")
+	}
+
 	// Public API: serving live data over HTTP with no PII.
 	resp, err := http.Get("http://127.0.0.1" + addrs["PUBLICAPI_ADDR"] + "/v1/risk/current")
 	require.NoError(t, err)
@@ -234,6 +264,7 @@ func TestAllServicesBootAndRunThePipeline(t *testing.T) {
 	for _, path := range []string{
 		"/v1/model", "/v1/climate/series", "/v1/ledger/summary",
 		"/v1/alerts/summary", "/v1/pipeline", "/v1/stats",
+		"/v1/briefings", "/v1/briefings?area=Kisumu&lang=en", "/v1/briefings?area=Kisumu&lang=sw",
 		"/v1/risk/current?format=csv", "/v1/risk/current?format=geojson",
 	} {
 		r, err := http.Get("http://127.0.0.1" + addrs["PUBLICAPI_ADDR"] + path)

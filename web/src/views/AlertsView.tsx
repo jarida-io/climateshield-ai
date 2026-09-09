@@ -6,13 +6,21 @@ import { publicClient } from "../api";
 import { Columns, TableView } from "../charts";
 import { Select, TextInput } from "../forms";
 import { septets } from "../gsm7";
-import { Caveat, Card, Code, Failed, Loading, Page, StatTile, Table, Td, TileRow, brand, levelColor, space, text } from "../ui";
+import { Caveat, Card, Code, Disclosure, Failed, Loading, Page, StatTile, Table, Td, TileRow, brand, levelColor, space, text } from "../ui";
 import { useApi } from "../useApi";
 
 const COUNTIES = ["Nairobi", "Kisumu", "Mombasa", "Nakuru", "Eldoret"];
+
+// The whole KEPI schedule seeded by migration 0006, longest names included —
+// the previewer is only useful for stress-testing the GSM-7 budget if it can
+// offer the doses that actually exist. No endpoint publishes the schedule
+// (the registry is an internal service), so this list is a copy: if a dose is
+// added there, add it here too.
 const VACCINES = [
-  "BCG", "OPV 1", "OPV 2", "OPV 3", "DPT-HepB-Hib 1", "DPT-HepB-Hib 3",
-  "PCV 3", "IPV", "Measles-Rubella 1", "Measles-Rubella 2",
+  "BCG", "OPV birth dose", "OPV 1", "OPV 2", "OPV 3",
+  "DPT-HepB-Hib 1", "DPT-HepB-Hib 2", "DPT-HepB-Hib 3",
+  "PCV 1", "PCV 2", "PCV 3", "Rotavirus 1", "Rotavirus 2",
+  "IPV", "Measles-Rubella 1", "Measles-Rubella 2",
 ];
 
 /**
@@ -28,43 +36,70 @@ export function AlertsView() {
 
   const total = a.statuses.reduce((n, s) => n + Number(s.count ?? 0n), 0);
 
+  const budget = a.templates[0]?.maxSeptets;
+
   return (
     <Page
       title="Guardian messaging"
-      lede="What the alert path produced, in both languages, and exactly what happened to it."
+      lede="One short message, in the guardian’s language, naming their own child and the dose that is due. The alert path renders it, gates it on consent and quiet hours, and records what it did."
     >
-      <Caveat>
+      {a.channelSends && (
+        <Caveat>
+          <strong>Channel “{a.channel}” is active and delivers messages.</strong> {a.channelNote}{" "}
+          Messages leaving this deployment reach real handsets.
+        </Caveat>
+      )}
+
+      <TileRow>
+        <StatTile
+          label="Active channel"
+          value={a.channel}
+          hint={a.channelSends ? "delivers messages" : "sends nothing"}
+        />
+        <StatTile label="Alerts recorded" value={String(total)} />
+        <StatTile
+          label="One-segment budget"
+          value={budget === undefined ? "—" : `${budget} septets`}
+          hint="a longer message costs two and can fail on basic handsets"
+        />
+      </TileRow>
+
+      <Disclosure>
         {a.channelSends ? (
           <>
-            <strong>Channel “{a.channel}” is active and delivers messages.</strong> {a.channelNote}
+            <strong>Every message is rendered, gated and recorded here</strong>, and the active
+            channel “{a.channel}” then delivers it. {a.channelNote}
           </>
         ) : (
           <>
-            <strong>No SMS was sent.</strong> {a.channelNote} Messages are rendered, checked and
-            recorded with status <code>would_send</code> — never <code>sent</code>, which only a
-            real carrier adapter may write. Message bodies are not published here: they contain a
-            child’s first name. The samples below are the same templates rendered with placeholder
-            values.
+            <strong>Everything up to the carrier is real: rendering, the consent gate, quiet
+            hours, deduplication and the recorded outcome.</strong> The last step is not.{" "}
+            {a.channelNote} Messages are recorded with status <code>would_send</code> — never{" "}
+            <code>sent</code>, which only a real carrier adapter may write, so no screen and no log
+            can imply a delivery that did not happen.
           </>
-        )}
-      </Caveat>
-
-      <TileRow>
-        <StatTile label="Active channel" value={a.channel} hint={a.channelSends ? "delivers" : "sends nothing"} />
-        <StatTile label="Alerts recorded" value={String(total)} />
-        <StatTile label="Languages" value={String(a.templates.length)} hint="English and Kiswahili" />
-      </TileRow>
+        )}{" "}
+        Message bodies as sent are not published here: they contain a child’s first name. The
+        samples below are the same templates rendered with placeholder values.
+      </Disclosure>
 
       <Card title="Outcomes">
-        <Table head={["Status", "Count", "Meaning"]}>
-          {a.statuses.map((s) => (
-            <tr key={s.status}>
-              <Td mono>{s.status}</Td>
-              <Td mono>{s.suppressed ? "withheld (k<10)" : String(s.count ?? 0n)}</Td>
-              <Td>{statusMeaning(s.status)}</Td>
-            </tr>
-          ))}
-        </Table>
+        {a.statuses.length === 0 ? (
+          <p style={{ ...text.body, color: brand.muted, margin: 0 }}>
+            No alert has been recorded yet in this deployment. Outcomes appear here as soon as a
+            county is scored at an elevated level and the dispatch job runs.
+          </p>
+        ) : (
+          <Table head={["Status", "Count", "Meaning"]}>
+            {a.statuses.map((s) => (
+              <tr key={s.status}>
+                <Td mono>{s.status}</Td>
+                <Td mono>{s.suppressed ? "withheld (k<10)" : String(s.count ?? 0n)}</Td>
+                <Td>{statusMeaning(s.status)}</Td>
+              </tr>
+            ))}
+          </Table>
+        )}
       </Card>
 
       <Card title="Message length by outcome">

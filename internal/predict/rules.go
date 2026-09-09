@@ -5,8 +5,10 @@ package predict
 import "fmt"
 
 // SINGLE SOURCE OF TRUTH for the v1 risk thresholds, exactly as published in
-// the funding proposal and docs/diagrams/risk-scoring.md. Do not change these
-// numbers without a proposal amendment.
+// the funding proposal. Do not change these numbers without a proposal
+// amendment — including the two that docs/threshold-validation.md shows can
+// never fire in the monitored counties. That finding is reported, not fixed
+// here: amending a contractual cutoff is a proposal decision.
 const (
 	// Cholera: 14-day peak rainfall (mm).
 	CholeraHighMM   = 60.0

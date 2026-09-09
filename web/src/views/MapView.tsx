@@ -5,13 +5,37 @@ import { useEffect, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { publicClient } from "../api";
-import { Columns } from "../charts";
 import { Select } from "../forms";
+import type { RiskScore } from "../gen/climateshield/v1/public_pb";
 import { createMap, diseaseName, fitToCounties, groupByCounty, levelName, renderMarkers } from "../map";
-import { Caveat, Failed, Loading, Pill, brand, levelColor, space, text } from "../ui";
+import { Disclosure, Failed, Loading, Pill, brand, levelColor, space, text } from "../ui";
 import { useApi } from "../useApi";
 
 const DISEASES = ["cholera", "malaria", "pneumonia", "meningitis"];
+
+/**
+ * Plain words for the two drivers the scorers use, matching the wording the Go
+ * explainers already produce. Only a label is chosen here — the number and the
+ * driver name both come from the score row.
+ */
+const DRIVER_LABEL: Record<string, { name: string; unit: string }> = {
+  peak_rainfall_mm_14d: { name: "peak 14-day rainfall", unit: " mm" },
+  mean_max_temp_c_14d: { name: "mean 14-day maximum temperature", unit: " °C" },
+};
+
+function driverPhrase(driver: string, value: number): string {
+  const d = DRIVER_LABEL[driver];
+  return d === undefined ? `${driver} = ${String(value)}` : `${d.name} ${value.toFixed(1)}${d.unit}`;
+}
+
+/** The worst-scoring row for a county — the one that colours its marker. */
+function worstScore(scores: RiskScore[]): RiskScore | undefined {
+  let best: RiskScore | undefined;
+  for (const s of scores) {
+    if (best === undefined || s.level > best.level) best = s;
+  }
+  return best;
+}
 
 /** Proves: current risk, geographically, at a glance. */
 export function MapView() {
@@ -66,16 +90,19 @@ export function MapView() {
   }, [risk, disease]);
 
   const counties = groupByCounty(scores);
-  const byLevel = (["HIGH", "MEDIUM", "LOW"] as const).map((lvl) => ({
-    label: lvl,
-    value: scores.filter((s) => levelName(s.level) === lvl).length,
-    color: levelColor[lvl],
-    detail: `${scores.filter((s) => levelName(s.level) === lvl).length} county-disease pairs at ${lvl}`,
-  }));
+  // Worst county first, so the eye lands where the attention is needed.
+  const ranked = [...counties].sort(
+    (a, b) => (worstScore(b.scores)?.level ?? 0) - (worstScore(a.scores)?.level ?? 0),
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <div style={{ padding: `${space(4)} ${space(6)} 0`, maxWidth: 1180, margin: "0 auto", width: "100%" }}>
+      <div style={{ padding: `${space(5)} ${space(6)} 0`, maxWidth: 1180, margin: "0 auto", width: "100%" }}>
+        <h1 style={{ ...text.h1, margin: 0, color: brand.ink }}>Where risk is elevated today</h1>
+        <p style={{ ...text.body, color: brand.muted, margin: `${space(2)} 0 ${space(4)}`, lineHeight: 1.6 }}>
+          Current risk by county and disease, with the weather figure that produced each level.
+          Pick a disease to recolour the markers, or read the counties underneath.
+        </p>
         <form
           onSubmit={(e) => e.preventDefault()}
           style={{ display: "flex", gap: space(4), flexWrap: "wrap", marginBottom: space(4) }}
@@ -91,10 +118,11 @@ export function MapView() {
             hint="markers recolour to the worst level among the selection"
           />
         </form>
-        <Caveat>
-          County-level aggregates only. Markers are county centroids, not the location of any
+        <Disclosure>
+          Everything here is a county-level aggregate, computed from the forecast window and the
+          published thresholds. Markers sit on county centroids — they are not the location of any
           person, and nothing on this map is derived from an identifiable child.
-        </Caveat>
+        </Disclosure>
       </div>
 
       <div style={{ flex: "0 0 auto", position: "relative", height: 420, minHeight: 300 }}>
@@ -159,33 +187,50 @@ export function MapView() {
       )}
       {risk.kind === "ready" && (
         <div style={{ padding: `${space(4)} ${space(6)} ${space(10)}`, maxWidth: 1180, margin: "0 auto", width: "100%" }}>
-          <div style={{ marginBottom: space(5) }}>
-            <div style={{ ...text.h2, color: brand.ink, marginBottom: space(2) }}>
-              Risk distribution
-            </div>
-            <Columns data={byLevel} height={140} />
+          <div style={{ ...text.h2, color: brand.ink, marginBottom: space(3) }}>
+            Every county, worst level first — and why
           </div>
           <div style={{ display: "flex", gap: space(3), flexWrap: "wrap" }}>
-            {counties.map((c) => (
-              <div
-                key={c.area}
-                style={{
-                  border: `1px solid ${brand.line}`, borderRadius: 10,
-                  padding: space(4), flex: "1 1 200px", background: brand.surface,
-                }}
-              >
-                <div style={{ ...text.h2, color: brand.ink, marginBottom: space(2) }}>{c.area}</div>
-                {c.scores.map((s, i) => (
-                  <div
-                    key={`${s.disease}-${i}`}
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: space(1) }}
-                  >
-                    <span style={{ ...text.small, color: brand.muted }}>{diseaseName(s.disease)}</span>
-                    <Pill level={levelName(s.level)} />
+            {ranked.map((c) => {
+              const worst = worstScore(c.scores);
+              return (
+                <div
+                  key={c.area}
+                  style={{
+                    border: `1px solid ${brand.line}`, borderRadius: 10,
+                    padding: space(4), flex: "1 1 280px", minWidth: 0, background: brand.surface,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: space(2), marginBottom: space(2) }}>
+                    <span style={{ ...text.h2, color: brand.ink }}>{c.area}</span>
+                    {worst !== undefined && (
+                      <span style={{ marginLeft: "auto" }}>
+                        <Pill level={levelName(worst.level)} />
+                      </span>
+                    )}
                   </div>
-                ))}
-              </div>
-            ))}
+                  {/* The explanation is written by the predictor that produced
+                      the row, so this card can never invent a reason the
+                      scorer did not give. */}
+                  {worst !== undefined && (
+                    <p style={{ ...text.small, color: brand.ink, margin: `0 0 ${space(3)}`, lineHeight: 1.6 }}>
+                      {worst.explanation === ""
+                        ? `${levelName(worst.level)} for ${diseaseName(worst.disease)} — ${driverPhrase(worst.driver, worst.driverValue)} in the scored window.`
+                        : `${diseaseName(worst.disease)}: ${worst.explanation}`}
+                    </p>
+                  )}
+                  {c.scores.map((s, i) => (
+                    <div
+                      key={`${s.disease}-${i}`}
+                      style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: space(3), marginTop: space(1) }}
+                    >
+                      <span style={{ ...text.small, color: brand.muted }}>{diseaseName(s.disease)}</span>
+                      <Pill level={levelName(s.level)} />
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

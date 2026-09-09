@@ -1,3 +1,8 @@
+> **Superseded prototype artefact.** This describes the original Python/PHP
+> prototype, not the system that runs today. Its calibration and delivery claims
+> were never substantiated — see [../README.md](../README.md) and
+> [docs/architecture.md](../../../docs/architecture.md).
+
 # Parent Alert Journey
 
 What happens, step by step, when ClimateShield detects an outbreak risk in a parent's county.

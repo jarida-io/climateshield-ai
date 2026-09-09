@@ -46,8 +46,34 @@ func (s *Server) buildModelInfo(_ context.Context) (*climateshieldv1.GetModelInf
 			"and month against the reference record: 0.02 means the most extreme 2% of that decade. " +
 			"It describes the weather. It is not a probability that an outbreak will occur — this " +
 			"system holds no outbreak surveillance data and does not estimate that."
+
+		// Provenance, so the artifact can be recomputed rather than trusted.
+		// The digest is of the exact bytes embedded in this binary.
+		resp.ReferenceFile = predict.DefaultClimatologyFile
+		resp.ReferenceGenerator = s.climatology.GeneratedBy
+		resp.ReferenceWindows = int64(s.climatology.TotalSamples())
+		resp.QuantileSteps = int32(s.climatology.QuantileSteps())
+		if digest, err := predict.ClimatologyDigest(); err == nil {
+			resp.ReferenceSha256 = digest
+		}
 	}
+	resp.ExceedanceRole = exceedanceRole(s.predictorName, s.climatology != nil)
 	return resp, nil
+}
+
+// exceedanceRole states what the exceedance figure attached to a score
+// actually did. Under the published thresholds it is an annotation and
+// decided nothing; under the climatology predictor it is what set the tier.
+// With no reference climatology loaded there is no figure at all, and the
+// view says so rather than describing one.
+func exceedanceRole(activePredictor string, haveClimatology bool) string {
+	if !haveClimatology {
+		return "No reference climatology is loaded in this deployment, so scores carry no exceedance figure."
+	}
+	if activePredictor == "climatology" {
+		return predict.ExceedanceRoleDeciding
+	}
+	return predict.ExceedanceRoleAnnotation
 }
 
 // thresholdRules reports the published cutoffs together with whether the
@@ -75,49 +101,74 @@ func thresholdRules(clim *predict.Climatology) []*climateshieldv1.ThresholdRule 
 	}
 	for _, r := range rules {
 		if clim == nil {
-			r.ReachableInReferencePeriod = true
+			// With no reference record there is nothing to check against, so
+			// the field is left false and says why rather than asserting a
+			// reachability nobody measured.
+			r.Note = "Not checked: no reference climatology is loaded in this deployment."
 			continue
 		}
-		reachable, extreme := reachable(clim, r)
-		r.ReachableInReferencePeriod = reachable
-		if !reachable {
-			dir := "hottest"
-			if !r.GetHigherIsWorse() {
-				dir = "coldest"
-			}
-			r.Note = fmt.Sprintf(
-				"Not reachable: the %s 14-day mean in the reference record is %.1f°C, so this "+
-					"HIGH cutoff of %.0f°C never fires in the monitored counties.",
-				dir, extreme, r.GetHigh())
+		ok, extreme, measured := reachable(clim, r)
+		if !measured {
+			r.Note = "Not checked: the reference record holds no distribution for this driver."
+			continue
 		}
+		r.ReachableInReferencePeriod = ok
+		r.Note = reachabilityNote(r, extreme, ok)
 	}
 	return rules
 }
 
-// reachable reports whether any county-month in the reference record has a
-// distribution that reaches the rule's HIGH cutoff, plus the closest value.
-func reachable(clim *predict.Climatology, r *climateshieldv1.ThresholdRule) (bool, float64) {
-	if r.GetDriver() != predict.DriverMeanMaxTemp {
-		// Rainfall cutoffs are reached in the record; only the temperature
-		// rules are in question.
-		return true, 0
+// unitFor is the unit each published driver is expressed in.
+func unitFor(driver string) string {
+	if driver == predict.DriverPeakRainfall {
+		return " mm"
 	}
-	extreme := 0.0
-	first := true
+	return "°C"
+}
+
+// reachabilityNote states the measurement behind the verdict, so a reviewer
+// sees the number the check was made against and not just a yes or no.
+func reachabilityNote(r *climateshieldv1.ThresholdRule, extreme float64, ok bool) string {
+	unit := unitFor(r.GetDriver())
+	end := "highest"
+	if !r.GetHigherIsWorse() {
+		end = "lowest"
+	}
+	if !ok {
+		return fmt.Sprintf(
+			"Not reachable: the %s 14-day value in the reference record is %.1f%s, so this "+
+				"HIGH cutoff of %.0f%s never fires in the monitored counties.",
+			end, extreme, unit, r.GetHigh(), unit)
+	}
+	return fmt.Sprintf(
+		"Reachable: the %s 14-day value in the reference record is %.1f%s, which passes this "+
+			"HIGH cutoff of %.0f%s. Reachable is not the same as correct — no threshold here has "+
+			"been checked against disease outcomes.",
+		end, extreme, unit, r.GetHigh(), unit)
+}
+
+// reachable reports whether any county-month in the reference record has a
+// distribution that reaches the rule's HIGH cutoff, the most extreme value in
+// the hazardous direction, and whether there was anything to measure at all.
+func reachable(clim *predict.Climatology, r *climateshieldv1.ThresholdRule) (ok bool, extreme float64, measured bool) {
+	key, known := predict.LadderKey(r.GetDriver())
+	if !known {
+		return false, 0, false
+	}
 	for _, county := range clim.Counties {
 		for _, month := range county.Months {
-			q := month.Quantiles["mean_tmax_c"]
+			q := month.Quantiles[key]
 			if len(q) == 0 {
 				continue
 			}
-			var candidate float64
+			// The ladder is sorted, so the hazardous end of one county-month
+			// is its first or last entry.
+			candidate := q[0]
 			if r.GetHigherIsWorse() {
 				candidate = q[len(q)-1]
-			} else {
-				candidate = q[0]
 			}
-			if first {
-				extreme, first = candidate, false
+			if !measured {
+				extreme, measured = candidate, true
 				continue
 			}
 			if r.GetHigherIsWorse() == (candidate > extreme) {
@@ -125,13 +176,13 @@ func reachable(clim *predict.Climatology, r *climateshieldv1.ThresholdRule) (boo
 			}
 		}
 	}
-	if first {
-		return true, 0
+	if !measured {
+		return false, 0, false
 	}
 	if r.GetHigherIsWorse() {
-		return extreme >= r.GetHigh(), extreme
+		return extreme >= r.GetHigh(), extreme, true
 	}
-	return extreme <= r.GetHigh(), extreme
+	return extreme <= r.GetHigh(), extreme, true
 }
 
 // buildClimateSeries returns the forecast window currently driving the

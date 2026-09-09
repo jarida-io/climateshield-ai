@@ -1,0 +1,23 @@
+{
+  "id": "chatcmpl-briefing-hallucinated",
+  "object": "chat.completion",
+  "created": 1789084800,
+  "model": "qwen2.5:1.5b",
+  "system_fingerprint": "fp_ollama",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"briefing\": \"Kisumu and Nairobi are both in danger this week. Cholera is LOW despite peak rainfall of 82 mm, and dengue is HIGH across the lake basin. The model reaches an accuracy of 91 percent for this county. Guardian Amina Otieno was reached on +254712345678 and the SMS sent to her confirms the alert. An outbreak will occur within two weeks unless stock is moved today.\"}"
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 812,
+    "completion_tokens": 121,
+    "total_tokens": 933
+  }
+}

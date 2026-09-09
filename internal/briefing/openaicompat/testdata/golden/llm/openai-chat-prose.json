@@ -1,0 +1,23 @@
+{
+  "id": "chatcmpl-briefing-prose",
+  "object": "chat.completion",
+  "created": 1789084800,
+  "model": "qwen2.5:1.5b",
+  "system_fingerprint": "fp_ollama",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Sure! Here is the briefing you asked for: Kisumu is having a wet fortnight."
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 812,
+    "completion_tokens": 19,
+    "total_tokens": 831
+  }
+}

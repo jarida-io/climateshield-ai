@@ -64,6 +64,9 @@ const (
 	// PublicServiceGetAnchorVerificationProcedure is the fully-qualified name of the PublicService's
 	// GetAnchorVerification RPC.
 	PublicServiceGetAnchorVerificationProcedure = "/climateshield.v1.PublicService/GetAnchorVerification"
+	// PublicServiceGetBriefingProcedure is the fully-qualified name of the PublicService's GetBriefing
+	// RPC.
+	PublicServiceGetBriefingProcedure = "/climateshield.v1.PublicService/GetBriefing"
 )
 
 // PublicServiceClient is a client for the climateshield.v1.PublicService service.
@@ -84,6 +87,9 @@ type PublicServiceClient interface {
 	// in the database. It answers "unavailable" with a reason — never a
 	// fabricated match — when no chain is configured or reachable.
 	GetAnchorVerification(context.Context, *connect.Request[v1.GetAnchorVerificationRequest]) (*connect.Response[v1.GetAnchorVerificationResponse], error)
+	// GetBriefing returns one county's plain-language risk briefing together
+	// with the exact fact sheet it was generated from (see briefing.proto).
+	GetBriefing(context.Context, *connect.Request[v1.GetBriefingRequest]) (*connect.Response[v1.GetBriefingResponse], error)
 }
 
 // NewPublicServiceClient constructs a client for the climateshield.v1.PublicService service. By
@@ -157,6 +163,12 @@ func NewPublicServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(publicServiceMethods.ByName("GetAnchorVerification")),
 			connect.WithClientOptions(opts...),
 		),
+		getBriefing: connect.NewClient[v1.GetBriefingRequest, v1.GetBriefingResponse](
+			httpClient,
+			baseURL+PublicServiceGetBriefingProcedure,
+			connect.WithSchema(publicServiceMethods.ByName("GetBriefing")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -172,6 +184,7 @@ type publicServiceClient struct {
 	getPipelineStatus     *connect.Client[v1.GetPipelineStatusRequest, v1.GetPipelineStatusResponse]
 	getClimatology        *connect.Client[v1.GetClimatologyRequest, v1.GetClimatologyResponse]
 	getAnchorVerification *connect.Client[v1.GetAnchorVerificationRequest, v1.GetAnchorVerificationResponse]
+	getBriefing           *connect.Client[v1.GetBriefingRequest, v1.GetBriefingResponse]
 }
 
 // GetCurrentRisk calls climateshield.v1.PublicService.GetCurrentRisk.
@@ -224,6 +237,11 @@ func (c *publicServiceClient) GetAnchorVerification(ctx context.Context, req *co
 	return c.getAnchorVerification.CallUnary(ctx, req)
 }
 
+// GetBriefing calls climateshield.v1.PublicService.GetBriefing.
+func (c *publicServiceClient) GetBriefing(ctx context.Context, req *connect.Request[v1.GetBriefingRequest]) (*connect.Response[v1.GetBriefingResponse], error) {
+	return c.getBriefing.CallUnary(ctx, req)
+}
+
 // PublicServiceHandler is an implementation of the climateshield.v1.PublicService service.
 type PublicServiceHandler interface {
 	GetCurrentRisk(context.Context, *connect.Request[v1.GetCurrentRiskRequest]) (*connect.Response[v1.GetCurrentRiskResponse], error)
@@ -242,6 +260,9 @@ type PublicServiceHandler interface {
 	// in the database. It answers "unavailable" with a reason — never a
 	// fabricated match — when no chain is configured or reachable.
 	GetAnchorVerification(context.Context, *connect.Request[v1.GetAnchorVerificationRequest]) (*connect.Response[v1.GetAnchorVerificationResponse], error)
+	// GetBriefing returns one county's plain-language risk briefing together
+	// with the exact fact sheet it was generated from (see briefing.proto).
+	GetBriefing(context.Context, *connect.Request[v1.GetBriefingRequest]) (*connect.Response[v1.GetBriefingResponse], error)
 }
 
 // NewPublicServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -311,6 +332,12 @@ func NewPublicServiceHandler(svc PublicServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(publicServiceMethods.ByName("GetAnchorVerification")),
 		connect.WithHandlerOptions(opts...),
 	)
+	publicServiceGetBriefingHandler := connect.NewUnaryHandler(
+		PublicServiceGetBriefingProcedure,
+		svc.GetBriefing,
+		connect.WithSchema(publicServiceMethods.ByName("GetBriefing")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/climateshield.v1.PublicService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PublicServiceGetCurrentRiskProcedure:
@@ -333,6 +360,8 @@ func NewPublicServiceHandler(svc PublicServiceHandler, opts ...connect.HandlerOp
 			publicServiceGetClimatologyHandler.ServeHTTP(w, r)
 		case PublicServiceGetAnchorVerificationProcedure:
 			publicServiceGetAnchorVerificationHandler.ServeHTTP(w, r)
+		case PublicServiceGetBriefingProcedure:
+			publicServiceGetBriefingHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -380,4 +409,8 @@ func (UnimplementedPublicServiceHandler) GetClimatology(context.Context, *connec
 
 func (UnimplementedPublicServiceHandler) GetAnchorVerification(context.Context, *connect.Request[v1.GetAnchorVerificationRequest]) (*connect.Response[v1.GetAnchorVerificationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("climateshield.v1.PublicService.GetAnchorVerification is not implemented"))
+}
+
+func (UnimplementedPublicServiceHandler) GetBriefing(context.Context, *connect.Request[v1.GetBriefingRequest]) (*connect.Response[v1.GetBriefingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("climateshield.v1.PublicService.GetBriefing is not implemented"))
 }

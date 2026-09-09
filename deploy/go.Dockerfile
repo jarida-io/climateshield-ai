@@ -5,7 +5,7 @@ ARG CMD
 WORKDIR /src
 COPY go.mod go.sum ./
 # BuildKit cache mounts share the module download and the compiler cache
-# across the seven service images built in parallel by `make up`. Without
+# across the eight service images built in parallel by `make up`. Without
 # them every image re-downloads every module (the tool dependencies alone are
 # hundreds of megabytes), which is what made a cold first build take so long.
 RUN --mount=type=cache,target=/go/pkg/mod go mod download

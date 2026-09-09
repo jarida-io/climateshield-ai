@@ -122,21 +122,24 @@ var ErrNotImplemented = errors.New("predict: not implemented")
 // A configured ONNX model path is a hard startup error while no model exists:
 // silently falling back to rules would misreport scoring provenance.
 // The choice is logged so every deployment's provenance is explicit.
+//
+// Whichever predictor is chosen, its output is wrapped by Annotate so that
+// every score carries the reference climatology's view of its own driver
+// value. The wrapper never changes a level, a driver or a driver value; see
+// annotate.go. The wrapped predictor's name and version are what get
+// persisted, because it is the one that decided the tier.
 func Select(name, modelPath string, log *slog.Logger) (Predictor, error) {
-	if modelPath != "" {
-		p, err := NewONNXPredictor(modelPath)
+	var p Predictor
+	switch {
+	case modelPath != "":
+		onnx, err := NewONNXPredictor(modelPath)
 		if err != nil {
 			return nil, fmt.Errorf("predict: ONNX model configured at %q but unavailable: %w", modelPath, err)
 		}
-		log.Info("predictor selected", "predictor", p.Name(), "version", p.Version())
-		return p, nil
-	}
-
-	var p Predictor
-	switch name {
-	case "", "rules":
+		p = onnx
+	case name == "" || name == "rules":
 		p = NewRulesPredictor()
-	case "climatology":
+	case name == "climatology":
 		c, err := NewClimatologyPredictor()
 		if err != nil {
 			return nil, err
@@ -145,6 +148,17 @@ func Select(name, modelPath string, log *slog.Logger) (Predictor, error) {
 	default:
 		return nil, fmt.Errorf("predict: unknown predictor %q (want rules or climatology)", name)
 	}
-	log.Info("predictor selected", "predictor", p.Name(), "version", p.Version())
-	return p, nil
+
+	annotated, annotating := p, false
+	clim, err := LoadClimatology()
+	if err != nil {
+		// An annotation that cannot be measured is left off, not invented.
+		log.Warn("reference climatology unavailable: scores will carry no exceedance annotation",
+			"error", err)
+	} else {
+		annotated, annotating = Annotate(p, clim), true
+	}
+	log.Info("predictor selected",
+		"predictor", p.Name(), "version", p.Version(), "climatology_annotation", annotating)
+	return annotated, nil
 }

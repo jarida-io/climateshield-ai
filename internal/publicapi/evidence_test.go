@@ -63,6 +63,43 @@ func TestModelInfoReportsLiveDeploymentAndUnreachableThresholds(t *testing.T) {
 	require.False(t, byDisease["meningitis"].GetReachableInReferencePeriod())
 	require.Contains(t, byDisease["pneumonia"].GetNote(), "never fires")
 	require.Contains(t, byDisease["meningitis"].GetNote(), "never fires")
+
+	// Provenance: the reference artifact must be identified precisely enough
+	// that a reviewer can hash it and rebuild it, rather than take it on
+	// trust. The digest is of the exact bytes embedded in the binary.
+	digest, err := predict.ClimatologyDigest()
+	require.NoError(t, err)
+	require.Equal(t, digest, msg.GetReferenceSha256())
+	require.Len(t, msg.GetReferenceSha256(), 64)
+	require.Equal(t, predict.DefaultClimatologyFile, msg.GetReferenceFile())
+	require.Equal(t, "cmd/buildclimatology", msg.GetReferenceGenerator())
+	require.Positive(t, msg.GetReferenceWindows())
+	require.EqualValues(t, 21, msg.GetQuantileSteps())
+
+	// The climatology predictor is the deployment here, so the exceedance is
+	// what set each level and the view must say so.
+	require.Equal(t, predict.ExceedanceRoleDeciding, msg.GetExceedanceRole())
+}
+
+// Under the default deployment the published thresholds decide the tiers, and
+// /v1/model must say the exceedance beside a score only annotates it.
+func TestModelInfoSaysTheExceedanceOnlyAnnotatesRulesScores(t *testing.T) {
+	pool := testdb.Pool(t)
+	srv := publicapi.NewServer(pool, logging.New(io.Discard, "info")).
+		WithDeployment("rules", predict.RulesVersion, "mock", "6h")
+	ts := httptest.NewServer(srv.Router(nil, nil))
+	t.Cleanup(ts.Close)
+
+	_, body := get(t, ts, "/v1/model")
+	var msg climateshieldv1.GetModelInfoResponse
+	require.NoError(t, protojson.Unmarshal([]byte(body), &msg))
+
+	require.Equal(t, "rules", msg.GetActivePredictor())
+	require.Equal(t, predict.ExceedanceRoleAnnotation, msg.GetExceedanceRole())
+	require.Contains(t, msg.GetExceedanceRole(), "did not move any tier")
+	// The reference provenance is reported whichever predictor is active: the
+	// annotation is measured from the same artifact.
+	require.NotEmpty(t, msg.GetReferenceSha256())
 }
 
 func TestClimateSeriesReportsSourceItWasActuallyIngestedFrom(t *testing.T) {
