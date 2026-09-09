@@ -15,9 +15,9 @@ substantiated.
 
 ## Services
 
-Six long-running services plus two one-shot commands, all from one Go module.
-Each `cmd/*/main.go` is about fifteen lines and delegates to `Run` in its
-package.
+Seven long-running services plus three one-shot commands, all from one Go
+module. Each service's `cmd/*/main.go` is about fifteen lines and delegates to
+`Run` in its package.
 
 ```mermaid
 flowchart LR
@@ -30,6 +30,7 @@ flowchart LR
         PRE["predictor :8091<br/>internal/predict"]
         NOT["notifier :8092<br/>internal/notify/notifier"]
         LED["ledger :8093<br/>internal/ledger"]
+        BRF["briefing :8094<br/>internal/briefing<br/>deterministic template by default"]
         REG["registry :8082<br/>internal/registry<br/>INTERNAL ONLY"]
         API["publicapi :8080<br/>internal/publicapi<br/>read-only, unauthenticated"]
     end
@@ -47,6 +48,7 @@ flowchart LR
     PRE --> PG
     NOT --> PG
     LED --> PG
+    BRF --> PG
     REG --> PG
     API --> PG
     LED -->|"daily Merkle root, read back after writing"| ANVIL
@@ -131,6 +133,41 @@ Two properties are worth stating plainly because they are easy to overclaim:
   linkage and destroys that child's HMAC key, which makes their leaves
   permanently unlinkable while previously published roots continue to verify.
 
+## The county briefings
+
+The briefing service builds an aggregate **fact sheet** for a county — the same
+numbers the public API already publishes, through the same k>=10 suppression —
+and turns it into prose. Nothing generates on a request path: the service runs
+its own sweep on `BRIEFING_SWEEP_INTERVAL`, and a county whose fact-sheet hash
+has not changed regenerates nothing.
+
+```mermaid
+flowchart LR
+    AGG["risk_scores, climate windows,<br/>alert counts through Suppress"]
+    FS["FactSheet<br/>no field for a child, a guardian,<br/>a phone or a sub-k count"]
+    GEN{"generator"}
+    TPL["deterministic template<br/>DEFAULT — labels itself<br/>'[mock] no language model ran'"]
+    LLM["language model<br/>OPT-IN: local open-weights,<br/>or the Claude API with a key"]
+    CHK{"grounding check<br/>against the same fact sheet"}
+    STORE[("briefings<br/>served, or rejected with reasons")]
+
+    AGG --> FS --> GEN
+    GEN -->|default| TPL --> STORE
+    GEN -->|opt-in| LLM --> CHK
+    CHK -->|grounded| STORE
+    CHK -->|refused| TPL
+```
+
+A draft is refused for a number not traceable to the fact sheet, another
+county, an unscored disease, a disease at the wrong tier, an accuracy or
+outbreak-prediction claim, an "SMS sent" claim in either language, a person- or
+phone-shaped string, or a model writing the `[mock]` label itself. Refused text
+is never served, stored or logged — only the kinds of violation are published,
+because repeating the text would repeat exactly what the check exists to stop.
+
+No generated text ever reaches a guardian. Alert SMS comes only from the fixed,
+length-checked templates in `internal/notify`.
+
 ## The public surface
 
 One read-only tier serves both REST and Connect from the same protobuf
@@ -178,11 +215,12 @@ reaches a public response, in JSON or in the CSV export.
 | `event_leaves`, `daily_roots`, `anchors`, `anchor_contracts` | The ledger: per-child HMAC leaves, daily Merkle roots, anchor receipts and the deployed contract per chain. |
 | `sealed.child_keys` | Per-child HMAC keys, in their own schema. Referenced from exactly one query file. |
 | `alerts` | What the alert path did for each child and score, including the outcomes that were skipped and why. |
+| `briefings` | One county briefing per language, with the generator, model and prompt version that wrote it, the fact sheet it was written from and that sheet's hash. A refused draft is recorded with status `rejected` and its reasons — the body stored is the labelled template, and the model's own text is never stored. |
 | River tables | Durable job queues with real retry history. |
 
 ## What runs where
 
-`make up` starts Postgres, runs migrations, then the six services, the local
+`make up` starts Postgres, runs migrations, then the seven services, the local
 development chain and the dashboard. `make demo` drives one pass of the whole
 pipeline against committed fixtures and prints what it did. Both need zero
 credentials, and every dependency is open source and free.

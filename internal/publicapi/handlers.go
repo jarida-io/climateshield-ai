@@ -39,6 +39,7 @@ func (s *Server) buildCurrentRisk(ctx context.Context) (*climateshieldv1.GetCurr
 		resp.Scores = append(resp.Scores, riskScoreMsg(
 			r.AreaName, r.Latitude, r.Longitude, r.Disease, r.Level, r.Driver,
 			r.DriverValue, r.ForecastDate, r.Predictor, r.PredictorVersion, r.ScoredAt,
+			r.Exceedance, r.Explanation,
 		))
 	}
 	return resp, nil
@@ -85,6 +86,7 @@ func (s *Server) buildRiskHistory(ctx context.Context, p historyParams) (*climat
 		resp.Scores = append(resp.Scores, riskScoreMsg(
 			r.AreaName, r.Latitude, r.Longitude, r.Disease, r.Level, r.Driver,
 			r.DriverValue, r.ForecastDate, r.Predictor, r.PredictorVersion, r.ScoredAt,
+			r.Exceedance, r.Explanation,
 		))
 	}
 	return resp, nil
@@ -181,9 +183,9 @@ func (s *Server) dueCounts(ctx context.Context) (due, overdue map[string]int64, 
 func riskScoreMsg(
 	areaName string, lat, lon float64, disease, level, driver string,
 	driverValue float64, forecastDate pgtype.Date, predictor, version string,
-	scoredAt pgtype.Timestamptz,
+	scoredAt pgtype.Timestamptz, exceedance *float64, explanation *string,
 ) *climateshieldv1.RiskScore {
-	return &climateshieldv1.RiskScore{
+	msg := &climateshieldv1.RiskScore{
 		Area:             areaName,
 		Latitude:         lat,
 		Longitude:        lon,
@@ -196,6 +198,20 @@ func riskScoreMsg(
 		PredictorVersion: version,
 		ScoredAt:         timestamppb.New(scoredAt.Time),
 	}
+	// The explainability columns, published as stored. Both describe WEATHER:
+	// the exceedance is how unusual this driver value is for this county and
+	// month against the reference climatology, and the explanation is the
+	// sentence the predictor wrote about the cutoff it applied. Neither is
+	// derived from a person, and publishing them is the difference between a
+	// risk level a health officer can act on and one they must simply accept.
+	if exceedance != nil {
+		v := *exceedance
+		msg.Exceedance = &v
+	}
+	if explanation != nil {
+		msg.Explanation = *explanation
+	}
+	return msg
 }
 
 func optionalDate(s string) (pgtype.Date, error) {

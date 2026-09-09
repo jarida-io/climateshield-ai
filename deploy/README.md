@@ -42,8 +42,24 @@ ufw default deny incoming && ufw allow OpenSSH && ufw allow 80 && ufw allow 443 
 ```bash
 git clone https://github.com/jarida-io/climateshield.git
 cd climateshield
-git checkout feat/climatology-model
 ```
+
+The default branch is what you want. Do not deploy a feature branch.
+
+Two things this stack starts that are easy to overlook when reading the base
+compose file:
+
+- **`anvil`** — a single-node EVM **development** chain (id 31337) that the
+  ledger anchors each day's Merkle root to and reads back from. It is not a
+  public network, it holds no value, and its history is deleted along with the
+  database by `down -v`. The base file publishes it on `127.0.0.1:8545` so a
+  reviewer can run `cast` against it from the host; **the production overlay
+  stops publishing 8545 entirely**, and the chain stays reachable only from the
+  ledger and the public API inside the compose network. The anchor and its
+  verification endpoint keep working either way.
+- **`briefing`** — writes the county briefings. Its default generator is a
+  deterministic template; no language model runs and no credential is involved
+  unless you deliberately set `BRIEFING_GENERATOR`.
 
 ## 3. Generate secrets **on the host**
 
@@ -88,7 +104,7 @@ docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --b
 docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml ps
 ```
 
-First build compiles seven Go binaries and the dashboard — several minutes.
+First build compiles eight Go binaries and the dashboard — several minutes.
 
 ## 5. Seed the demo population and run the pipeline
 
@@ -113,8 +129,13 @@ REGISTRY_URL=http://localhost:8082 PUBLICAPI_URL=http://localhost:8080 \
 ```bash
 curl -s localhost/health
 curl -s localhost/v1/risk/current | head -c 300
-curl -s localhost/v1/model | grep -o 'reachableInReferencePeriod[^,]*' | head -4
+curl -s localhost/v1/model | grep -o '"note":"[^"]*"' | head -4
+curl -s localhost/v1/ledger/anchors/verify | grep -o '"status":"[a-z]*"'
 ```
+
+The last one should say `verified` once the ledger has swept at least one day.
+`unavailable` means the check could not run and the response says why; it is
+never a fabricated match.
 
 Then open the dashboard in a browser at your host address.
 
@@ -144,8 +165,11 @@ $C down -v                  # stop and DELETE the database
 - **No SMS is sent.** `NOTIFY_CHANNEL=mock` records what it would send.
 - **The public surface is aggregates only**, k≥10 suppressed, enforced by a
   contract test in CI.
-- **Postgres and the registry API are not reachable from the internet.** Caddy
-  is the only public process.
+- **Postgres, the registry API and the development chain are not reachable from
+  the internet.** Caddy is the only public process.
+- **The chain the ledger anchors to is a local development chain** started by
+  this deployment. Nothing here writes to any public network, and no surface
+  calls it public, immutable or decentralised.
 
 ## Before this could hold real data
 
@@ -161,4 +185,9 @@ Not a checklist for today — a statement of what is missing. From
    way to invoke it. Holding real records without an operable
    right-to-erasure path is not defensible.
 4. **Backups**, and a restore you have actually rehearsed.
-5. **The coverage gate**, currently red at 66.8% against an 80% threshold.
+5. **A demonstrated delivery path.** No SMS has ever been sent by this system,
+   so the last hop between an alert and a guardian is unproven. See
+   [docs/roadmap.md](../docs/roadmap.md).
+
+The coverage gate used to be on this list, red at 66.8%. It now reads 90.6%
+against the 80% threshold and is green, so it is not.

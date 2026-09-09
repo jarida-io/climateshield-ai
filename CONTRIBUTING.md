@@ -10,16 +10,18 @@ than from taste.
 
 ## Development setup
 
-Prerequisites: **Go 1.23+**, **Docker** (for the database and tests), and
-**Node 20+** (for the dashboard only). Nothing else needs installing — `buf`,
-`sqlc` and the protobuf plugins are pinned as `go.mod` tool dependencies, and
-`golangci-lint` is fetched into `./bin` by the Makefile at a pinned version.
+Prerequisites: **Go 1.26** (the version `go.mod` requires and the build image
+uses), **Docker** (for the database and tests), and **Node 22** (for the
+dashboard only — it is what CI and `web/Dockerfile` use). Nothing else needs
+installing — `buf`, `sqlc` and the protobuf plugins are pinned as `go.mod` tool
+dependencies, and `golangci-lint` is fetched into `./bin` by the Makefile at a
+pinned version.
 
 ```bash
 git clone https://github.com/jarida-io/climateshield.git
 cd climateshield
 cp .env.example .env
-make up      # full stack, healthy in under a minute
+make up      # full stack; several minutes on a cold Docker cache, ~1 min after
 make demo    # end-to-end pipeline against committed fixtures
 make verify  # everything CI runs
 ```
@@ -47,7 +49,9 @@ the funding agreement:
 4. **Never log PII.** Use the typed wrappers in
    `internal/platform/logging`.
 5. **Coverage must stay ≥80%** over `./internal/...`, excluding generated code.
-6. **Every first-party source file carries** `SPDX-License-Identifier: Apache-2.0`.
+6. **Every first-party source file carries** `SPDX-License-Identifier: Apache-2.0`
+   — `.go`, `.ts`, `.tsx`, `.proto`, `.sql` and `.sol`.
+   `scripts/contract-checks.sh` fails the build if one is missing.
 7. **Do not delete or rename the contract tests** (`TestContract_PIILeak`,
    `TestContract_KAnonymity`). CI runs them by name.
 8. **Risk thresholds live only in `internal/predict/rules.go`.** They are

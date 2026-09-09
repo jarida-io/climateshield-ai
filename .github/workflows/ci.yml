@@ -22,6 +22,12 @@ jobs:
       - name: Pre-pull PostGIS image
         run: docker pull imresamu/postgis:16-3.4
 
+      - name: Pre-pull the development-chain image
+        # internal/ledger/anchor/evm's container test starts anvil through
+        # testcontainers. Pull it here rather than inside the test's startup
+        # timeout. Digest-pinned, same string the test and compose assert.
+        run: docker pull ghcr.io/foundry-rs/foundry:v1.5.1@sha256:3a70bfa9bd2c732a767bb60d12c8770b40e8f9b6cca28efc4b12b1be81c7f28e
+
       - name: Build
         run: go build ./...
 
@@ -37,10 +43,34 @@ jobs:
       - name: Contract checks (SPDX, sealed-schema isolation, contract tests)
         run: ./scripts/contract-checks.sh
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dashboard dependencies
+        # buf.gen.yaml runs protoc-gen-es out of web/node_modules, so this has
+        # to happen before the codegen drift check below, not just before the
+        # dashboard build.
+        run: cd web && npm ci --no-audit --no-fund
+
       - name: Codegen drift (sqlc)
         run: |
           go tool sqlc generate
           git diff --exit-code -- internal/store/db
+
+      - name: Codegen drift (protobuf)
+        # A new RPC that ships with stale generated code compiles on the
+        # author's machine and nowhere else. The Go server, the Connect
+        # handler and the dashboard's client all come from proto/, so they
+        # must move together.
+        run: |
+          go tool buf generate
+          git diff --exit-code -- internal/gen web/src/gen
+
+      - name: Dashboard typecheck and build
+        run: cd web && npx tsc --noEmit && npm run build
 
       - name: Test (unit + testcontainers, no external network)
         run: go test ./... -coverprofile=coverage.out -covermode=atomic -coverpkg=./internal/...

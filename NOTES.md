@@ -17,13 +17,17 @@ unflattering. Everything below was verified by running it, not by intention.
 | Erasure | Real. `ForgetChild` deletes records, scrubs leaf linkage, destroys the HMAC key; tested that roots still verify structurally afterwards. |
 | Notification | Real up to the channel boundary. Bilingual GSM-7 templates, consent gate, quiet hours, per-child-per-score dedup. The mock channel writes JSONL and sends nothing. |
 | Public API | Real. REST (JSON/CSV/GeoJSON) + Connect over the same proto messages, k≥10 suppression, last-good-response stale cache, never-500 reads. |
-| Dashboard | Seven views, each backed by a live endpoint, each carrying an on-screen statement of what it does NOT prove. Filter/preview forms on every view; hand-built SVG charts (no charting dependency). Types generated from protobuf. |
-| Climatology predictor | Real. Empirical per-county, per-month distributions from ~18,200 historical 14-day windows, embedded in the binary. Reports exceedance of the CLIMATE driver, never an outbreak probability. |
+| Dashboard | Nine views, each backed by a live endpoint, each carrying an on-screen statement of what it does NOT prove. A status strip under the nav puts the weather source, the channel ("mock — no SMS is sent"), the active scorer and "demo population: fictional" on EVERY view. Filter/preview forms throughout; hand-built SVG charts (no charting dependency). Types generated from protobuf. |
+| Climatology predictor | Real. Empirical per-county, per-month distributions from 18,195 historical 14-day windows (3,780 stored quantiles), embedded in the binary. Reports exceedance of the CLIMATE driver, never an outbreak probability. |
+| Annotated scores | Real. A default `PREDICTOR=rules` deployment now records an exceedance annotation and one explaining sentence on every score. The published thresholds still decide every tier; the annotation is measured after the fact and moved nothing. The bare `RulesPredictor` is byte-identical and its boundary tests are untouched. |
+| Chain anchor | Real, against a LOCAL DEVELOPMENT CHAIN. Each day's Merkle root goes to a `RootAnchor` contract on the anvil node this stack starts (chain id 31337) and is read back with `eth_call` before the day is reported anchored; a mismatch is an error. `GET /v1/ledger/anchors/verify` re-runs the check live. Nothing is written to any public network. |
+| Briefing service | Real. One plain-language briefing per county per language (en, sw) built from an aggregate fact sheet. The DEFAULT generator is a deterministic template that labels itself. Model drafts pass a grounding check or are rejected. |
 | Threshold validation | Real, and the most useful thing in here. Two of four published cutoffs are unreachable in the monitored counties; see docs/threshold-validation.md. Encoded as a failing-if-untrue test and exposed on /v1/model. |
-| Pipeline | Real. River-backed ingest → predict → alert, plus a ledger sweep, exercised end to end by an integration test that boots all six services. |
+| Pipeline | Real. River-backed ingest → predict → alert, plus a ledger sweep and a briefing sweep, exercised end to end by an integration test that boots all seven services. |
 
-`make verify`, `make up` and `make demo` all pass; the demo output in the README
-is copied from an actual run.
+`make verify`, `make up` and `make demo` all pass as of the last commit on this
+branch. The demo output in the README is copied verbatim from an actual run —
+quiet-hours note, zero alert count and all — not retyped or tidied.
 
 ## What is stubbed, and exactly where
 
@@ -34,7 +38,9 @@ is copied from an actual run.
 | ERA5 source | `internal/climate/era5/era5.go` | `TODO(Q1)`; constructor returns `ErrNotImplemented`. |
 | Africa's Talking | `internal/notify/at/at.go` | Returns `ErrNotConfigured`. No account, no credentials, by design. |
 | SMPP channel | `internal/notify/smpp/smpp.go` | Wired against `fiorix/go-smpp` and it compiles and binds lazily, but it has **never been tested against a live carrier**. Treat it as unproven. |
-| Public-chain anchor | `internal/ledger/anchor/evm/` | Real, but only against a **local development chain**: `RootAnchor.sol` (compiled once, artifacts committed and hash-checked) receives each day's root via a hand-rolled JSON-RPC client and the root is read back before it is reported. `make up` starts anvil for it; its history is deleted by `make down -v`. Nothing in this repo writes to any public chain, and no surface may call this chain public, immutable or decentralised. |
+| Public-chain anchor | `internal/ledger/anchor/evm/` | The anchor itself is real, but only against a **local development chain**: `RootAnchor.sol` (compiled once, artifacts committed and hash-checked) receives each day's root via a hand-rolled JSON-RPC client and the root is read back before it is reported. `make up` starts anvil for it; its history is deleted by `make down -v`. Anchoring to a **public** network is deliberately not wired — it needs a funded signing key and the zero-credential rule forbids one. Nothing in this repo writes to any public chain, and no surface may call this chain public, immutable or decentralised. |
+| Language-model briefings | `internal/briefing/openaicompat/`, `internal/briefing/anthropic/` | Both adapters are written and covered by committed golden response shapes served by `httptest`. **Neither has ever produced a briefing on this machine.** `make up-ai` (Ollama + qwen2.5:1.5b) has never been run here — it needs a multi-GB image and model pull — and no live Anthropic API call has ever been made from this repository, deliberately: tests may not touch the network and the repo ships no key. The compose graph for the `ai` profile was validated with `docker compose config` and the image digest resolved with `docker manifest inspect`, and that is the whole of what is known. |
+| Kiswahili wording | `internal/briefing/mock/`, `internal/notify/` templates | The Kiswahili text is the implementer's, not a Kiswahili speaker's. The grounding check catches invented facts; it does not judge grammar. Every surface says so and keeps saying so until a named reviewer signs it off. |
 
 ## Assumptions I made
 
@@ -105,64 +111,106 @@ place, with boundary tests.
 
 ## Coverage, per package
 
-**Total: 66.8% (1444/2162 statements). The gate is 80% and is currently RED.**
+**Total: 90.6% (2819/3113 statements). The gate is 80% and is GREEN.**
 Generated code (`internal/gen`, `internal/store/db`) is excluded; nothing else
-is. This branch adds roughly 790 statements — the climatology predictor, the
-evidence API and the climatology explorer — and the new code has been added
-faster than tests for it. The evidence handlers themselves are covered; the
-gap is service bootstrap plus the long tail of error branches. The gap is concentrated in `Run` composition roots
-(`internal/predict/service.go`, `internal/publicapi/server.go`,
-`internal/climate/ingestor/service.go`), which only the integration test
-touches.
+is. Reproduce with:
 
-Two honest ways to close it, and the choice is a policy one:
-(a) write tests for the bootstrap paths, or (b) argue that `Run` composition
-roots belong in the same excluded category as the thin `cmd/` mains and
-document that decision. Option (b) must not be taken quietly — moving a
-threshold to meet the code is exactly what the gate exists to prevent.
+```sh
+make test
+go run ./scripts/covergate -profile coverage.out -threshold 80
+```
 
-Per-package figures below predate this branch and are stale; regenerate before
-quoting them.
+This is up from a red 66.8% one branch ago. It was closed by writing tests, not
+by moving the threshold or adding an exclusion — which was the stated policy
+here when the number was embarrassing, and the policy did not change once it
+stopped being embarrassing.
+
+The per-package figures below come from the same `coverage.out` the gate reads,
+merged block-by-block the way `covergate` merges it and then summed per
+directory:
+
+```sh
+awk '!/^mode:/ && !/\/internal\/(gen|store\/db)\// {
+       if (!($1 in best) || $3 > best[$1]) best[$1] = $3; st[$1] = $2 }
+     END { for (b in st) { p = b; sub(/:[0-9.,]+$/, "", p); sub(/\/[^\/]*$/, "", p)
+             t[p] += st[b]; if (best[b] > 0) c[p] += st[b] }
+           for (p in t) printf "%.1f\t%s\n", 100*c[p]/t[p], p }' coverage.out | sort -k2
+```
+
+Because `make test` runs with `-coverpkg=./internal/...`, every test binary
+reports every instrumented block, so a package's number includes coverage
+contributed by other packages' tests — the integration test in particular. That
+is the honest answer to "is this code exercised anywhere in the suite", and it
+is higher than what `go test ./internal/foo` alone would print for the same
+package. Where the two disagree, say which one you mean.
 
 | Package | Coverage | |
 |---|---|---|
+| `internal/briefing` | 95.6% | |
+| `internal/briefing/anthropic` | 97.0% | never called against the live API |
+| `internal/briefing/facts` | 96.7% | |
+| `internal/briefing/facts/factstest` | 100.0% | test harness |
+| `internal/briefing/mock` | 100.0% | the deterministic template |
+| `internal/briefing/openaicompat` | 92.1% | never called against a live model |
 | `internal/climate` | 95.8% | |
 | `internal/climate/chirps` | 100.0% | stub |
 | `internal/climate/era5` | 100.0% | stub |
 | `internal/climate/fixture` | 92.3% | |
-| `internal/climate/ingestor` | 50.0% | **weakest**; service bootstrap |
+| `internal/climate/ingestor` | 78.9% | service bootstrap |
 | `internal/climate/openmeteo` | 86.4% | |
 | `internal/jobs` | 100.0% | |
-| `internal/ledger` | 78.2% | |
-| `internal/ledger/anchor` | 83.3% | |
+| `internal/ledger` | 85.8% | |
+| `internal/ledger/anchor` | 100.0% | |
+| `internal/ledger/anchor/evm` | 95.5% | |
+| `internal/ledger/anchor/evm/evmtest` | 84.9% | test harness |
 | `internal/notify` | 97.5% | |
 | `internal/notify/at` | 100.0% | stub |
 | `internal/notify/mock` | 74.1% | |
-| `internal/notify/notifier` | 80.5% | |
-| `internal/notify/smpp` | 58.8% | untested against a carrier |
+| `internal/notify/notifier` | 79.9% | |
+| `internal/notify/smpp` | 58.8% | **weakest**, and untested against a carrier |
 | `internal/platform/clock` | 100.0% | |
 | `internal/platform/config` | 75.0% | |
-| `internal/platform/crypto` | 82.2% | |
+| `internal/platform/crypto` | 83.3% | |
 | `internal/platform/httpx` | 85.7% | |
-| `internal/platform/logging` | 97.6% | |
+| `internal/platform/logging` | 100.0% | |
 | `internal/platform/metrics` | 100.0% | |
-| `internal/predict` | 67.2% | rules logic is ~100%; service wiring drags it |
-| `internal/publicapi` | 93.5% | |
+| `internal/predict` | 92.7% | |
+| `internal/publicapi` | 93.0% | |
 | `internal/registry` | 88.2% | |
 | `internal/store` | 73.8% | |
 | `internal/store/seed` | 84.8% | |
 | `internal/store/testdb` | 68.5% | test harness |
 
-The number flatters the pure logic and hides thin spots in service bootstrap
-and error paths. `internal/climate/ingestor` at 50% is the one I would fix
-first.
+The number still flatters pure logic over error paths. `internal/notify/smpp`
+at 58.8% is the one I would fix first, and it is also the package whose real
+behaviour a test cannot establish at all (see below).
 
 ## Where this is thin — read this part
 
-- **The risk model is four `if` statements.** It is defensible as a v1 because
-  the thresholds are published and traceable, but it is not machine learning,
-  it has not been validated against outbreak data, and **no accuracy claim is
-  made anywhere in this repository**. Do not let a demo imply otherwise.
+- **The thing that decides a risk level is still four `if` statements.** A
+  fitted baseline now annotates every score with how unusual the weather was,
+  and can be promoted to the deciding scorer with `PREDICTOR=climatology` — but
+  in the default deployment the published thresholds set every tier and trigger
+  every alert, and the annotation moves nothing. That is defensible as a v1
+  because the thresholds are published and traceable, but neither scorer is
+  machine learning, neither has been validated against outbreak data, and **no
+  accuracy claim is made anywhere in this repository**. Do not let a demo imply
+  otherwise.
+- **The reference climatology has not been rebuilt from the archive here.**
+  `make climatology` was never run in this branch, so byte-identical
+  regeneration is unproven. What is proven without a network: the generator
+  re-emits the committed artifact byte for byte
+  (`TestEncoderReproducesTheCommittedArtifactByteForByte`) and its windowing
+  reproduces the committed per-county-per-month sample counts. A human should
+  run `make climatology` once and compare the digest before the assessment.
+- **The artifact's quantile index rule was inferred, not recovered.** The
+  repository never contained the original generator, so the rule
+  (virtual index `p/100*(n-1)`, rounded half to even — NumPy's
+  `method="nearest"`) was reverse-engineered. It is consistent with every value
+  in the committed file being an exact order statistic: all 2,520 temperature
+  quantiles are exact multiples of 1/140 and all 1,260 rainfall quantiles are
+  exactly one decimal. Consistent is not the same as confirmed; only a rebuild
+  confirms it.
 - **Nothing has run at scale.** Five counties, 28 fictional children, 273
   ledger leaves. No load test, no query plan review, no index tuning beyond the
   obvious. `climate_observations` has no partitioning yet.
@@ -173,8 +221,24 @@ first.
   external key management.
 - **`ForgetChild` is not wired to an API.** It is a tested library function; no
   endpoint or operator tool calls it.
-- **The dashboard is one page with five dots.** No history view, no legend
-  beyond three colours, no error retry. The basemap needs internet.
+- **The dashboard is nine views and no test runner.** `web/` has no test
+  framework at all, so none of the TypeScript is covered by anything; adding
+  one is a stack decision that has not been taken. The basemap still needs
+  internet, dark mode is still not implemented, and the stale-data banner's
+  logic has been reviewed but never exercised against a real `X-Data-Stale`
+  response — producing one means stopping the database under the running
+  stack, which nobody has done yet.
+- **No language model has ever written a briefing here.** The default
+  deterministic template is exercised constantly; the two model adapters are
+  exercised only against committed golden response shapes. `make up-ai` has
+  never been run on this machine and no live Anthropic call has ever been made.
+  The grounding check is well tested against adversarial drafts
+  (`go test ./internal/briefing -run TestAdversarialDrafts`), but every one of
+  those drafts was written by a human pretending to be a model.
+- **The Kiswahili has had no native-speaker review.** Both the SMS templates
+  and the briefing template are the implementer's Kiswahili. This is the
+  cheapest outstanding item on the list and the one most likely to embarrass
+  the project in front of the people it is for.
 - **Error paths are thinner than happy paths.** Retry, backoff and partial
   failure handling largely rely on River's defaults, which have not been tuned.
 - **The SMPP adapter may well not work.** It compiles and fails cleanly against
@@ -182,12 +246,14 @@ first.
 - **Alert selection is naive.** Every child with any due dose in an affected
   county is alerted; there is no prioritisation by risk, distance to a clinic,
   or how overdue they are.
-- **The dashboard was verified in an embedded browser, not a real one.** Marker
-  placement, colours, data binding, basemap tile rendering, the Comfortaa
-  wordmark and the logo were all confirmed against the running stack, but only
-  after forcing a viewport size, because the embedded browser reports 0×0 and
-  will not paint on its own. Responsive behaviour at real window sizes and on
-  mobile is therefore unverified. Open it in a normal browser before any demo.
+- **Most of the dashboard was verified in an embedded browser, not a real one.**
+  Marker placement, colours, data binding, basemap tile rendering, the
+  Comfortaa wordmark and the logo were all confirmed against the running stack,
+  but only after forcing a viewport size, because the embedded browser reports
+  0×0 and will not paint on its own. The History view and its "verify on chain
+  now" button are the exception: those were confirmed in a real browser against
+  the running stack. Responsive behaviour at real window sizes and on mobile
+  remains unverified. Open it in a normal browser before any demo.
 
 ## Dashboard forms and charts
 
@@ -264,7 +330,56 @@ reanalysis, used to flag climatological extremes; no disease model has been
 trained or validated."* Anyone who wants to call that "AI" should be
 corrected — including in your own slides.
 
-## The three things I would do next
+## On calling it "AI"
+
+There are now two things in this repository that a reader could point at and
+say "AI", and only one of them has any claim to the word. Keep them apart.
+
+**The briefing generator can be real generative text.** When a deployment opts
+in — `make up-ai` for a local open-weights model, or the Claude API with a key
+this repository never ships — a language model writes the county briefing. That
+is a language model doing what language models do, and calling it generative AI
+is fair. Four things bound it:
+
+- It is **off by default**. The shipped generator is a deterministic template
+  whose first line is `[mock] no language model ran — deterministic template.`
+  If you see that line, no model ran, and the surface says so rather than
+  leaving you to guess.
+- It is **grounded**. Every draft is checked against the aggregate fact sheet it
+  was given. A number not traceable to the sheet, another county, an unscored
+  disease, a disease at the wrong tier, an accuracy or outbreak-prediction
+  claim, an "SMS sent" claim in either language, a person- or phone-shaped
+  string, or a model writing our own `[mock]` label — each rejects the draft.
+  A rejected draft is never served, stored or logged; the template is served in
+  its place with the violation kinds published.
+- It is **labelled**. Every briefing carries its generator, model and prompt
+  version alongside the hash of the fact sheet it was written from.
+- It **cannot see a person**. The `FactSheet` type has no field for a child, a
+  guardian, a phone number or a sub-k count, and no generated text is ever sent
+  to a guardian — SMS comes only from the fixed, length-checked templates.
+
+And the honest caveat, which belongs in the same breath: **no model has ever
+written one of these on this machine.** Both adapters are tested against
+committed golden response shapes, never a live model. Until someone runs
+`make up-ai` and watches it, "the generative pillar works" means "the plumbing
+and the refusal path work".
+
+**The risk scorer is not AI, in either mode.** Neither the four published
+threshold rules nor the fitted climatology is machine learning; nothing was
+trained on health outcomes; nothing predicts a disease. Calling the scorer AI
+because there is now a language model elsewhere in the same repository would be
+exactly the sort of borrowed credibility this project exists to avoid.
+
+The sentence that covers both: *"a language model can write the county
+briefing, and every sentence it writes is checked against the aggregates it was
+given; the risk levels themselves come from published threshold rules and a
+fitted weather baseline, neither of which is machine learning."*
+
+## What I would do next
+
+Ordered by how much each changes whether the system helps anyone.
+[docs/roadmap.md](docs/roadmap.md) says which of these are blocked on somebody
+else rather than on effort.
 
 1. **Validate the thresholds, or stop calling them a model.** Pull historical
    county outbreak data and CHIRPS/ERA5 reanalysis, and measure how these four
@@ -284,3 +399,9 @@ corrected — including in your own slides.
    untested boundary: get an SMPP or Africa's Talking sandbox delivering to one
    handset, with delivery receipts recorded, before anyone plans a pilot.
    Nothing else in the system is worth much if the last hop does not work.
+5. **Get the Kiswahili reviewed, and run `make up-ai` once.** Two small jobs
+   that convert two "unproven" labels into "verified". A named Kiswahili
+   reviewer signs off the SMS and briefing templates; a human runs the ai
+   profile and watches a local model write one briefing and, ideally, watches
+   the grounding check refuse one. Neither is hard. Both are currently caveats
+   in front of an assessor.
