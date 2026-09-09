@@ -24,6 +24,11 @@ service PublicService {
   rpc GetAlertSummary(GetAlertSummaryRequest) returns (GetAlertSummaryResponse) {}
   rpc GetPipelineStatus(GetPipelineStatusRequest) returns (GetPipelineStatusResponse) {}
   rpc GetClimatology(GetClimatologyRequest) returns (GetClimatologyResponse) {}
+  // GetAnchorVerification checks one day's root against the chain LIVE:
+  // eth_call rootOf(day) on the RootAnchor contract, compared with the root
+  // in the database. It answers "unavailable" with a reason — never a
+  // fabricated match — when no chain is configured or reachable.
+  rpc GetAnchorVerification(GetAnchorVerificationRequest) returns (GetAnchorVerificationResponse) {}
 }
 
 // RiskScore is one county x disease risk assessment for one forecast window.
@@ -167,14 +172,66 @@ message DailyRoot {
   bool leaf_count_suppressed = 4;
   string anchor_type = 5;
   google.protobuf.Timestamp anchored_at = 6;
+
+  // Where the NEWEST anchor of this day was published. Only the newest is
+  // reported: how many anchor versions a day accumulated would track how
+  // many late immunizations were recorded, a people-derived count. The chain
+  // fields are zero/empty for a local (database-table) anchor.
+  int64 chain_id = 7;
+  string chain_label = 8; // e.g. "local development chain started by this stack — not a public network"
+  string contract_address = 9;
+  string tx_hash = 10;
+  int64 block_number = 11;
+  // readback_matches is true when the anchor read the root back from its
+  // destination right after publishing and it equalled the root published.
+  // Always false for local anchors: a database row is not an independent
+  // place to read from, and the row does not pretend otherwise.
+  bool readback_matches = 12;
+  google.protobuf.Timestamp verified_at = 13;
+  // anchor_reference is the anchor's own reference: the hex root for a local
+  // anchor, the transaction hash for a chain anchor.
+  string anchor_reference = 14;
 }
 
 message GetLedgerSummaryResponse {
   repeated DailyRoot roots = 1;
   int64 total_days = 2;
   string algorithm = 3;
-  string anchor_note = 4; // states plainly that no blockchain is written to
+  // anchor_note is computed from the newest anchor row: it names the chain,
+  // contract and what kind of chain it is when a root was written to one,
+  // and says plainly that no chain was written to when none was.
+  string anchor_note = 4;
   google.protobuf.Timestamp generated_at = 5;
+  // anchor_mode is the configured ANCHOR_MODE ("local" or "evm").
+  string anchor_mode = 6;
+}
+
+message GetAnchorVerificationRequest {
+  string day = 1; // YYYY-MM-DD; empty means the newest day that has a root
+}
+
+// GetAnchorVerificationResponse is the result of a live check of one day's
+// root against the chain. Nothing in it derives from a person: both roots are
+// whole-day commitments.
+message GetAnchorVerificationResponse {
+  string day = 1;
+  // status is "verified" (chain root equals database root), "mismatch"
+  // (chain holds a different root) or "unavailable" (no chain anchor for
+  // this day, no RPC configured, or the chain did not answer). reason says
+  // why in plain language.
+  string status = 2;
+  string reason = 3;
+  string db_root_hex = 4;
+  string chain_root_hex = 5;
+  int64 chain_id = 6;
+  string chain_label = 7;
+  string contract_address = 8;
+  string tx_hash = 9;
+  google.protobuf.Timestamp checked_at = 10;
+  string anchor_mode = 11;
+  // day_bytes32 is the day as the contract takes it (ASCII, zero-padded), so
+  // the check can be repeated from any EVM tool.
+  string day_bytes32 = 12;
 }
 
 message GetAlertSummaryRequest {}

@@ -29,9 +29,12 @@ Three claims this project refuses to make:
 - **No accuracy claim.** There is no outbreak surveillance data here, so no
   predictor has been validated against disease outcomes and none reports a
   sensitivity, specificity or accuracy figure anywhere.
-- **No blockchain.** The ledger is tamper-evident by construction — Merkle
-  roots over per-child HMAC leaves — but nothing in this repository writes to
-  any chain.
+- **No public blockchain.** The ledger is tamper-evident by construction —
+  Merkle roots over per-child HMAC leaves. With `ANCHOR_MODE=evm` (the compose
+  default) each day's root is also written to a small `RootAnchor` contract on
+  a **local development chain started by this stack — not a public network** —
+  and read back before it is reported. Nothing here writes to any public chain,
+  and the dashboard says which kind of chain it is talking to.
 
 And two it does make:
 
@@ -51,11 +54,11 @@ make up
 make demo
 ```
 
-`make up` starts nine containers — eight long-running services plus a one-shot
+`make up` starts ten containers — nine long-running services (including
+`anvil`, the local development chain the ledger anchors to) plus a one-shot
 migration that exits 0 — and waits for every health check. The **first** run
 compiles seven Go binaries and the dashboard, which takes several minutes on a
-cold Docker cache; afterwards it reaches healthy in under a minute (57s
-measured on an M-series Mac).
+cold Docker cache; afterwards it reaches healthy in about a minute.
 
 | Surface | URL |
 |---|---|
@@ -410,8 +413,9 @@ Everything else runs fully offline.
 ## Not in scope
 
 USSD, an Android app, ONNX inference, model training, FHIR/DHIS2 integration,
-real SMS delivery, blockchain anchoring, authentication, multi-tenancy,
-Kubernetes, and an admin UI. [NOTES.md](NOTES.md) says exactly where each
+real SMS delivery, anchoring to a public chain (only the local development
+chain is anchored to), authentication, multi-tenancy, Kubernetes, and an admin
+UI. [NOTES.md](NOTES.md) says exactly where each
 boundary sits in the code.
 
 ## Contributing

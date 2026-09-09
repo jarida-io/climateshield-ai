@@ -13,6 +13,11 @@
 #   * The registry API stops being published at all. It is the internal
 #     service that touches encrypted PII columns and has no business on a
 #     public interface.
+#   * The development chain stops publishing 8545. It stays reachable from
+#     the ledger and the public API inside the compose network — the anchor
+#     and its verification endpoint keep working — but nobody on the internet
+#     can send it transactions. It remains a development chain either way,
+#     and every surface that names it says so.
 #   * Secrets come from the host environment. There are no defaults, so a
 #     missing value fails the deploy instead of silently using the published
 #     placeholder from .env.example.
@@ -25,6 +30,9 @@ services:
       POSTGRES_DB: "${POSTGRES_DB:?set POSTGRES_DB in .env}"
 
   registry:
+    ports: !override []
+
+  anvil:
     ports: !override []
 
   publicapi:

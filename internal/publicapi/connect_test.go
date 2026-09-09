@@ -116,6 +116,8 @@ func TestConnectEvidenceSurfacesSurviveBackendLoss(t *testing.T) {
 	require.NoError(t, err)
 	_, err = client.GetPipelineStatus(ctx, connect.NewRequest(&climateshieldv1.GetPipelineStatusRequest{}))
 	require.NoError(t, err)
+	_, err = client.GetAnchorVerification(ctx, connect.NewRequest(&climateshieldv1.GetAnchorVerificationRequest{}))
+	require.NoError(t, err)
 
 	pool.Close()
 
@@ -140,6 +142,14 @@ func TestConnectEvidenceSurfacesSurviveBackendLoss(t *testing.T) {
 	pipeline, err := client.GetPipelineStatus(ctx, connect.NewRequest(&climateshieldv1.GetPipelineStatusRequest{}))
 	require.NoError(t, err)
 	require.Equal(t, "true", pipeline.Header().Get("X-Data-Stale"))
+
+	verify, err := client.GetAnchorVerification(ctx, connect.NewRequest(&climateshieldv1.GetAnchorVerificationRequest{}))
+	require.NoError(t, err)
+	require.Equal(t, "true", verify.Header().Get("X-Data-Stale"))
+
+	// A malformed day is a client error, not a stale response.
+	_, err = client.GetAnchorVerification(ctx, connect.NewRequest(&climateshieldv1.GetAnchorVerificationRequest{Day: "yesterday"}))
+	require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 }
 
 func TestConnectStaleColdStart(t *testing.T) {

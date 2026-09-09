@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file climateshield/v1/public.proto.
  */
 export const file_climateshield_v1_public: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jbGltYXRlc2hpZWxkL3YxL3B1YmxpYy5wcm90bxIQY2xpbWF0ZXNoaWVsZC52MSLtAgoJUmlza1Njb3JlEgwKBGFyZWEYASABKAkSEAoIbGF0aXR1ZGUYAiABKAESEQoJbG9uZ2l0dWRlGAMgASgBEioKB2Rpc2Vhc2UYBCABKA4yGS5jbGltYXRlc2hpZWxkLnYxLkRpc2Vhc2USKgoFbGV2ZWwYBSABKA4yGy5jbGltYXRlc2hpZWxkLnYxLlJpc2tMZXZlbBIVCg1mb3JlY2FzdF9kYXRlGAYgASgJEg4KBmRyaXZlchgHIAEoCRIUCgxkcml2ZXJfdmFsdWUYCCABKAESEQoJcHJlZGljdG9yGAkgASgJEhkKEXByZWRpY3Rvcl92ZXJzaW9uGAogASgJEi0KCXNjb3JlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFwoKZXhjZWVkYW5jZRgMIAEoAUgAiAEBEhMKC2V4cGxhbmF0aW9uGA0gASgJQg0KC19leGNlZWRhbmNlIhcKFUdldEN1cnJlbnRSaXNrUmVxdWVzdCJ3ChZHZXRDdXJyZW50Umlza1Jlc3BvbnNlEisKBnNjb3JlcxgBIAMoCzIbLmNsaW1hdGVzaGllbGQudjEuUmlza1Njb3JlEjAKDGdlbmVyYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAihAEKFUdldFJpc2tIaXN0b3J5UmVxdWVzdBIMCgRhcmVhGAEgASgJEioKB2Rpc2Vhc2UYAiABKA4yGS5jbGltYXRlc2hpZWxkLnYxLkRpc2Vhc2USEQoJZnJvbV9kYXRlGAMgASgJEg8KB3RvX2RhdGUYBCABKAkSDQoFbGltaXQYBSABKAUidwoWR2V0Umlza0hpc3RvcnlSZXNwb25zZRIrCgZzY29yZXMYASADKAsyGy5jbGltYXRlc2hpZWxkLnYxLlJpc2tTY29yZRIwCgxnZW5lcmF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIvwCCgtDb3VudHlTdGF0cxIMCgRhcmVhGAEgASgJEiAKE2NoaWxkcmVuX3JlZ2lzdGVyZWQYAiABKANIAIgBARImCh5jaGlsZHJlbl9yZWdpc3RlcmVkX3N1cHByZXNzZWQYAyABKAgSGQoMY2hpbGRyZW5fZHVlGAQgASgDSAGIAQESHwoXY2hpbGRyZW5fZHVlX3N1cHByZXNzZWQYBSABKAgSHQoQY2hpbGRyZW5fb3ZlcmR1ZRgGIAEoA0gCiAEBEiMKG2NoaWxkcmVuX292ZXJkdWVfc3VwcHJlc3NlZBgHIAEoCBIdChBhbGVydHNfZ2VuZXJhdGVkGAggASgDSAOIAQESIwobYWxlcnRzX2dlbmVyYXRlZF9zdXBwcmVzc2VkGAkgASgIQhYKFF9jaGlsZHJlbl9yZWdpc3RlcmVkQg8KDV9jaGlsZHJlbl9kdWVCEwoRX2NoaWxkcmVuX292ZXJkdWVCEwoRX2FsZXJ0c19nZW5lcmF0ZWQiEQoPR2V0U3RhdHNSZXF1ZXN0InIKEEdldFN0YXRzUmVzcG9uc2USLAoFc3RhdHMYASADKAsyHS5jbGltYXRlc2hpZWxkLnYxLkNvdW50eVN0YXRzEjAKDGdlbmVyYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiFQoTR2V0TW9kZWxJbmZvUmVxdWVzdCKcAQoNVGhyZXNob2xkUnVsZRIPCgdkaXNlYXNlGAEgASgJEg4KBmRyaXZlchgCIAEoCRIMCgRoaWdoGAMgASgBEg4KBm1lZGl1bRgEIAEoARIXCg9oaWdoZXJfaXNfd29yc2UYBSABKAgSJQodcmVhY2hhYmxlX2luX3JlZmVyZW5jZV9wZXJpb2QYBiABKAgSDAoEbm90ZRgHIAEoCSLGAgoUR2V0TW9kZWxJbmZvUmVzcG9uc2USGAoQYWN0aXZlX3ByZWRpY3RvchgBIAEoCRIWCg5hY3RpdmVfdmVyc2lvbhgCIAEoCRIcChRhdmFpbGFibGVfcHJlZGljdG9ycxgDIAMoCRIuCgVydWxlcxgEIAMoCzIfLmNsaW1hdGVzaGllbGQudjEuVGhyZXNob2xkUnVsZRIYChByZWZlcmVuY2VfcGVyaW9kGAUgASgJEhgKEHJlZmVyZW5jZV9zb3VyY2UYBiABKAkSGQoRcmVmZXJlbmNlX2xpY2VuY2UYByABKAkSEwoLd2luZG93X2RheXMYCCABKAUSFwoPaGlnaF9leGNlZWRhbmNlGAkgASgBEhkKEW1lZGl1bV9leGNlZWRhbmNlGAogASgBEhYKDmludGVycHJldGF0aW9uGAsgASgJIicKF0dldENsaW1hdGVTZXJpZXNSZXF1ZXN0EgwKBGFyZWEYASABKAkiXAoKQ2xpbWF0ZURheRIMCgRkYXRlGAEgASgJEhgKEHByZWNpcGl0YXRpb25fbW0YAiABKAESEgoKdGVtcF9tYXhfYxgDIAEoARISCgp0ZW1wX21pbl9jGAQgASgBIocBCgxDb3VudHlTZXJpZXMSDAoEYXJlYRgBIAEoCRIOCgZzb3VyY2UYAiABKAkSLQoJaXNzdWVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIqCgRkYXlzGAQgAygLMhwuY2xpbWF0ZXNoaWVsZC52MS5DbGltYXRlRGF5InwKGEdldENsaW1hdGVTZXJpZXNSZXNwb25zZRIuCgZzZXJpZXMYASADKAsyHi5jbGltYXRlc2hpZWxkLnYxLkNvdW50eVNlcmllcxIwCgxnZW5lcmF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIhkKF0dldExlZGdlclN1bW1hcnlSZXF1ZXN0IrcBCglEYWlseVJvb3QSCwoDZGF5GAEgASgJEhAKCHJvb3RfaGV4GAIgASgJEhcKCmxlYWZfY291bnQYAyABKANIAIgBARIdChVsZWFmX2NvdW50X3N1cHByZXNzZWQYBCABKAgSEwoLYW5jaG9yX3R5cGUYBSABKAkSLwoLYW5jaG9yZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQg0KC19sZWFmX2NvdW50IrQBChhHZXRMZWRnZXJTdW1tYXJ5UmVzcG9uc2USKgoFcm9vdHMYASADKAsyGy5jbGltYXRlc2hpZWxkLnYxLkRhaWx5Um9vdBISCgp0b3RhbF9kYXlzGAIgASgDEhEKCWFsZ29yaXRobRgDIAEoCRITCgthbmNob3Jfbm90ZRgEIAEoCRIwCgxnZW5lcmF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIhgKFkdldEFsZXJ0U3VtbWFyeVJlcXVlc3QiVAoQQWxlcnRTdGF0dXNDb3VudBIOCgZzdGF0dXMYASABKAkSEgoFY291bnQYAiABKANIAIgBARISCgpzdXBwcmVzc2VkGAMgASgIQggKBl9jb3VudCJSCg5UZW1wbGF0ZVNhbXBsZRIMCgRsYW5nGAEgASgJEgwKBGJvZHkYAiABKAkSDwoHc2VwdGV0cxgDIAEoBRITCgttYXhfc2VwdGV0cxgEIAEoBSKJAgoXR2V0QWxlcnRTdW1tYXJ5UmVzcG9uc2USDwoHY2hhbm5lbBgBIAEoCRIVCg1jaGFubmVsX3NlbmRzGAIgASgIEhQKDGNoYW5uZWxfbm90ZRgDIAEoCRI0CghzdGF0dXNlcxgEIAMoCzIiLmNsaW1hdGVzaGllbGQudjEuQWxlcnRTdGF0dXNDb3VudBIzCgl0ZW1wbGF0ZXMYBSADKAsyIC5jbGltYXRlc2hpZWxkLnYxLlRlbXBsYXRlU2FtcGxlEhMKC3F1aWV0X2hvdXJzGAYgASgJEjAKDGdlbmVyYXRlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiGgoYR2V0UGlwZWxpbmVTdGF0dXNSZXF1ZXN0InEKDUpvYktpbmRTdGF0dXMSDAoEa2luZBgBIAEoCRINCgVzdGF0ZRgCIAEoCRINCgVjb3VudBgDIAEoAxI0ChBsYXN0X2ZpbmlzaGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKDAgoZR2V0UGlwZWxpbmVTdGF0dXNSZXNwb25zZRItCgRqb2JzGAEgAygLMh8uY2xpbWF0ZXNoaWVsZC52MS5Kb2JLaW5kU3RhdHVzEhwKFGNsaW1hdGVfb2JzZXJ2YXRpb25zGAIgASgDEhMKC3Jpc2tfc2NvcmVzGAMgASgDEjkKFWxhdGVzdF9vYnNlcnZhdGlvbl9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFwoPaW5nZXN0X2ludGVydmFsGAUgASgJEjAKDGdlbmVyYXRlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiNAoVR2V0Q2xpbWF0b2xvZ3lSZXF1ZXN0EgwKBGFyZWEYASABKAkSDQoFbW9udGgYAiABKAUi4AEKF0NsaW1hdG9sb2d5RGlzdHJpYnV0aW9uEg4KBmRyaXZlchgBIAEoCRIMCgR1bml0GAIgASgJEhEKCXF1YW50aWxlcxgDIAMoARIYChBwZXJjZW50aWxlX3N0ZXBzGAQgAygFEhwKFGxvd2VyX3RhaWxfaXNfaGF6YXJkGAUgASgIEhUKCG9ic2VydmVkGAYgASgBSACIAQESIAoTb2JzZXJ2ZWRfZXhjZWVkYW5jZRgHIAEoAUgBiAEBQgsKCV9vYnNlcnZlZEIWChRfb2JzZXJ2ZWRfZXhjZWVkYW5jZSKiAQoWR2V0Q2xpbWF0b2xvZ3lSZXNwb25zZRIMCgRhcmVhGAEgASgJEg0KBW1vbnRoGAIgASgFEg8KB3NhbXBsZXMYAyABKAUSGAoQcmVmZXJlbmNlX3BlcmlvZBgEIAEoCRJACg1kaXN0cmlidXRpb25zGAUgAygLMikuY2xpbWF0ZXNoaWVsZC52MS5DbGltYXRvbG9neURpc3RyaWJ1dGlvbjKuBwoNUHVibGljU2VydmljZRJlCg5HZXRDdXJyZW50UmlzaxInLmNsaW1hdGVzaGllbGQudjEuR2V0Q3VycmVudFJpc2tSZXF1ZXN0GiguY2xpbWF0ZXNoaWVsZC52MS5HZXRDdXJyZW50Umlza1Jlc3BvbnNlIgASZQoOR2V0Umlza0hpc3RvcnkSJy5jbGltYXRlc2hpZWxkLnYxLkdldFJpc2tIaXN0b3J5UmVxdWVzdBooLmNsaW1hdGVzaGllbGQudjEuR2V0Umlza0hpc3RvcnlSZXNwb25zZSIAElMKCEdldFN0YXRzEiEuY2xpbWF0ZXNoaWVsZC52MS5HZXRTdGF0c1JlcXVlc3QaIi5jbGltYXRlc2hpZWxkLnYxLkdldFN0YXRzUmVzcG9uc2UiABJfCgxHZXRNb2RlbEluZm8SJS5jbGltYXRlc2hpZWxkLnYxLkdldE1vZGVsSW5mb1JlcXVlc3QaJi5jbGltYXRlc2hpZWxkLnYxLkdldE1vZGVsSW5mb1Jlc3BvbnNlIgASawoQR2V0Q2xpbWF0ZVNlcmllcxIpLmNsaW1hdGVzaGllbGQudjEuR2V0Q2xpbWF0ZVNlcmllc1JlcXVlc3QaKi5jbGltYXRlc2hpZWxkLnYxLkdldENsaW1hdGVTZXJpZXNSZXNwb25zZSIAEmsKEEdldExlZGdlclN1bW1hcnkSKS5jbGltYXRlc2hpZWxkLnYxLkdldExlZGdlclN1bW1hcnlSZXF1ZXN0GiouY2xpbWF0ZXNoaWVsZC52MS5HZXRMZWRnZXJTdW1tYXJ5UmVzcG9uc2UiABJoCg9HZXRBbGVydFN1bW1hcnkSKC5jbGltYXRlc2hpZWxkLnYxLkdldEFsZXJ0U3VtbWFyeVJlcXVlc3QaKS5jbGltYXRlc2hpZWxkLnYxLkdldEFsZXJ0U3VtbWFyeVJlc3BvbnNlIgASbgoRR2V0UGlwZWxpbmVTdGF0dXMSKi5jbGltYXRlc2hpZWxkLnYxLkdldFBpcGVsaW5lU3RhdHVzUmVxdWVzdBorLmNsaW1hdGVzaGllbGQudjEuR2V0UGlwZWxpbmVTdGF0dXNSZXNwb25zZSIAEmUKDkdldENsaW1hdG9sb2d5EicuY2xpbWF0ZXNoaWVsZC52MS5HZXRDbGltYXRvbG9neVJlcXVlc3QaKC5jbGltYXRlc2hpZWxkLnYxLkdldENsaW1hdG9sb2d5UmVzcG9uc2UiAEJSWlBnaXRodWIuY29tL2phcmlkYS1pby9jbGltYXRlc2hpZWxkL2ludGVybmFsL2dlbi9jbGltYXRlc2hpZWxkL3YxO2NsaW1hdGVzaGllbGR2MWIGcHJvdG8z", [file_climateshield_v1_common, file_google_protobuf_timestamp]);
+  fileDesc("Ch1jbGltYXRlc2hpZWxkL3YxL3B1YmxpYy5wcm90bxIQY2xpbWF0ZXNoaWVsZC52MSLtAgoJUmlza1Njb3JlEgwKBGFyZWEYASABKAkSEAoIbGF0aXR1ZGUYAiABKAESEQoJbG9uZ2l0dWRlGAMgASgBEioKB2Rpc2Vhc2UYBCABKA4yGS5jbGltYXRlc2hpZWxkLnYxLkRpc2Vhc2USKgoFbGV2ZWwYBSABKA4yGy5jbGltYXRlc2hpZWxkLnYxLlJpc2tMZXZlbBIVCg1mb3JlY2FzdF9kYXRlGAYgASgJEg4KBmRyaXZlchgHIAEoCRIUCgxkcml2ZXJfdmFsdWUYCCABKAESEQoJcHJlZGljdG9yGAkgASgJEhkKEXByZWRpY3Rvcl92ZXJzaW9uGAogASgJEi0KCXNjb3JlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFwoKZXhjZWVkYW5jZRgMIAEoAUgAiAEBEhMKC2V4cGxhbmF0aW9uGA0gASgJQg0KC19leGNlZWRhbmNlIhcKFUdldEN1cnJlbnRSaXNrUmVxdWVzdCJ3ChZHZXRDdXJyZW50Umlza1Jlc3BvbnNlEisKBnNjb3JlcxgBIAMoCzIbLmNsaW1hdGVzaGllbGQudjEuUmlza1Njb3JlEjAKDGdlbmVyYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAihAEKFUdldFJpc2tIaXN0b3J5UmVxdWVzdBIMCgRhcmVhGAEgASgJEioKB2Rpc2Vhc2UYAiABKA4yGS5jbGltYXRlc2hpZWxkLnYxLkRpc2Vhc2USEQoJZnJvbV9kYXRlGAMgASgJEg8KB3RvX2RhdGUYBCABKAkSDQoFbGltaXQYBSABKAUidwoWR2V0Umlza0hpc3RvcnlSZXNwb25zZRIrCgZzY29yZXMYASADKAsyGy5jbGltYXRlc2hpZWxkLnYxLlJpc2tTY29yZRIwCgxnZW5lcmF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIvwCCgtDb3VudHlTdGF0cxIMCgRhcmVhGAEgASgJEiAKE2NoaWxkcmVuX3JlZ2lzdGVyZWQYAiABKANIAIgBARImCh5jaGlsZHJlbl9yZWdpc3RlcmVkX3N1cHByZXNzZWQYAyABKAgSGQoMY2hpbGRyZW5fZHVlGAQgASgDSAGIAQESHwoXY2hpbGRyZW5fZHVlX3N1cHByZXNzZWQYBSABKAgSHQoQY2hpbGRyZW5fb3ZlcmR1ZRgGIAEoA0gCiAEBEiMKG2NoaWxkcmVuX292ZXJkdWVfc3VwcHJlc3NlZBgHIAEoCBIdChBhbGVydHNfZ2VuZXJhdGVkGAggASgDSAOIAQESIwobYWxlcnRzX2dlbmVyYXRlZF9zdXBwcmVzc2VkGAkgASgIQhYKFF9jaGlsZHJlbl9yZWdpc3RlcmVkQg8KDV9jaGlsZHJlbl9kdWVCEwoRX2NoaWxkcmVuX292ZXJkdWVCEwoRX2FsZXJ0c19nZW5lcmF0ZWQiEQoPR2V0U3RhdHNSZXF1ZXN0InIKEEdldFN0YXRzUmVzcG9uc2USLAoFc3RhdHMYASADKAsyHS5jbGltYXRlc2hpZWxkLnYxLkNvdW50eVN0YXRzEjAKDGdlbmVyYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiFQoTR2V0TW9kZWxJbmZvUmVxdWVzdCKcAQoNVGhyZXNob2xkUnVsZRIPCgdkaXNlYXNlGAEgASgJEg4KBmRyaXZlchgCIAEoCRIMCgRoaWdoGAMgASgBEg4KBm1lZGl1bRgEIAEoARIXCg9oaWdoZXJfaXNfd29yc2UYBSABKAgSJQodcmVhY2hhYmxlX2luX3JlZmVyZW5jZV9wZXJpb2QYBiABKAgSDAoEbm90ZRgHIAEoCSLGAgoUR2V0TW9kZWxJbmZvUmVzcG9uc2USGAoQYWN0aXZlX3ByZWRpY3RvchgBIAEoCRIWCg5hY3RpdmVfdmVyc2lvbhgCIAEoCRIcChRhdmFpbGFibGVfcHJlZGljdG9ycxgDIAMoCRIuCgVydWxlcxgEIAMoCzIfLmNsaW1hdGVzaGllbGQudjEuVGhyZXNob2xkUnVsZRIYChByZWZlcmVuY2VfcGVyaW9kGAUgASgJEhgKEHJlZmVyZW5jZV9zb3VyY2UYBiABKAkSGQoRcmVmZXJlbmNlX2xpY2VuY2UYByABKAkSEwoLd2luZG93X2RheXMYCCABKAUSFwoPaGlnaF9leGNlZWRhbmNlGAkgASgBEhkKEW1lZGl1bV9leGNlZWRhbmNlGAogASgBEhYKDmludGVycHJldGF0aW9uGAsgASgJIicKF0dldENsaW1hdGVTZXJpZXNSZXF1ZXN0EgwKBGFyZWEYASABKAkiXAoKQ2xpbWF0ZURheRIMCgRkYXRlGAEgASgJEhgKEHByZWNpcGl0YXRpb25fbW0YAiABKAESEgoKdGVtcF9tYXhfYxgDIAEoARISCgp0ZW1wX21pbl9jGAQgASgBIocBCgxDb3VudHlTZXJpZXMSDAoEYXJlYRgBIAEoCRIOCgZzb3VyY2UYAiABKAkSLQoJaXNzdWVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIqCgRkYXlzGAQgAygLMhwuY2xpbWF0ZXNoaWVsZC52MS5DbGltYXRlRGF5InwKGEdldENsaW1hdGVTZXJpZXNSZXNwb25zZRIuCgZzZXJpZXMYASADKAsyHi5jbGltYXRlc2hpZWxkLnYxLkNvdW50eVNlcmllcxIwCgxnZW5lcmF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIhkKF0dldExlZGdlclN1bW1hcnlSZXF1ZXN0IoQDCglEYWlseVJvb3QSCwoDZGF5GAEgASgJEhAKCHJvb3RfaGV4GAIgASgJEhcKCmxlYWZfY291bnQYAyABKANIAIgBARIdChVsZWFmX2NvdW50X3N1cHByZXNzZWQYBCABKAgSEwoLYW5jaG9yX3R5cGUYBSABKAkSLwoLYW5jaG9yZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhAKCGNoYWluX2lkGAcgASgDEhMKC2NoYWluX2xhYmVsGAggASgJEhgKEGNvbnRyYWN0X2FkZHJlc3MYCSABKAkSDwoHdHhfaGFzaBgKIAEoCRIUCgxibG9ja19udW1iZXIYCyABKAMSGAoQcmVhZGJhY2tfbWF0Y2hlcxgMIAEoCBIvCgt2ZXJpZmllZF9hdBgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGAoQYW5jaG9yX3JlZmVyZW5jZRgOIAEoCUINCgtfbGVhZl9jb3VudCLJAQoYR2V0TGVkZ2VyU3VtbWFyeVJlc3BvbnNlEioKBXJvb3RzGAEgAygLMhsuY2xpbWF0ZXNoaWVsZC52MS5EYWlseVJvb3QSEgoKdG90YWxfZGF5cxgCIAEoAxIRCglhbGdvcml0aG0YAyABKAkSEwoLYW5jaG9yX25vdGUYBCABKAkSMAoMZ2VuZXJhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBITCgthbmNob3JfbW9kZRgGIAEoCSIrChxHZXRBbmNob3JWZXJpZmljYXRpb25SZXF1ZXN0EgsKA2RheRgBIAEoCSKlAgodR2V0QW5jaG9yVmVyaWZpY2F0aW9uUmVzcG9uc2USCwoDZGF5GAEgASgJEg4KBnN0YXR1cxgCIAEoCRIOCgZyZWFzb24YAyABKAkSEwoLZGJfcm9vdF9oZXgYBCABKAkSFgoOY2hhaW5fcm9vdF9oZXgYBSABKAkSEAoIY2hhaW5faWQYBiABKAMSEwoLY2hhaW5fbGFiZWwYByABKAkSGAoQY29udHJhY3RfYWRkcmVzcxgIIAEoCRIPCgd0eF9oYXNoGAkgASgJEi4KCmNoZWNrZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC2FuY2hvcl9tb2RlGAsgASgJEhMKC2RheV9ieXRlczMyGAwgASgJIhgKFkdldEFsZXJ0U3VtbWFyeVJlcXVlc3QiVAoQQWxlcnRTdGF0dXNDb3VudBIOCgZzdGF0dXMYASABKAkSEgoFY291bnQYAiABKANIAIgBARISCgpzdXBwcmVzc2VkGAMgASgIQggKBl9jb3VudCJSCg5UZW1wbGF0ZVNhbXBsZRIMCgRsYW5nGAEgASgJEgwKBGJvZHkYAiABKAkSDwoHc2VwdGV0cxgDIAEoBRITCgttYXhfc2VwdGV0cxgEIAEoBSKJAgoXR2V0QWxlcnRTdW1tYXJ5UmVzcG9uc2USDwoHY2hhbm5lbBgBIAEoCRIVCg1jaGFubmVsX3NlbmRzGAIgASgIEhQKDGNoYW5uZWxfbm90ZRgDIAEoCRI0CghzdGF0dXNlcxgEIAMoCzIiLmNsaW1hdGVzaGllbGQudjEuQWxlcnRTdGF0dXNDb3VudBIzCgl0ZW1wbGF0ZXMYBSADKAsyIC5jbGltYXRlc2hpZWxkLnYxLlRlbXBsYXRlU2FtcGxlEhMKC3F1aWV0X2hvdXJzGAYgASgJEjAKDGdlbmVyYXRlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiGgoYR2V0UGlwZWxpbmVTdGF0dXNSZXF1ZXN0InEKDUpvYktpbmRTdGF0dXMSDAoEa2luZBgBIAEoCRINCgVzdGF0ZRgCIAEoCRINCgVjb3VudBgDIAEoAxI0ChBsYXN0X2ZpbmlzaGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKDAgoZR2V0UGlwZWxpbmVTdGF0dXNSZXNwb25zZRItCgRqb2JzGAEgAygLMh8uY2xpbWF0ZXNoaWVsZC52MS5Kb2JLaW5kU3RhdHVzEhwKFGNsaW1hdGVfb2JzZXJ2YXRpb25zGAIgASgDEhMKC3Jpc2tfc2NvcmVzGAMgASgDEjkKFWxhdGVzdF9vYnNlcnZhdGlvbl9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFwoPaW5nZXN0X2ludGVydmFsGAUgASgJEjAKDGdlbmVyYXRlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiNAoVR2V0Q2xpbWF0b2xvZ3lSZXF1ZXN0EgwKBGFyZWEYASABKAkSDQoFbW9udGgYAiABKAUi4AEKF0NsaW1hdG9sb2d5RGlzdHJpYnV0aW9uEg4KBmRyaXZlchgBIAEoCRIMCgR1bml0GAIgASgJEhEKCXF1YW50aWxlcxgDIAMoARIYChBwZXJjZW50aWxlX3N0ZXBzGAQgAygFEhwKFGxvd2VyX3RhaWxfaXNfaGF6YXJkGAUgASgIEhUKCG9ic2VydmVkGAYgASgBSACIAQESIAoTb2JzZXJ2ZWRfZXhjZWVkYW5jZRgHIAEoAUgBiAEBQgsKCV9vYnNlcnZlZEIWChRfb2JzZXJ2ZWRfZXhjZWVkYW5jZSKiAQoWR2V0Q2xpbWF0b2xvZ3lSZXNwb25zZRIMCgRhcmVhGAEgASgJEg0KBW1vbnRoGAIgASgFEg8KB3NhbXBsZXMYAyABKAUSGAoQcmVmZXJlbmNlX3BlcmlvZBgEIAEoCRJACg1kaXN0cmlidXRpb25zGAUgAygLMikuY2xpbWF0ZXNoaWVsZC52MS5DbGltYXRvbG9neURpc3RyaWJ1dGlvbjKqCAoNUHVibGljU2VydmljZRJlCg5HZXRDdXJyZW50UmlzaxInLmNsaW1hdGVzaGllbGQudjEuR2V0Q3VycmVudFJpc2tSZXF1ZXN0GiguY2xpbWF0ZXNoaWVsZC52MS5HZXRDdXJyZW50Umlza1Jlc3BvbnNlIgASZQoOR2V0Umlza0hpc3RvcnkSJy5jbGltYXRlc2hpZWxkLnYxLkdldFJpc2tIaXN0b3J5UmVxdWVzdBooLmNsaW1hdGVzaGllbGQudjEuR2V0Umlza0hpc3RvcnlSZXNwb25zZSIAElMKCEdldFN0YXRzEiEuY2xpbWF0ZXNoaWVsZC52MS5HZXRTdGF0c1JlcXVlc3QaIi5jbGltYXRlc2hpZWxkLnYxLkdldFN0YXRzUmVzcG9uc2UiABJfCgxHZXRNb2RlbEluZm8SJS5jbGltYXRlc2hpZWxkLnYxLkdldE1vZGVsSW5mb1JlcXVlc3QaJi5jbGltYXRlc2hpZWxkLnYxLkdldE1vZGVsSW5mb1Jlc3BvbnNlIgASawoQR2V0Q2xpbWF0ZVNlcmllcxIpLmNsaW1hdGVzaGllbGQudjEuR2V0Q2xpbWF0ZVNlcmllc1JlcXVlc3QaKi5jbGltYXRlc2hpZWxkLnYxLkdldENsaW1hdGVTZXJpZXNSZXNwb25zZSIAEmsKEEdldExlZGdlclN1bW1hcnkSKS5jbGltYXRlc2hpZWxkLnYxLkdldExlZGdlclN1bW1hcnlSZXF1ZXN0GiouY2xpbWF0ZXNoaWVsZC52MS5HZXRMZWRnZXJTdW1tYXJ5UmVzcG9uc2UiABJoCg9HZXRBbGVydFN1bW1hcnkSKC5jbGltYXRlc2hpZWxkLnYxLkdldEFsZXJ0U3VtbWFyeVJlcXVlc3QaKS5jbGltYXRlc2hpZWxkLnYxLkdldEFsZXJ0U3VtbWFyeVJlc3BvbnNlIgASbgoRR2V0UGlwZWxpbmVTdGF0dXMSKi5jbGltYXRlc2hpZWxkLnYxLkdldFBpcGVsaW5lU3RhdHVzUmVxdWVzdBorLmNsaW1hdGVzaGllbGQudjEuR2V0UGlwZWxpbmVTdGF0dXNSZXNwb25zZSIAEmUKDkdldENsaW1hdG9sb2d5EicuY2xpbWF0ZXNoaWVsZC52MS5HZXRDbGltYXRvbG9neVJlcXVlc3QaKC5jbGltYXRlc2hpZWxkLnYxLkdldENsaW1hdG9sb2d5UmVzcG9uc2UiABJ6ChVHZXRBbmNob3JWZXJpZmljYXRpb24SLi5jbGltYXRlc2hpZWxkLnYxLkdldEFuY2hvclZlcmlmaWNhdGlvblJlcXVlc3QaLy5jbGltYXRlc2hpZWxkLnYxLkdldEFuY2hvclZlcmlmaWNhdGlvblJlc3BvbnNlIgBCUlpQZ2l0aHViLmNvbS9qYXJpZGEtaW8vY2xpbWF0ZXNoaWVsZC9pbnRlcm5hbC9nZW4vY2xpbWF0ZXNoaWVsZC92MTtjbGltYXRlc2hpZWxkdjFiBnByb3RvMw", [file_climateshield_v1_common, file_google_protobuf_timestamp]);
 
 /**
  * RiskScore is one county x disease risk assessment for one forecast window.
@@ -612,6 +612,61 @@ export type DailyRoot = Message<"climateshield.v1.DailyRoot"> & {
    * @generated from field: google.protobuf.Timestamp anchored_at = 6;
    */
   anchoredAt?: Timestamp | undefined;
+
+  /**
+   * Where the NEWEST anchor of this day was published. Only the newest is
+   * reported: how many anchor versions a day accumulated would track how
+   * many late immunizations were recorded, a people-derived count. The chain
+   * fields are zero/empty for a local (database-table) anchor.
+   *
+   * @generated from field: int64 chain_id = 7;
+   */
+  chainId: bigint;
+
+  /**
+   * e.g. "local development chain started by this stack — not a public network"
+   *
+   * @generated from field: string chain_label = 8;
+   */
+  chainLabel: string;
+
+  /**
+   * @generated from field: string contract_address = 9;
+   */
+  contractAddress: string;
+
+  /**
+   * @generated from field: string tx_hash = 10;
+   */
+  txHash: string;
+
+  /**
+   * @generated from field: int64 block_number = 11;
+   */
+  blockNumber: bigint;
+
+  /**
+   * readback_matches is true when the anchor read the root back from its
+   * destination right after publishing and it equalled the root published.
+   * Always false for local anchors: a database row is not an independent
+   * place to read from, and the row does not pretend otherwise.
+   *
+   * @generated from field: bool readback_matches = 12;
+   */
+  readbackMatches: boolean;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp verified_at = 13;
+   */
+  verifiedAt?: Timestamp | undefined;
+
+  /**
+   * anchor_reference is the anchor's own reference: the hex root for a local
+   * anchor, the transaction hash for a chain anchor.
+   *
+   * @generated from field: string anchor_reference = 14;
+   */
+  anchorReference: string;
 };
 
 /**
@@ -641,7 +696,9 @@ export type GetLedgerSummaryResponse = Message<"climateshield.v1.GetLedgerSummar
   algorithm: string;
 
   /**
-   * states plainly that no blockchain is written to
+   * anchor_note is computed from the newest anchor row: it names the chain,
+   * contract and what kind of chain it is when a root was written to one,
+   * and says plainly that no chain was written to when none was.
    *
    * @generated from field: string anchor_note = 4;
    */
@@ -651,6 +708,13 @@ export type GetLedgerSummaryResponse = Message<"climateshield.v1.GetLedgerSummar
    * @generated from field: google.protobuf.Timestamp generated_at = 5;
    */
   generatedAt?: Timestamp | undefined;
+
+  /**
+   * anchor_mode is the configured ANCHOR_MODE ("local" or "evm").
+   *
+   * @generated from field: string anchor_mode = 6;
+   */
+  anchorMode: string;
 };
 
 /**
@@ -659,6 +723,109 @@ export type GetLedgerSummaryResponse = Message<"climateshield.v1.GetLedgerSummar
  */
 export const GetLedgerSummaryResponseSchema: GenMessage<GetLedgerSummaryResponse> = /*@__PURE__*/
   messageDesc(file_climateshield_v1_public, 17);
+
+/**
+ * @generated from message climateshield.v1.GetAnchorVerificationRequest
+ */
+export type GetAnchorVerificationRequest = Message<"climateshield.v1.GetAnchorVerificationRequest"> & {
+  /**
+   * YYYY-MM-DD; empty means the newest day that has a root
+   *
+   * @generated from field: string day = 1;
+   */
+  day: string;
+};
+
+/**
+ * Describes the message climateshield.v1.GetAnchorVerificationRequest.
+ * Use `create(GetAnchorVerificationRequestSchema)` to create a new message.
+ */
+export const GetAnchorVerificationRequestSchema: GenMessage<GetAnchorVerificationRequest> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 18);
+
+/**
+ * GetAnchorVerificationResponse is the result of a live check of one day's
+ * root against the chain. Nothing in it derives from a person: both roots are
+ * whole-day commitments.
+ *
+ * @generated from message climateshield.v1.GetAnchorVerificationResponse
+ */
+export type GetAnchorVerificationResponse = Message<"climateshield.v1.GetAnchorVerificationResponse"> & {
+  /**
+   * @generated from field: string day = 1;
+   */
+  day: string;
+
+  /**
+   * status is "verified" (chain root equals database root), "mismatch"
+   * (chain holds a different root) or "unavailable" (no chain anchor for
+   * this day, no RPC configured, or the chain did not answer). reason says
+   * why in plain language.
+   *
+   * @generated from field: string status = 2;
+   */
+  status: string;
+
+  /**
+   * @generated from field: string reason = 3;
+   */
+  reason: string;
+
+  /**
+   * @generated from field: string db_root_hex = 4;
+   */
+  dbRootHex: string;
+
+  /**
+   * @generated from field: string chain_root_hex = 5;
+   */
+  chainRootHex: string;
+
+  /**
+   * @generated from field: int64 chain_id = 6;
+   */
+  chainId: bigint;
+
+  /**
+   * @generated from field: string chain_label = 7;
+   */
+  chainLabel: string;
+
+  /**
+   * @generated from field: string contract_address = 8;
+   */
+  contractAddress: string;
+
+  /**
+   * @generated from field: string tx_hash = 9;
+   */
+  txHash: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp checked_at = 10;
+   */
+  checkedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: string anchor_mode = 11;
+   */
+  anchorMode: string;
+
+  /**
+   * day_bytes32 is the day as the contract takes it (ASCII, zero-padded), so
+   * the check can be repeated from any EVM tool.
+   *
+   * @generated from field: string day_bytes32 = 12;
+   */
+  dayBytes32: string;
+};
+
+/**
+ * Describes the message climateshield.v1.GetAnchorVerificationResponse.
+ * Use `create(GetAnchorVerificationResponseSchema)` to create a new message.
+ */
+export const GetAnchorVerificationResponseSchema: GenMessage<GetAnchorVerificationResponse> = /*@__PURE__*/
+  messageDesc(file_climateshield_v1_public, 19);
 
 /**
  * @generated from message climateshield.v1.GetAlertSummaryRequest
@@ -671,7 +838,7 @@ export type GetAlertSummaryRequest = Message<"climateshield.v1.GetAlertSummaryRe
  * Use `create(GetAlertSummaryRequestSchema)` to create a new message.
  */
 export const GetAlertSummaryRequestSchema: GenMessage<GetAlertSummaryRequest> = /*@__PURE__*/
-  messageDesc(file_climateshield_v1_public, 18);
+  messageDesc(file_climateshield_v1_public, 20);
 
 /**
  * @generated from message climateshield.v1.AlertStatusCount
@@ -698,7 +865,7 @@ export type AlertStatusCount = Message<"climateshield.v1.AlertStatusCount"> & {
  * Use `create(AlertStatusCountSchema)` to create a new message.
  */
 export const AlertStatusCountSchema: GenMessage<AlertStatusCount> = /*@__PURE__*/
-  messageDesc(file_climateshield_v1_public, 19);
+  messageDesc(file_climateshield_v1_public, 21);
 
 /**
  * TemplateSample is a template rendered with PLACEHOLDER values so the
@@ -733,7 +900,7 @@ export type TemplateSample = Message<"climateshield.v1.TemplateSample"> & {
  * Use `create(TemplateSampleSchema)` to create a new message.
  */
 export const TemplateSampleSchema: GenMessage<TemplateSample> = /*@__PURE__*/
-  messageDesc(file_climateshield_v1_public, 20);
+  messageDesc(file_climateshield_v1_public, 22);
 
 /**
  * @generated from message climateshield.v1.GetAlertSummaryResponse
@@ -782,7 +949,7 @@ export type GetAlertSummaryResponse = Message<"climateshield.v1.GetAlertSummaryR
  * Use `create(GetAlertSummaryResponseSchema)` to create a new message.
  */
 export const GetAlertSummaryResponseSchema: GenMessage<GetAlertSummaryResponse> = /*@__PURE__*/
-  messageDesc(file_climateshield_v1_public, 21);
+  messageDesc(file_climateshield_v1_public, 23);
 
 /**
  * @generated from message climateshield.v1.GetPipelineStatusRequest
@@ -795,7 +962,7 @@ export type GetPipelineStatusRequest = Message<"climateshield.v1.GetPipelineStat
  * Use `create(GetPipelineStatusRequestSchema)` to create a new message.
  */
 export const GetPipelineStatusRequestSchema: GenMessage<GetPipelineStatusRequest> = /*@__PURE__*/
-  messageDesc(file_climateshield_v1_public, 22);
+  messageDesc(file_climateshield_v1_public, 24);
 
 /**
  * @generated from message climateshield.v1.JobKindStatus
@@ -827,7 +994,7 @@ export type JobKindStatus = Message<"climateshield.v1.JobKindStatus"> & {
  * Use `create(JobKindStatusSchema)` to create a new message.
  */
 export const JobKindStatusSchema: GenMessage<JobKindStatus> = /*@__PURE__*/
-  messageDesc(file_climateshield_v1_public, 23);
+  messageDesc(file_climateshield_v1_public, 25);
 
 /**
  * @generated from message climateshield.v1.GetPipelineStatusResponse
@@ -869,7 +1036,7 @@ export type GetPipelineStatusResponse = Message<"climateshield.v1.GetPipelineSta
  * Use `create(GetPipelineStatusResponseSchema)` to create a new message.
  */
 export const GetPipelineStatusResponseSchema: GenMessage<GetPipelineStatusResponse> = /*@__PURE__*/
-  messageDesc(file_climateshield_v1_public, 24);
+  messageDesc(file_climateshield_v1_public, 26);
 
 /**
  * @generated from message climateshield.v1.GetClimatologyRequest
@@ -895,7 +1062,7 @@ export type GetClimatologyRequest = Message<"climateshield.v1.GetClimatologyRequ
  * Use `create(GetClimatologyRequestSchema)` to create a new message.
  */
 export const GetClimatologyRequestSchema: GenMessage<GetClimatologyRequest> = /*@__PURE__*/
-  messageDesc(file_climateshield_v1_public, 25);
+  messageDesc(file_climateshield_v1_public, 27);
 
 /**
  * ClimatologyDistribution is the empirical distribution of one driver for one
@@ -950,7 +1117,7 @@ export type ClimatologyDistribution = Message<"climateshield.v1.ClimatologyDistr
  * Use `create(ClimatologyDistributionSchema)` to create a new message.
  */
 export const ClimatologyDistributionSchema: GenMessage<ClimatologyDistribution> = /*@__PURE__*/
-  messageDesc(file_climateshield_v1_public, 26);
+  messageDesc(file_climateshield_v1_public, 28);
 
 /**
  * @generated from message climateshield.v1.GetClimatologyResponse
@@ -987,7 +1154,7 @@ export type GetClimatologyResponse = Message<"climateshield.v1.GetClimatologyRes
  * Use `create(GetClimatologyResponseSchema)` to create a new message.
  */
 export const GetClimatologyResponseSchema: GenMessage<GetClimatologyResponse> = /*@__PURE__*/
-  messageDesc(file_climateshield_v1_public, 27);
+  messageDesc(file_climateshield_v1_public, 29);
 
 /**
  * PublicService is the read-only public tier. Everything here is aggregate
@@ -1071,6 +1238,19 @@ export const PublicService: GenService<{
     methodKind: "unary";
     input: typeof GetClimatologyRequestSchema;
     output: typeof GetClimatologyResponseSchema;
+  },
+  /**
+   * GetAnchorVerification checks one day's root against the chain LIVE:
+   * eth_call rootOf(day) on the RootAnchor contract, compared with the root
+   * in the database. It answers "unavailable" with a reason — never a
+   * fabricated match — when no chain is configured or reachable.
+   *
+   * @generated from rpc climateshield.v1.PublicService.GetAnchorVerification
+   */
+  getAnchorVerification: {
+    methodKind: "unary";
+    input: typeof GetAnchorVerificationRequestSchema;
+    output: typeof GetAnchorVerificationResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_climateshield_v1_public, 0);

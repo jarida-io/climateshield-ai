@@ -1,0 +1,18 @@
+{
+  "_comment": "Golden ABI vectors for RootAnchor, generated with cast from ghcr.io/foundry-rs/foundry:v1.5.1 (cast Version: 1.5.1-stable). Regenerate with `cast sig`, `cast keccak`, `cast format-bytes32-string` and `cast calldata` if the contract interface changes; the Go ABI packer is tested byte-for-byte against these.",
+  "cast_version": "cast Version: 1.5.1-stable",
+  "anchor_selector": "0xa21f3c6a",
+  "rootOf_selector": "0x6d6f398e",
+  "versions_selector": "0xc7cec7f8",
+  "rootAt_selector": "0x40757a6a",
+  "publisher_selector": "0x8c72c54e",
+  "anchored_topic": "0x59848f28dc002d29725176b135eb44ae5a7b3512bf265f2056efd6780d5c4bfd",
+  "day": "2026-08-07",
+  "day_bytes32": "0x323032362d30382d303700000000000000000000000000000000000000000000",
+  "root": "0x9c1185a5c5e9fc54612808977ee8f548b2258d31f7a4e5a5b57c9e8bb7c3f6a1",
+  "anchor_calldata": "0xa21f3c6a323032362d30382d3037000000000000000000000000000000000000000000009c1185a5c5e9fc54612808977ee8f548b2258d31f7a4e5a5b57c9e8bb7c3f6a1",
+  "rootOf_calldata": "0x6d6f398e323032362d30382d303700000000000000000000000000000000000000000000",
+  "versions_calldata": "0xc7cec7f8323032362d30382d303700000000000000000000000000000000000000000000",
+  "publisher_calldata": "0x8c72c54e",
+  "version_word_1": "0x0000000000000000000000000000000000000000000000000000000000000001"
+}

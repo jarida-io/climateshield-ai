@@ -108,7 +108,7 @@ func TestLedgerSummaryPublishesRootsButNeverLeaves(t *testing.T) {
 	require.NoError(t, err)
 	_, err = seed.Demo(ctx, pool, key, time.Now())
 	require.NoError(t, err)
-	_, _, err = ledger.Sweep(ctx, q, anchor.NewLocal(pool), logging.New(io.Discard, "info"))
+	_, _, err = ledger.Sweep(ctx, q, anchor.Multi{anchor.NewLocal()}, logging.New(io.Discard, "info"))
 	require.NoError(t, err)
 
 	srv := publicapi.NewServer(pool, logging.New(io.Discard, "info"))
@@ -121,8 +121,19 @@ func TestLedgerSummaryPublishesRootsButNeverLeaves(t *testing.T) {
 
 	require.NotEmpty(t, msg.GetRoots())
 	require.Positive(t, msg.GetTotalDays())
-	// The anchor note must not let anyone infer a blockchain.
-	require.Contains(t, msg.GetAnchorNote(), "No blockchain")
+	// With a local anchor the note must not let anyone infer a chain, and the
+	// mode is reported as configured.
+	require.Equal(t, "local", msg.GetAnchorMode())
+	require.Contains(t, msg.GetAnchorNote(), "No blockchain is written to by this system")
+	require.False(t, msg.GetRoots()[0].GetReadbackMatches(), "a local anchor reads nothing back and must not claim to")
+	require.Zero(t, msg.GetRoots()[0].GetChainId())
+	require.Equal(t, hex.EncodeToString(func() []byte {
+		days, err := q.ListLeafDays(ctx)
+		require.NoError(t, err)
+		stored, err := q.GetDailyRoot(ctx, days[0])
+		require.NoError(t, err)
+		return stored.Root
+	}()), msg.GetRoots()[0].GetAnchorReference())
 
 	// Every published root must match what the ledger actually stored, and
 	// the leaf count (people-derived) must obey the k rule.
@@ -247,6 +258,7 @@ func TestEvidenceEndpointsNeverFailWhenBackendIsDown(t *testing.T) {
 	// The availability promise covers every read, including the new views.
 	for _, path := range []string{
 		"/v1/model", "/v1/climate/series", "/v1/ledger/summary",
+		"/v1/ledger/anchors/verify", "/v1/ledger/anchors/verify?day=2026-08-07",
 		"/v1/alerts/summary", "/v1/pipeline",
 	} {
 		resp, err := http.Get(ts.URL + path)

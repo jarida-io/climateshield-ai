@@ -34,7 +34,7 @@ is copied from an actual run.
 | ERA5 source | `internal/climate/era5/era5.go` | `TODO(Q1)`; constructor returns `ErrNotImplemented`. |
 | Africa's Talking | `internal/notify/at/at.go` | Returns `ErrNotConfigured`. No account, no credentials, by design. |
 | SMPP channel | `internal/notify/smpp/smpp.go` | Wired against `fiorix/go-smpp` and it compiles and binds lazily, but it has **never been tested against a live carrier**. Treat it as unproven. |
-| Blockchain anchor | `internal/ledger/anchor/` | Only `LocalAnchor` (writes roots to a table) exists. Nothing in this repo calls any chain, and no Solidity is present. |
+| Public-chain anchor | `internal/ledger/anchor/evm/` | Real, but only against a **local development chain**: `RootAnchor.sol` (compiled once, artifacts committed and hash-checked) receives each day's root via a hand-rolled JSON-RPC client and the root is read back before it is reported. `make up` starts anvil for it; its history is deleted by `make down -v`. Nothing in this repo writes to any public chain, and no surface may call this chain public, immutable or decentralised. |
 
 ## Assumptions I made
 

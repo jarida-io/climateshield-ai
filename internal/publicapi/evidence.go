@@ -3,6 +3,7 @@
 package publicapi
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"errors"
@@ -179,7 +180,8 @@ func (s *Server) buildLedgerSummary(ctx context.Context) (*climateshieldv1.GetLe
 	resp := &climateshieldv1.GetLedgerSummaryResponse{
 		TotalDays:   int64(len(rows)),
 		Algorithm:   "per-child HMAC-SHA256 leaves, RFC 6962 Merkle tree, daily root",
-		AnchorNote:  "Roots are anchored locally to a database table. No blockchain is written to by this system.",
+		AnchorMode:  s.anchorMode,
+		AnchorNote:  anchorNote(s.anchorMode, rows),
 		GeneratedAt: timestamppb.Now(),
 	}
 	for _, r := range rows {
@@ -194,6 +196,33 @@ func (s *Server) buildLedgerSummary(ctx context.Context) (*climateshieldv1.GetLe
 		root.AnchorType = r.AnchorType
 		if r.AnchoredAt.Valid {
 			root.AnchoredAt = timestamppb.New(r.AnchoredAt.Time)
+		}
+		// The newest anchor's own record of where the root went. Only the
+		// newest: how many times a day was re-anchored tracks how many late
+		// immunizations were recorded, which is people-derived.
+		if r.AnchorReference != nil {
+			root.AnchorReference = *r.AnchorReference
+		}
+		if r.ChainID != nil {
+			root.ChainId = *r.ChainID
+		}
+		if r.ChainLabel != nil {
+			root.ChainLabel = *r.ChainLabel
+		}
+		if r.ContractAddress != nil {
+			root.ContractAddress = *r.ContractAddress
+		}
+		if r.TxHash != nil {
+			root.TxHash = *r.TxHash
+		}
+		if r.BlockNumber != nil {
+			root.BlockNumber = *r.BlockNumber
+		}
+		// A local anchor reads nothing back — a row in this database is not
+		// an independent place to read from — so it never claims a match.
+		root.ReadbackMatches = len(r.ReadbackRoot) > 0 && bytes.Equal(r.ReadbackRoot, r.Root)
+		if r.VerifiedAt.Valid {
+			root.VerifiedAt = timestamppb.New(r.VerifiedAt.Time)
 		}
 		resp.Roots = append(resp.Roots, root)
 	}

@@ -1,0 +1,12 @@
+-- SPDX-License-Identifier: Apache-2.0
+DROP TABLE anchor_contracts;
+DROP INDEX anchors_day_type_root_idx;
+ALTER TABLE anchors
+    DROP COLUMN chain_id,
+    DROP COLUMN chain_label,
+    DROP COLUMN contract_address,
+    DROP COLUMN tx_hash,
+    DROP COLUMN block_number,
+    DROP COLUMN root,
+    DROP COLUMN readback_root,
+    DROP COLUMN verified_at;

@@ -25,11 +25,26 @@ type Alert struct {
 }
 
 type Anchor struct {
-	ID         int64
-	LeafDay    pgtype.Date
-	AnchorType string
-	Reference  *string
-	AnchoredAt pgtype.Timestamptz
+	ID              int64
+	LeafDay         pgtype.Date
+	AnchorType      string
+	Reference       *string
+	AnchoredAt      pgtype.Timestamptz
+	ChainID         *int64
+	ChainLabel      *string
+	ContractAddress *string
+	TxHash          *string
+	BlockNumber     *int64
+	Root            []byte
+	ReadbackRoot    []byte
+	VerifiedAt      pgtype.Timestamptz
+}
+
+type AnchorContract struct {
+	ChainID    int64
+	Address    string
+	DeployTx   *string
+	DeployedAt pgtype.Timestamptz
 }
 
 type Area struct {

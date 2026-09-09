@@ -31,7 +31,7 @@ func TestSweepCommitsAllEventsAndAnchorsRoots(t *testing.T) {
 	sum, err := seed.Demo(ctx, pool, key, time.Now())
 	require.NoError(t, err)
 
-	leaves, roots, err := ledger.Sweep(ctx, q, anchor.NewLocal(pool), log)
+	leaves, roots, err := ledger.Sweep(ctx, q, anchor.Multi{anchor.NewLocal()}, log)
 	require.NoError(t, err)
 	require.Equal(t, sum.Events, leaves, "one leaf per immunization event")
 	require.Positive(t, roots)
@@ -65,7 +65,7 @@ func TestSweepCommitsAllEventsAndAnchorsRoots(t *testing.T) {
 	}
 
 	// Idempotence: nothing new on a second sweep, no duplicate anchors.
-	leaves2, roots2, err := ledger.Sweep(ctx, q, anchor.NewLocal(pool), log)
+	leaves2, roots2, err := ledger.Sweep(ctx, q, anchor.Multi{anchor.NewLocal()}, log)
 	require.NoError(t, err)
 	require.Zero(t, leaves2)
 	require.Zero(t, roots2)
@@ -80,7 +80,7 @@ func TestSweepInclusionProofEndToEnd(t *testing.T) {
 	require.NoError(t, err)
 	_, err = seed.Demo(ctx, pool, key, time.Now())
 	require.NoError(t, err)
-	_, _, err = ledger.Sweep(ctx, q, anchor.NewLocal(pool), logging.New(io.Discard, "info"))
+	_, _, err = ledger.Sweep(ctx, q, anchor.Multi{anchor.NewLocal()}, logging.New(io.Discard, "info"))
 	require.NoError(t, err)
 
 	days, err := q.ListLeafDays(ctx)
@@ -114,7 +114,7 @@ func TestForgetChildErasesAndPreservesStructure(t *testing.T) {
 	require.NoError(t, err)
 	_, err = seed.Demo(ctx, pool, key, time.Now())
 	require.NoError(t, err)
-	_, _, err = ledger.Sweep(ctx, q, anchor.NewLocal(pool), log)
+	_, _, err = ledger.Sweep(ctx, q, anchor.Multi{anchor.NewLocal()}, log)
 	require.NoError(t, err)
 
 	children, err := q.ListChildren(ctx)

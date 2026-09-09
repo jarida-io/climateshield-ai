@@ -5,7 +5,7 @@ GOLANGCI_LINT_VERSION := v2.12.2
 COVERAGE_THRESHOLD := 80
 
 .PHONY: verify fmt-check vet lint build test covergate buf-lint contracts \
-        web-verify generate up down demo demo-live migrate tools help
+        web-verify generate contract up down demo demo-live migrate tools help
 
 ## verify: everything the Definition of Done requires. Must exit 0.
 verify: fmt-check vet lint build test covergate buf-lint contracts web-verify
@@ -53,6 +53,12 @@ web-verify:
 generate:
 	go tool buf generate
 	go tool sqlc generate
+
+## contract: recompile the RootAnchor Solidity contract with the pinned solc
+## image (one-off, developer only). Artifacts and BUILD.txt are committed;
+## `make up`, tests and CI never compile Solidity.
+contract:
+	./scripts/build-contract.sh
 
 # Host-side targets read .env the same way docker compose does, so
 # `cp .env.example .env` is the only setup step a reviewer needs.

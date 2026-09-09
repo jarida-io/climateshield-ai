@@ -11,6 +11,30 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const anchorExistsForRoot = `-- name: AnchorExistsForRoot :one
+SELECT EXISTS (
+    SELECT 1 FROM anchors
+    WHERE leaf_day = $1 AND anchor_type = $2 AND root = $3
+) AS exists
+`
+
+type AnchorExistsForRootParams struct {
+	LeafDay    pgtype.Date
+	AnchorType string
+	Root       []byte
+}
+
+// Whether THIS root of THIS day has already been published through the given
+// anchor type. The sweep anchors whenever this is false, so a root whose
+// anchoring failed once is retried on the next sweep instead of being
+// forgotten.
+func (q *Queries) AnchorExistsForRoot(ctx context.Context, arg AnchorExistsForRootParams) (bool, error) {
+	row := q.db.QueryRow(ctx, anchorExistsForRoot, arg.LeafDay, arg.AnchorType, arg.Root)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const destroyChildKey = `-- name: DestroyChildKey :execrows
 DELETE FROM sealed.child_keys WHERE child_id = $1
 `
@@ -21,6 +45,22 @@ func (q *Queries) DestroyChildKey(ctx context.Context, childID pgtype.UUID) (int
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const getAnchorContract = `-- name: GetAnchorContract :one
+SELECT chain_id, address, deploy_tx, deployed_at FROM anchor_contracts WHERE chain_id = $1
+`
+
+func (q *Queries) GetAnchorContract(ctx context.Context, chainID int64) (AnchorContract, error) {
+	row := q.db.QueryRow(ctx, getAnchorContract, chainID)
+	var i AnchorContract
+	err := row.Scan(
+		&i.ChainID,
+		&i.Address,
+		&i.DeployTx,
+		&i.DeployedAt,
+	)
+	return i, err
 }
 
 const getChildKey = `-- name: GetChildKey :one
@@ -68,18 +108,46 @@ func (q *Queries) GetLeaf(ctx context.Context, eventID pgtype.UUID) (EventLeafe,
 }
 
 const insertAnchor = `-- name: InsertAnchor :exec
-INSERT INTO anchors (leaf_day, anchor_type, reference)
-VALUES ($1, $2, $3)
+INSERT INTO anchors (
+    leaf_day, anchor_type, reference, root,
+    chain_id, chain_label, contract_address, tx_hash, block_number,
+    readback_root, verified_at
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 `
 
 type InsertAnchorParams struct {
-	LeafDay    pgtype.Date
-	AnchorType string
-	Reference  *string
+	LeafDay         pgtype.Date
+	AnchorType      string
+	Reference       *string
+	Root            []byte
+	ChainID         *int64
+	ChainLabel      *string
+	ContractAddress *string
+	TxHash          *string
+	BlockNumber     *int64
+	ReadbackRoot    []byte
+	VerifiedAt      pgtype.Timestamptz
 }
 
+// One row per publication of one daily root. `root` is the root that was
+// published; `readback_root` is what the anchor read back from wherever it
+// published, so a row is checkable on its own. Only whole-day roots are ever
+// written here or anywhere an anchor points to.
 func (q *Queries) InsertAnchor(ctx context.Context, arg InsertAnchorParams) error {
-	_, err := q.db.Exec(ctx, insertAnchor, arg.LeafDay, arg.AnchorType, arg.Reference)
+	_, err := q.db.Exec(ctx, insertAnchor,
+		arg.LeafDay,
+		arg.AnchorType,
+		arg.Reference,
+		arg.Root,
+		arg.ChainID,
+		arg.ChainLabel,
+		arg.ContractAddress,
+		arg.TxHash,
+		arg.BlockNumber,
+		arg.ReadbackRoot,
+		arg.VerifiedAt,
+	)
 	return err
 }
 
@@ -126,6 +194,39 @@ func (q *Queries) InsertLeaf(ctx context.Context, arg InsertLeafParams) error {
 	return err
 }
 
+const latestAnchorForDay = `-- name: LatestAnchorForDay :one
+SELECT id, leaf_day, anchor_type, reference, anchored_at, chain_id, chain_label, contract_address, tx_hash, block_number, root, readback_root, verified_at FROM anchors
+WHERE leaf_day = $1 AND anchor_type = $2
+ORDER BY anchored_at DESC, id DESC
+LIMIT 1
+`
+
+type LatestAnchorForDayParams struct {
+	LeafDay    pgtype.Date
+	AnchorType string
+}
+
+func (q *Queries) LatestAnchorForDay(ctx context.Context, arg LatestAnchorForDayParams) (Anchor, error) {
+	row := q.db.QueryRow(ctx, latestAnchorForDay, arg.LeafDay, arg.AnchorType)
+	var i Anchor
+	err := row.Scan(
+		&i.ID,
+		&i.LeafDay,
+		&i.AnchorType,
+		&i.Reference,
+		&i.AnchoredAt,
+		&i.ChainID,
+		&i.ChainLabel,
+		&i.ContractAddress,
+		&i.TxHash,
+		&i.BlockNumber,
+		&i.Root,
+		&i.ReadbackRoot,
+		&i.VerifiedAt,
+	)
+	return i, err
+}
+
 const leavesForDay = `-- name: LeavesForDay :many
 SELECT event_id, leaf_hash
 FROM event_leaves
@@ -159,7 +260,7 @@ func (q *Queries) LeavesForDay(ctx context.Context, leafDay pgtype.Date) ([]Leav
 }
 
 const listAnchorsForDay = `-- name: ListAnchorsForDay :many
-SELECT id, leaf_day, anchor_type, reference, anchored_at FROM anchors WHERE leaf_day = $1 ORDER BY anchored_at, id
+SELECT id, leaf_day, anchor_type, reference, anchored_at, chain_id, chain_label, contract_address, tx_hash, block_number, root, readback_root, verified_at FROM anchors WHERE leaf_day = $1 ORDER BY anchored_at, id
 `
 
 func (q *Queries) ListAnchorsForDay(ctx context.Context, leafDay pgtype.Date) ([]Anchor, error) {
@@ -177,6 +278,14 @@ func (q *Queries) ListAnchorsForDay(ctx context.Context, leafDay pgtype.Date) ([
 			&i.AnchorType,
 			&i.Reference,
 			&i.AnchoredAt,
+			&i.ChainID,
+			&i.ChainLabel,
+			&i.ContractAddress,
+			&i.TxHash,
+			&i.BlockNumber,
+			&i.Root,
+			&i.ReadbackRoot,
+			&i.VerifiedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -267,6 +376,26 @@ func (q *Queries) ScrubChildFromLeaves(ctx context.Context, childID pgtype.UUID)
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const upsertAnchorContract = `-- name: UpsertAnchorContract :exec
+INSERT INTO anchor_contracts (chain_id, address, deploy_tx)
+VALUES ($1, $2, $3)
+ON CONFLICT (chain_id) DO UPDATE SET
+    address = excluded.address,
+    deploy_tx = excluded.deploy_tx,
+    deployed_at = now()
+`
+
+type UpsertAnchorContractParams struct {
+	ChainID  int64
+	Address  string
+	DeployTx *string
+}
+
+func (q *Queries) UpsertAnchorContract(ctx context.Context, arg UpsertAnchorContractParams) error {
+	_, err := q.db.Exec(ctx, upsertAnchorContract, arg.ChainID, arg.Address, arg.DeployTx)
+	return err
 }
 
 const upsertDailyRoot = `-- name: UpsertDailyRoot :exec

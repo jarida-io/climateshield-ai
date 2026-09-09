@@ -1,0 +1,11 @@
+# RootAnchor build record — written by scripts/build-contract.sh (make contract).
+# internal/ledger/anchor/evm/contract_test.go asserts the committed artifacts
+# still hash to these values. Rebuild rather than editing this file.
+solc_version=0.8.30+commit.73712a01.Linux.clang
+solc_image=ghcr.io/argotorg/solc:0.8.30@sha256:b116bf835554d40c501feab0b2c943a8c5eec003b804bcc5b326b85c93da00c2
+solc_flags=--optimize --optimize-runs 200 --evm-version paris --metadata-hash none
+sha256 RootAnchor.sol 5bbf527abb80e86032150770e231d6505cc5743fc5f58ec6bd11ac9685019163
+sha256 build/RootAnchor.abi 95db2d59200e427dd792f1ce9f74bc0f370bc1a911584c3c4a10c81385e09e77
+sha256 build/RootAnchor.bin f75f2952ed7e054c41c26582e336ded1a4a872dac14d76fcc96094e52e8c93b2
+sha256 build/RootAnchor.bin-runtime 2a60e8e4896919195318cc476e3345c5060599459aad5c66fd944fb2114b8769
+sha256 build/RootAnchor.signatures 8b3ad16883ad090fbe701b2561cdc80623d11ff9af45b547fc34ee103f2d074c

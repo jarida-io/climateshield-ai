@@ -139,6 +139,8 @@ func TestContract_PIILeak(t *testing.T) {
 		"/v1/climate/series",
 		"/v1/climate/series?area=Kisumu",
 		"/v1/ledger/summary",
+		"/v1/ledger/anchors/verify",
+		"/v1/ledger/anchors/verify?day=" + time.Now().UTC().Format("2006-01-02"),
 		"/v1/alerts/summary",
 		"/v1/pipeline",
 	}
@@ -165,7 +167,7 @@ func TestContract_PIILeak(t *testing.T) {
 	// Connect surface too: the same rule holds for the RPC responses.
 	for _, procedure := range []string{
 		"GetCurrentRisk", "GetStats", "GetModelInfo", "GetClimateSeries",
-		"GetLedgerSummary", "GetAlertSummary", "GetPipelineStatus",
+		"GetLedgerSummary", "GetAnchorVerification", "GetAlertSummary", "GetPipelineStatus",
 	} {
 		resp, err := http.Post(
 			ts.URL+"/climateshield.v1.PublicService/"+procedure,

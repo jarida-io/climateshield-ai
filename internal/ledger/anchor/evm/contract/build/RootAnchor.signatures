@@ -1,0 +1,13 @@
+Function signatures:
+a21f3c6a: anchor(bytes32,bytes32)
+8c72c54e: publisher()
+40757a6a: rootAt(bytes32,uint256)
+6d6f398e: rootOf(bytes32)
+c7cec7f8: versions(bytes32)
+
+Error signatures:
+53ce4ece: EmptyRoot()
+6cc8883a: NotPublisher()
+
+Event signatures:
+59848f28dc002d29725176b135eb44ae5a7b3512bf265f2056efd6780d5c4bfd: Anchored(bytes32,bytes32,uint256)

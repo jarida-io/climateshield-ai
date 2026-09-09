@@ -237,6 +237,9 @@ func run() error {
 		}
 		fmt.Printf("  %s: %d leaves, root %s…\n",
 			day.Time.Format("2006-01-02"), root.LeafCount, hex.EncodeToString(root.Root)[:16])
+		if err := reportAnchor(ctx, q, day, root.Root); err != nil {
+			return err
+		}
 	}
 	if err := verifyInclusion(ctx, q, eventID); err != nil {
 		return err

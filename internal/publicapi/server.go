@@ -17,6 +17,7 @@ import (
 
 	climateshieldv1 "github.com/jarida-io/climateshield/internal/gen/climateshield/v1"
 	"github.com/jarida-io/climateshield/internal/gen/climateshield/v1/climateshieldv1connect"
+	"github.com/jarida-io/climateshield/internal/ledger/anchor"
 	"github.com/jarida-io/climateshield/internal/platform/config"
 	"github.com/jarida-io/climateshield/internal/platform/httpx"
 	"github.com/jarida-io/climateshield/internal/platform/logging"
@@ -36,6 +37,12 @@ type ServiceConfig struct {
 	PredictorName  string `env:"PREDICTOR" envDefault:"rules"`
 	Channel        string `env:"NOTIFY_CHANNEL" envDefault:"mock"`
 	IngestInterval string `env:"INGEST_INTERVAL" envDefault:"6h"`
+	// How the ledger anchors its roots, and the chain endpoint this API uses
+	// to re-read them for GET /v1/ledger/anchors/verify. An empty RPC URL is
+	// reported by that endpoint rather than hidden: a check that cannot run
+	// must never look like a check that passed.
+	AnchorMode   string `env:"ANCHOR_MODE" envDefault:"local"`
+	AnchorRPCURL string `env:"ANCHOR_RPC_URL" envDefault:""`
 }
 
 func predictorVersionFor(name string) string {
@@ -61,6 +68,13 @@ type Server struct {
 	channel          string
 	ingestInterval   string
 	climatology      *predict.Climatology
+
+	// How the ledger publishes its roots, and where this API can re-read
+	// them from. anchorRPCURL is empty when this process cannot reach a
+	// chain — which the verification endpoint then reports rather than
+	// quietly skipping the check.
+	anchorMode   string
+	anchorRPCURL string
 }
 
 // NewServer builds the public server over a database handle.
@@ -68,7 +82,7 @@ func NewServer(dbtx db.DBTX, log *slog.Logger) *Server {
 	s := &Server{
 		q: db.New(dbtx), cache: newStaleCache(), log: log,
 		predictorName: "rules", predictorVersion: predict.RulesVersion,
-		channel: "mock", ingestInterval: "6h",
+		channel: "mock", ingestInterval: "6h", anchorMode: anchor.TypeLocal,
 	}
 	if pool, ok := dbtx.(*pgxpool.Pool); ok {
 		s.pool = pool
@@ -140,6 +154,12 @@ func (s *Server) Router(healthy httpx.HealthFunc, metricsHandler http.Handler) c
 			return s.buildLedgerSummary(ctx)
 		}, &climateshieldv1.GetLedgerSummaryResponse{})
 	})
+	r.Get("/v1/ledger/anchors/verify", func(w http.ResponseWriter, req *http.Request) {
+		day := req.URL.Query().Get("day")
+		s.serveREST(w, req, "anchorverify", func(ctx context.Context) (proto.Message, error) {
+			return s.buildAnchorVerification(ctx, day)
+		}, &climateshieldv1.GetAnchorVerificationResponse{})
+	})
 	r.Get("/v1/alerts/summary", func(w http.ResponseWriter, req *http.Request) {
 		s.serveREST(w, req, "alerts", func(ctx context.Context) (proto.Message, error) {
 			return s.buildAlertSummary(ctx)
@@ -200,6 +220,22 @@ func (s *Server) GetLedgerSummary(
 		return staleConnect[climateshieldv1.GetLedgerSummaryResponse](s, "connect:ledger")
 	}
 	s.cache.storeProto("connect:ledger", msg)
+	return connect.NewResponse(msg), nil
+}
+
+// GetAnchorVerification implements climateshieldv1connect.PublicServiceHandler.
+func (s *Server) GetAnchorVerification(
+	ctx context.Context, req *connect.Request[climateshieldv1.GetAnchorVerificationRequest],
+) (*connect.Response[climateshieldv1.GetAnchorVerificationResponse], error) {
+	msg, err := s.buildAnchorVerification(ctx, req.Msg.GetDay())
+	if err != nil {
+		var bad errBadRequest
+		if errors.As(err, &bad) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, bad)
+		}
+		return staleConnect[climateshieldv1.GetAnchorVerificationResponse](s, "connect:anchorverify")
+	}
+	s.cache.storeProto("connect:anchorverify", msg)
 	return connect.NewResponse(msg), nil
 }
 
@@ -384,7 +420,8 @@ func Run(ctx context.Context) error {
 	defer pool.Close()
 
 	srv := NewServer(pool, log).WithDeployment(
-		cfg.PredictorName, predictorVersionFor(cfg.PredictorName), cfg.Channel, cfg.IngestInterval)
+		cfg.PredictorName, predictorVersionFor(cfg.PredictorName), cfg.Channel, cfg.IngestInterval,
+	).WithAnchor(cfg.AnchorMode, cfg.AnchorRPCURL)
 	router := srv.Router(healthFunc(pool), m.Handler())
 
 	log.Info("public api started", "addr", cfg.Addr)

@@ -61,6 +61,9 @@ const (
 	// PublicServiceGetClimatologyProcedure is the fully-qualified name of the PublicService's
 	// GetClimatology RPC.
 	PublicServiceGetClimatologyProcedure = "/climateshield.v1.PublicService/GetClimatology"
+	// PublicServiceGetAnchorVerificationProcedure is the fully-qualified name of the PublicService's
+	// GetAnchorVerification RPC.
+	PublicServiceGetAnchorVerificationProcedure = "/climateshield.v1.PublicService/GetAnchorVerification"
 )
 
 // PublicServiceClient is a client for the climateshield.v1.PublicService service.
@@ -76,6 +79,11 @@ type PublicServiceClient interface {
 	GetAlertSummary(context.Context, *connect.Request[v1.GetAlertSummaryRequest]) (*connect.Response[v1.GetAlertSummaryResponse], error)
 	GetPipelineStatus(context.Context, *connect.Request[v1.GetPipelineStatusRequest]) (*connect.Response[v1.GetPipelineStatusResponse], error)
 	GetClimatology(context.Context, *connect.Request[v1.GetClimatologyRequest]) (*connect.Response[v1.GetClimatologyResponse], error)
+	// GetAnchorVerification checks one day's root against the chain LIVE:
+	// eth_call rootOf(day) on the RootAnchor contract, compared with the root
+	// in the database. It answers "unavailable" with a reason — never a
+	// fabricated match — when no chain is configured or reachable.
+	GetAnchorVerification(context.Context, *connect.Request[v1.GetAnchorVerificationRequest]) (*connect.Response[v1.GetAnchorVerificationResponse], error)
 }
 
 // NewPublicServiceClient constructs a client for the climateshield.v1.PublicService service. By
@@ -143,20 +151,27 @@ func NewPublicServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(publicServiceMethods.ByName("GetClimatology")),
 			connect.WithClientOptions(opts...),
 		),
+		getAnchorVerification: connect.NewClient[v1.GetAnchorVerificationRequest, v1.GetAnchorVerificationResponse](
+			httpClient,
+			baseURL+PublicServiceGetAnchorVerificationProcedure,
+			connect.WithSchema(publicServiceMethods.ByName("GetAnchorVerification")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // publicServiceClient implements PublicServiceClient.
 type publicServiceClient struct {
-	getCurrentRisk    *connect.Client[v1.GetCurrentRiskRequest, v1.GetCurrentRiskResponse]
-	getRiskHistory    *connect.Client[v1.GetRiskHistoryRequest, v1.GetRiskHistoryResponse]
-	getStats          *connect.Client[v1.GetStatsRequest, v1.GetStatsResponse]
-	getModelInfo      *connect.Client[v1.GetModelInfoRequest, v1.GetModelInfoResponse]
-	getClimateSeries  *connect.Client[v1.GetClimateSeriesRequest, v1.GetClimateSeriesResponse]
-	getLedgerSummary  *connect.Client[v1.GetLedgerSummaryRequest, v1.GetLedgerSummaryResponse]
-	getAlertSummary   *connect.Client[v1.GetAlertSummaryRequest, v1.GetAlertSummaryResponse]
-	getPipelineStatus *connect.Client[v1.GetPipelineStatusRequest, v1.GetPipelineStatusResponse]
-	getClimatology    *connect.Client[v1.GetClimatologyRequest, v1.GetClimatologyResponse]
+	getCurrentRisk        *connect.Client[v1.GetCurrentRiskRequest, v1.GetCurrentRiskResponse]
+	getRiskHistory        *connect.Client[v1.GetRiskHistoryRequest, v1.GetRiskHistoryResponse]
+	getStats              *connect.Client[v1.GetStatsRequest, v1.GetStatsResponse]
+	getModelInfo          *connect.Client[v1.GetModelInfoRequest, v1.GetModelInfoResponse]
+	getClimateSeries      *connect.Client[v1.GetClimateSeriesRequest, v1.GetClimateSeriesResponse]
+	getLedgerSummary      *connect.Client[v1.GetLedgerSummaryRequest, v1.GetLedgerSummaryResponse]
+	getAlertSummary       *connect.Client[v1.GetAlertSummaryRequest, v1.GetAlertSummaryResponse]
+	getPipelineStatus     *connect.Client[v1.GetPipelineStatusRequest, v1.GetPipelineStatusResponse]
+	getClimatology        *connect.Client[v1.GetClimatologyRequest, v1.GetClimatologyResponse]
+	getAnchorVerification *connect.Client[v1.GetAnchorVerificationRequest, v1.GetAnchorVerificationResponse]
 }
 
 // GetCurrentRisk calls climateshield.v1.PublicService.GetCurrentRisk.
@@ -204,6 +219,11 @@ func (c *publicServiceClient) GetClimatology(ctx context.Context, req *connect.R
 	return c.getClimatology.CallUnary(ctx, req)
 }
 
+// GetAnchorVerification calls climateshield.v1.PublicService.GetAnchorVerification.
+func (c *publicServiceClient) GetAnchorVerification(ctx context.Context, req *connect.Request[v1.GetAnchorVerificationRequest]) (*connect.Response[v1.GetAnchorVerificationResponse], error) {
+	return c.getAnchorVerification.CallUnary(ctx, req)
+}
+
 // PublicServiceHandler is an implementation of the climateshield.v1.PublicService service.
 type PublicServiceHandler interface {
 	GetCurrentRisk(context.Context, *connect.Request[v1.GetCurrentRiskRequest]) (*connect.Response[v1.GetCurrentRiskResponse], error)
@@ -217,6 +237,11 @@ type PublicServiceHandler interface {
 	GetAlertSummary(context.Context, *connect.Request[v1.GetAlertSummaryRequest]) (*connect.Response[v1.GetAlertSummaryResponse], error)
 	GetPipelineStatus(context.Context, *connect.Request[v1.GetPipelineStatusRequest]) (*connect.Response[v1.GetPipelineStatusResponse], error)
 	GetClimatology(context.Context, *connect.Request[v1.GetClimatologyRequest]) (*connect.Response[v1.GetClimatologyResponse], error)
+	// GetAnchorVerification checks one day's root against the chain LIVE:
+	// eth_call rootOf(day) on the RootAnchor contract, compared with the root
+	// in the database. It answers "unavailable" with a reason — never a
+	// fabricated match — when no chain is configured or reachable.
+	GetAnchorVerification(context.Context, *connect.Request[v1.GetAnchorVerificationRequest]) (*connect.Response[v1.GetAnchorVerificationResponse], error)
 }
 
 // NewPublicServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -280,6 +305,12 @@ func NewPublicServiceHandler(svc PublicServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(publicServiceMethods.ByName("GetClimatology")),
 		connect.WithHandlerOptions(opts...),
 	)
+	publicServiceGetAnchorVerificationHandler := connect.NewUnaryHandler(
+		PublicServiceGetAnchorVerificationProcedure,
+		svc.GetAnchorVerification,
+		connect.WithSchema(publicServiceMethods.ByName("GetAnchorVerification")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/climateshield.v1.PublicService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PublicServiceGetCurrentRiskProcedure:
@@ -300,6 +331,8 @@ func NewPublicServiceHandler(svc PublicServiceHandler, opts ...connect.HandlerOp
 			publicServiceGetPipelineStatusHandler.ServeHTTP(w, r)
 		case PublicServiceGetClimatologyProcedure:
 			publicServiceGetClimatologyHandler.ServeHTTP(w, r)
+		case PublicServiceGetAnchorVerificationProcedure:
+			publicServiceGetAnchorVerificationHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -343,4 +376,8 @@ func (UnimplementedPublicServiceHandler) GetPipelineStatus(context.Context, *con
 
 func (UnimplementedPublicServiceHandler) GetClimatology(context.Context, *connect.Request[v1.GetClimatologyRequest]) (*connect.Response[v1.GetClimatologyResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("climateshield.v1.PublicService.GetClimatology is not implemented"))
+}
+
+func (UnimplementedPublicServiceHandler) GetAnchorVerification(context.Context, *connect.Request[v1.GetAnchorVerificationRequest]) (*connect.Response[v1.GetAnchorVerificationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("climateshield.v1.PublicService.GetAnchorVerification is not implemented"))
 }

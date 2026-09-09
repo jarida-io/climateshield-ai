@@ -66,15 +66,45 @@ services:
       timeout: 3s
       retries: 12
 
+  # A single-node EVM development chain, started by this stack, for the
+  # ledger's daily Merkle roots. It is NOT a public network: its chain id is
+  # 31337, its accounts are anvil's well-known unlocked development accounts
+  # (so no key is configured anywhere), and its history is deleted by
+  # `make down -v` along with the database. Every surface that mentions it
+  # says so. Pinned by digest; the same string is asserted by a test.
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:v1.5.1@sha256:3a70bfa9bd2c732a767bb60d12c8770b40e8f9b6cca28efc4b12b1be81c7f28e
+    # The image's entrypoint is `/bin/sh -c`, so the command must arrive as ONE
+    # argument: a bare string here would be split into words and the shell
+    # would run only the first of them.
+    command: ["exec anvil --host 0.0.0.0 --port 8545 --chain-id 31337 --state /data/anvil-state.json"]
+    volumes:
+      - anvildata:/data
+    ports:
+      # Bound to the loopback interface so the assessor can run `cast` against
+      # it from the host without exposing a chain on any other interface.
+      - "127.0.0.1:8545:8545"
+    healthcheck:
+      # The image ships cast and no curl or wget.
+      test: ["CMD-SHELL", "cast chain-id --rpc-url http://127.0.0.1:8545"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
   ledger:
     build:
       context: .
       dockerfile: deploy/go.Dockerfile
       args: { CMD: ledger }
-    environment: *appenv
+    environment:
+      <<: *appenv
+      ANCHOR_MODE: ${ANCHOR_MODE:-evm}
+      ANCHOR_RPC_URL: ${ANCHOR_RPC_URL:-http://anvil:8545}
     depends_on:
       migrate:
         condition: service_completed_successfully
+      anvil:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8093/health"]
       interval: 5s
@@ -91,6 +121,10 @@ services:
       NOTIFY_CHANNEL: ${NOTIFY_CHANNEL:-mock}
       MOCK_OUTBOX_PATH: /outbox/outbox.jsonl
       PII_KEY_HEX: ${PII_KEY_HEX:?set PII_KEY_HEX in .env (cp .env.example .env)}
+      # Local development runs on the published placeholder key and must say so
+      # explicitly. Left unset (as the production overlay's .env does) the
+      # service refuses to start on that key — fail closed, never silently.
+      PII_ALLOW_DEV_KEY: ${PII_ALLOW_DEV_KEY:-false}
     volumes:
       - ./var:/outbox
     depends_on:
@@ -124,7 +158,13 @@ services:
       context: .
       dockerfile: deploy/go.Dockerfile
       args: { CMD: publicapi }
-    environment: *appenv
+    environment:
+      <<: *appenv
+      # Read-only: the public API re-reads roots from the chain to answer
+      # GET /v1/ledger/anchors/verify. It never writes to it.
+      ANCHOR_MODE: ${ANCHOR_MODE:-evm}
+      ANCHOR_RPC_URL: ${ANCHOR_RPC_URL:-http://anvil:8545}
+      PREDICTOR: ${PREDICTOR:-rules}
     ports:
       - "8080:8080"
     depends_on:
@@ -147,3 +187,4 @@ services:
 
 volumes:
   pgdata:
+  anvildata:

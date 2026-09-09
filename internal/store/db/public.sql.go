@@ -158,25 +158,45 @@ func (q *Queries) LatestSeriesForAllAreas(ctx context.Context) ([]LatestSeriesFo
 
 const ledgerRootSummary = `-- name: LedgerRootSummary :many
 SELECT dr.leaf_day, dr.root, dr.leaf_count, dr.computed_at,
-       COALESCE((SELECT an.anchor_type FROM anchors an WHERE an.leaf_day = dr.leaf_day
-        ORDER BY an.anchored_at DESC LIMIT 1), '')::text AS anchor_type,
-       (SELECT an.anchored_at FROM anchors an WHERE an.leaf_day = dr.leaf_day
-        ORDER BY an.anchored_at DESC LIMIT 1) AS anchored_at
+       COALESCE(an.anchor_type, '')::text AS anchor_type,
+       an.anchored_at,
+       an.reference AS anchor_reference,
+       an.chain_id, an.chain_label, an.contract_address, an.tx_hash,
+       an.block_number, an.readback_root, an.verified_at
 FROM daily_roots dr
+LEFT JOIN LATERAL (
+    SELECT a.anchor_type, a.anchored_at, a.reference, a.chain_id, a.chain_label,
+           a.contract_address, a.tx_hash, a.block_number, a.readback_root, a.verified_at
+    FROM anchors a
+    WHERE a.leaf_day = dr.leaf_day
+    ORDER BY a.anchored_at DESC, a.id DESC
+    LIMIT 1
+) an ON true
 ORDER BY dr.leaf_day DESC
 `
 
 type LedgerRootSummaryRow struct {
-	LeafDay    pgtype.Date
-	Root       []byte
-	LeafCount  int32
-	ComputedAt pgtype.Timestamptz
-	AnchorType string
-	AnchoredAt pgtype.Timestamptz
+	LeafDay         pgtype.Date
+	Root            []byte
+	LeafCount       int32
+	ComputedAt      pgtype.Timestamptz
+	AnchorType      string
+	AnchoredAt      pgtype.Timestamptz
+	AnchorReference *string
+	ChainID         *int64
+	ChainLabel      *string
+	ContractAddress *string
+	TxHash          *string
+	BlockNumber     *int64
+	ReadbackRoot    []byte
+	VerifiedAt      pgtype.Timestamptz
 }
 
 // Daily Merkle roots and their anchors. A root is a commitment over a whole
 // day; no individual leaf is selected here and none may ever be published.
+// Only the NEWEST anchor per day is returned: the number of anchor versions
+// a day accumulated would track how many late immunizations were recorded,
+// which is a people-derived count.
 func (q *Queries) LedgerRootSummary(ctx context.Context) ([]LedgerRootSummaryRow, error) {
 	rows, err := q.db.Query(ctx, ledgerRootSummary)
 	if err != nil {
@@ -193,6 +213,14 @@ func (q *Queries) LedgerRootSummary(ctx context.Context) ([]LedgerRootSummaryRow
 			&i.ComputedAt,
 			&i.AnchorType,
 			&i.AnchoredAt,
+			&i.AnchorReference,
+			&i.ChainID,
+			&i.ChainLabel,
+			&i.ContractAddress,
+			&i.TxHash,
+			&i.BlockNumber,
+			&i.ReadbackRoot,
+			&i.VerifiedAt,
 		); err != nil {
 			return nil, err
 		}

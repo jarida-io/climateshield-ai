@@ -4,9 +4,14 @@ FROM golang:1.26-alpine AS build
 ARG CMD
 WORKDIR /src
 COPY go.mod go.sum ./
-RUN go mod download
+# BuildKit cache mounts share the module download and the compiler cache
+# across the seven service images built in parallel by `make up`. Without
+# them every image re-downloads every module (the tool dependencies alone are
+# hundreds of megabytes), which is what made a cold first build take so long.
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -trimpath -o /out/app ./cmd/${CMD}
+RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 go build -trimpath -o /out/app ./cmd/${CMD}
 
 FROM alpine:3.22
 # CA certificates come from the build stage rather than `apk add`, so the

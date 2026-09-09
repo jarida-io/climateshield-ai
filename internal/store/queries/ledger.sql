@@ -55,8 +55,43 @@ ON CONFLICT (leaf_day) DO UPDATE SET
 SELECT * FROM daily_roots WHERE leaf_day = $1;
 
 -- name: InsertAnchor :exec
-INSERT INTO anchors (leaf_day, anchor_type, reference)
-VALUES ($1, $2, $3);
+-- One row per publication of one daily root. `root` is the root that was
+-- published; `readback_root` is what the anchor read back from wherever it
+-- published, so a row is checkable on its own. Only whole-day roots are ever
+-- written here or anywhere an anchor points to.
+INSERT INTO anchors (
+    leaf_day, anchor_type, reference, root,
+    chain_id, chain_label, contract_address, tx_hash, block_number,
+    readback_root, verified_at
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
 
 -- name: ListAnchorsForDay :many
 SELECT * FROM anchors WHERE leaf_day = $1 ORDER BY anchored_at, id;
+
+-- name: AnchorExistsForRoot :one
+-- Whether THIS root of THIS day has already been published through the given
+-- anchor type. The sweep anchors whenever this is false, so a root whose
+-- anchoring failed once is retried on the next sweep instead of being
+-- forgotten.
+SELECT EXISTS (
+    SELECT 1 FROM anchors
+    WHERE leaf_day = $1 AND anchor_type = $2 AND root = $3
+) AS exists;
+
+-- name: LatestAnchorForDay :one
+SELECT * FROM anchors
+WHERE leaf_day = $1 AND anchor_type = $2
+ORDER BY anchored_at DESC, id DESC
+LIMIT 1;
+
+-- name: GetAnchorContract :one
+SELECT * FROM anchor_contracts WHERE chain_id = $1;
+
+-- name: UpsertAnchorContract :exec
+INSERT INTO anchor_contracts (chain_id, address, deploy_tx)
+VALUES ($1, $2, $3)
+ON CONFLICT (chain_id) DO UPDATE SET
+    address = excluded.address,
+    deploy_tx = excluded.deploy_tx,
+    deployed_at = now();

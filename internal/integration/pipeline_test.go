@@ -87,6 +87,7 @@ func TestAllServicesBootAndRunThePipeline(t *testing.T) {
 		"DATABASE_URL":          dsn,
 		"LOG_LEVEL":             "error",
 		"PII_KEY_HEX":           devKeyHex,
+		"PII_ALLOW_DEV_KEY":     "true", // the dev placeholder is refused unless explicitly allowed
 		"CLIMATE_SOURCE":        "fixture",
 		"CLIMATE_FIXTURE_DIR":   goldenDir,
 		"NOTIFY_CHANNEL":        "mock",

@@ -5,32 +5,27 @@ package anchor
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
+	"errors"
 	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
-
-	"github.com/jarida-io/climateshield/internal/store/db"
 )
 
-// Local writes roots to the anchors table — the honest skeleton anchor.
-type Local struct {
-	q *db.Queries
-}
+// Local is the database-table anchor. It publishes nowhere outside the
+// database: the sweep records its Receipt as an anchors row and that row is
+// the anchor. It is always present, so every root has a local record even
+// when no chain is configured or the chain is unreachable.
+type Local struct{}
 
-// NewLocal builds a Local anchor over a database handle.
-func NewLocal(dbtx db.DBTX) *Local { return &Local{q: db.New(dbtx)} }
+// NewLocal builds the local anchor.
+func NewLocal() *Local { return &Local{} }
 
-// AnchorRoot implements Anchor.
-func (l *Local) AnchorRoot(ctx context.Context, day time.Time, root []byte) (string, error) {
-	ref := hex.EncodeToString(root)
-	err := l.q.InsertAnchor(ctx, db.InsertAnchorParams{
-		LeafDay:    pgtype.Date{Time: day, Valid: true},
-		AnchorType: "local",
-		Reference:  &ref,
-	})
-	if err != nil {
-		return "", fmt.Errorf("anchor: %w", err)
+// Type implements Anchor.
+func (*Local) Type() string { return TypeLocal }
+
+// AnchorRoot implements Anchor. The reference is the hex root, which is what
+// the row is for: a human-readable copy of the commitment next to its day.
+func (*Local) AnchorRoot(_ context.Context, _ time.Time, root []byte) (Receipt, error) {
+	if len(root) == 0 {
+		return Receipt{}, errors.New("anchor: empty root")
 	}
-	return ref, nil
+	return Receipt{Type: TypeLocal, Reference: hex.EncodeToString(root)}, nil
 }

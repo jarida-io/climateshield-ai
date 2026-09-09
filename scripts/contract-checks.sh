@@ -18,7 +18,7 @@ while IFS= read -r f; do
     fail=1
   fi
 done < <(
-  git ls-files '*.go' '*.ts' '*.tsx' '*.proto' '*.sql' \
+  git ls-files '*.go' '*.ts' '*.tsx' '*.proto' '*.sql' '*.sol' \
     | grep -v -E '^(internal/gen/|internal/store/db/|web/src/gen/|reference/|testdata/)'
 )
 
@@ -54,6 +54,22 @@ if [ -d internal/publicapi ]; then
     fail=1
   fi
 fi
+
+# ---------------------------------------------------------------------------
+# 4. No test may reach the network (CLAUDE.md rule 5). Tests run against
+#    httptest servers, committed fixtures and testcontainers only. A test that
+#    names a hosted RPC endpoint, a model API or a public chain is a test that
+#    will pass on a laptop and fail — or worse, quietly spend money and leak
+#    data — anywhere else.
+# ---------------------------------------------------------------------------
+network_hosts='api\.anthropic\.com|api\.openai\.com|infura\.io|alchemy\.com|alchemyapi|sepolia|mainnet\.|etherscan\.io|\.ngrok\.|ollama\.com'
+while IFS= read -r f; do
+  if grep -qE "$network_hosts" "$f"; then
+    echo "test names a network host (rule 5: no test may touch the network): $f"
+    grep -nE "$network_hosts" "$f" | head -3
+    fail=1
+  fi
+done < <(git ls-files '*_test.go')
 
 if [ "$fail" -ne 0 ]; then
   echo "contract-checks: FAIL"
