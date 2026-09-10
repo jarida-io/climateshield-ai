@@ -3,6 +3,13 @@
 coverage.out
 coverage.html
 /var/
+# A compiled copy of scripts/covergate. `make verify` runs it with `go run`,
+# so the binary is never needed and a committed one is both a 2.6 MB blob and
+# wrong on every architecture but the machine that built it.
+/covergate
+
+# Worktrees created by tooling that runs agents against this checkout.
+/.claude/worktrees/
 
 # Environment — .env.example is committed, real env never is
 .env

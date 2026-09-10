@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import { publicClient } from "../api";
+import { ForecastHero } from "./ForecastHero";
 import type { DailyRoot } from "../gen/climateshield/v1/public_pb";
 import { diseaseName, levelName } from "../map";
 import {
@@ -84,10 +85,12 @@ export function OverviewView() {
   return (
     <Page
       title="From the forecast to the clinic record"
-      lede="ClimateShield watches the weather that drives outbreak risk in five Kenyan counties, prompts the guardians whose children are due a vaccine dose, and keeps a record of the doses given that can be checked rather than taken on trust."
+      lede="Five Kenyan counties, the weather that drives outbreak risk in them, and a record of the doses given that can be checked rather than taken on trust."
     >
-      <Card title="How this works for a family in Kisumu">
-        <div style={{ ...text.body, color: brand.ink, lineHeight: 1.7 }}>
+      <ForecastHero />
+
+      <Card title="How this works for a family in Kisumu" plain>
+        <div className="prose" style={{ ...text.body, color: brand.ink, maxWidth: "68ch" }}>
           <p style={{ marginTop: 0 }}>
             Kisumu’s own 14-day forecast is ingested on a schedule from Open-Meteo, the same free
             and open source anybody else can query
@@ -306,7 +309,7 @@ export function OverviewView() {
           </Chip>
           <span style={{ ...text.small, color: brand.muted }}>
             Postgres-backed jobs with real retry history: ingest → score → alert, plus a ledger
-            sweep. <a href="#/pipeline" style={linkStyle}>See the job history →</a>
+            sweep. <a href="#/pipeline" style={linkStyle}>See the job history</a>
           </span>
         </div>
       </Card>
@@ -419,14 +422,17 @@ function Audience({ who, children }: { who: string; children: ReactNode }) {
   return (
     <div
       style={{
-        background: brand.surface,
-        border: `1px solid ${brand.line}`,
-        borderRadius: 10,
-        padding: space(4),
+        // Three people, not three products. A rule above each is enough to
+        // separate them; boxing prose gives it the weight of data and makes
+        // the page read as a component kit rather than an argument.
+        borderTop: `1px solid ${brand.lineStrong}`,
+        paddingTop: space(3),
       }}
     >
-      <div style={{ ...text.h2, color: brand.ink, marginBottom: space(2) }}>{who}</div>
-      <div style={{ ...text.small, color: brand.muted, lineHeight: 1.6 }}>{children}</div>
+      <div style={{ ...text.h3, color: brand.ink, marginBottom: space(2) }}>{who}</div>
+      <div className="prose" style={{ ...text.small, color: brand.muted }}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -477,10 +483,26 @@ function PillarCard({
         </div>
       )}
       {note !== "" && (
-        <div style={{ ...text.small, color: brand.ink, lineHeight: 1.6 }}>{note}</div>
+        // Clamped, not shortened: the API's own wording is what makes this
+        // note trustworthy, so no sentence is rewritten here. Four cards whose
+        // notes run from one line to twelve make a ragged row, so the overflow
+        // is hidden and the full text stays on hover and on the linked view.
+        <div
+          title={note}
+          style={{
+            ...text.small,
+            color: brand.ink,
+            display: "-webkit-box",
+            WebkitLineClamp: 5,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {note}
+        </div>
       )}
       <a href={href} style={{ ...text.small, ...linkStyle, marginTop: "auto", paddingTop: space(2) }}>
-        {cta} →
+        {cta}
       </a>
     </div>
   );

@@ -6,7 +6,7 @@ import { publicClient } from "../api";
 import { Columns, DistributionStrip, TableView, diseaseColor } from "../charts";
 import { Select } from "../forms";
 import { diseaseName, levelName } from "../map";
-import { Caveat, Card, Code, Failed, Loading, Page, Pill, StatTile, Table, Td, TileRow, brand, space, text } from "../ui";
+import { Caveat, Card, Code, Failed, InlineCode, Loading, Page, Pill, StatTile, Table, Td, TileRow, brand, space, text } from "../ui";
 import { useApi } from "../useApi";
 
 const COUNTIES = ["Nairobi", "Kisumu", "Mombasa", "Nakuru", "Eldoret"];
@@ -91,7 +91,7 @@ export function ModelView() {
         </Table>
         <p style={{ ...text.small, color: brand.muted, marginBottom: 0 }}>
           Reachable is not the same as correct. The full method, the per-county firing rates and
-          the recommendation are in <Code>docs/threshold-validation.md</Code>; the same finding
+          the recommendation are in <InlineCode>docs/threshold-validation.md</InlineCode>; the same finding
           fails a test in CI if it ever stops being true.
         </p>
       </Card>
@@ -284,7 +284,7 @@ function ReferenceProvenance({ info }: { info: ModelInfo }) {
         The rebuild is the only command in the repository that makes an outbound request, and it
         needs no account or key. The tier cut-points are declared choices, not fitted ones: HIGH at
         exceedance ≤ {info.highExceedance}, MEDIUM at ≤ {info.mediumExceedance}. Method, operating
-        points and limitations: <Code>docs/model-card.md</Code>.
+        points and limitations: <InlineCode>docs/model-card.md</InlineCode>.
       </p>
       {info.interpretation !== "" && (
         <p style={{ ...text.small, color: brand.muted, marginBottom: 0, marginTop: space(4) }}>

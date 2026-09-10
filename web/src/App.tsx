@@ -108,10 +108,27 @@ export default function App(): React.JSX.Element {
             textDecoration: "none",
           }}
         >
-          <Logo size={22} />
-          <strong style={{ ...text.h1, fontSize: 19 }}>ClimateShield</strong>
+          <Logo size={24} />
+          {/* The wordmark is the one place Comfortaa belongs: it is a logotype,
+              not text. Everything else on the page is set in Plex. */}
+          <strong className="wordmark" style={{ fontSize: 20, fontWeight: 700, letterSpacing: "0.01em" }}>
+            ClimateShield
+          </strong>
         </a>
-        <span style={{ ...text.small, opacity: 0.85, lineHeight: 1.5 }}>
+        <span
+          className="prose"
+          style={{
+            ...text.small,
+            color: "rgba(255,255,255,0.78)",
+            // The tagline is a single line or it is nothing: broken across two
+            // it fights the wordmark it sits beside. Below the width where it
+            // fits, the page title carries the same idea.
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            minWidth: 0,
+          }}
+        >
           Climate-responsive early warning for child immunization in Kenya
         </span>
       </header>
@@ -138,11 +155,14 @@ export default function App(): React.JSX.Element {
               aria-current={isActive ? "page" : undefined}
               style={{
                 ...text.small,
-                color: isActive ? "#fff" : "rgba(255,255,255,0.72)",
-                fontWeight: isActive ? 700 : 400,
+                color: isActive ? "#fff" : "rgba(255,255,255,0.70)",
+                // Weight is constant across states. Bolding the active tab
+                // widens it and shifts every tab after it, which is a visible
+                // twitch each time someone navigates.
+                fontWeight: 500,
                 textDecoration: "none",
                 padding: `${space(3)} ${space(4)}`,
-                borderBottom: `3px solid ${isActive ? brand.purple : "transparent"}`,
+                borderBottom: `2px solid ${isActive ? "#fff" : "transparent"}`,
                 whiteSpace: "nowrap",
               }}
             >
@@ -173,7 +193,7 @@ export default function App(): React.JSX.Element {
         }}
       >
         <span>Aggregate data only — no personal information is served.</span>
-        <span style={{ marginLeft: "auto" }}>Apache-2.0 · open data · no credentials required</span>
+        <span style={{ marginLeft: "auto" }}>Apache-2.0. Open data, no credentials required.</span>
       </footer>
     </div>
   );

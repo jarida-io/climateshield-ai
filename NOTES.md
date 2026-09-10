@@ -375,6 +375,43 @@ briefing, and every sentence it writes is checked against the aggregates it was
 given; the risk levels themselves come from published threshold rules and a
 fitted weather baseline, neither of which is machine learning."*
 
+### What happened when a real model was actually run
+
+`make up-ai` was run on 2026-09-10 against qwen2.5:1.5b served locally by
+Ollama on an M-series Mac, with no credential involved. It is the first time a
+language model has produced text in this system, and the result is worth
+recording exactly.
+
+**Every draft the model produced was refused.** Six drafts across three sweeps
+(Kisumu and Eldoret, English and Kiswahili) were rejected by the grounding
+check. The recurring violation was `forbidden_claim` — the model wrote "will
+occur", an outbreak prediction this system cannot support — together with
+`possible_name`, and on the Kiswahili drafts `level_mismatch`, where it
+restated a disease at a tier the fact sheet did not give it.
+
+The deterministic template was served in each case, and the provenance line
+named the model that had failed:
+
+> No language model text is shown. qwen2.5:1.5b (openai-compatible) produced a
+> draft and the grounding check refused it (forbidden_claim, possible_name),
+> so the deterministic template is served instead.
+
+Two honest readings of that. The good one: the guardrail fires against a real
+model and not merely against the adversarial fixtures in the test suite, and
+the reader is told exactly what happened instead of being shown plausible
+text. The unflattering one: a 1.5B model on CPU is not good enough to pass
+this check on this task, so on the current default the language model
+contributes nothing but a rejection notice. Whether a larger model clears the
+bar is untested — none has been run here — and no pass rate should be quoted
+anywhere, because the only measurement that exists is "six of six refused".
+
+Timing, measured: a trivial completion takes about 14 seconds cold. A full
+briefing runs to minutes, which is why generation is a background job, and why
+the `ai` overlay now sets its own timeout and sweep interval instead of
+inheriting the ones sized for the template generator — inheriting them is what
+made the first run time out on every county and quietly serve templates.
+
+
 ## What I would do next
 
 Ordered by how much each changes whether the system helps anyone.

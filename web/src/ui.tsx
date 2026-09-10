@@ -7,38 +7,60 @@
 import type { CSSProperties, ReactNode } from "react";
 
 export const brand = {
-  purple: "#7C4DFF",
-  purpleDim: "#EDE7FF",
-  navy: "#14213D",
-  navySoft: "#26315A",
-  ink: "#1B1F2A",
-  muted: "#5C6478",
-  line: "#E3E6ED",
+  // The ground is the colour of an overcast day over the lake: a cool, damp
+  // paper rather than the warm cream or the blue-grey every dashboard ships
+  // with. It is the one surface the reader sees on every screen, so it is
+  // where the design decides what kind of instrument this is.
+  canvas: "#EDF1F0",
   surface: "#FFFFFF",
-  canvas: "#F7F8FB",
-  // Status palette, darkened from the original so white label text clears
-  // 4.5:1 on every tier. The previous amber sat at 2.07:1 — unreadable, and
-  // this is a public health tool.
+  // Lake Victoria at depth. Structure, headings and the header band. It
+  // replaces a generic navy with a colour that belongs to the five counties
+  // this system actually watches.
+  navy: "#0E3733",
+  navySoft: "#1A4A45",
+  ink: "#12211F",
+  muted: "#4A6360",
+  line: "#D6DEDC",
+  lineStrong: "#B9C6C3",
+
+  // Jarida's mark is purple, so purple stays — on the mark. It no longer
+  // colours buttons, links and furniture that have nothing to do with the
+  // brand, which is what made it read as decoration.
+  purple: "#7C4DFF",
+  purpleDim: "#EFEAFF",
+  purpleInk: "#4B2AC2",
+
+  // Status palette, unchanged: these three cleared 4.5:1 against white label
+  // text after an earlier amber failed at 2.07:1, and this is a public health
+  // tool. Re-tuning them for a new ground would be re-running a solved
+  // accessibility problem for the sake of taste.
   high: "#C1121F",
   medium: "#B45309",
   low: "#12715F",
   warn: "#8A6100",
   warnBg: "#FFF6E0",
-  // Tinted chip grounds. Each is paired below with ink dark enough to clear
-  // 4.5:1 on it, because a chip is often the only word carrying a caveat.
   lowBg: "#E3F1EC",
   highBg: "#FCE8EA",
-  purpleInk: "#4B2AC2",
 } as const;
 
 export const space = (n: number) => `${n * 4}px`;
 
 export const text = {
-  h1: { fontSize: 22, fontWeight: 700, letterSpacing: "0.01em" },
-  h2: { fontSize: 16, fontWeight: 700 },
-  body: { fontSize: 14, fontWeight: 400 },
-  small: { fontSize: 12.5, fontWeight: 400 },
-  mono: { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 12.5 },
+  // A modular scale, roughly 1.25, from a 15px body. Plex Sans has enough
+  // x-height to read at 15 where the previous rounded display face needed
+  // more, so the page carries more information at the same apparent size.
+  display: { fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.15 },
+  h1: { fontSize: 24, fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25 },
+  h2: { fontSize: 19, fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1.3 },
+  h3: { fontSize: 15, fontWeight: 600, letterSpacing: "0" },
+  body: { fontSize: 15, fontWeight: 400, lineHeight: 1.55 },
+  small: { fontSize: 13, fontWeight: 400, lineHeight: 1.5 },
+  micro: { fontSize: 12, fontWeight: 500, lineHeight: 1.4 },
+  // Machine output: Merkle roots, endpoint paths, driver values. Mono is used
+  // for things that ARE machine output, never as decoration on a label.
+  mono: { fontFamily: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 13 },
+  // A figure meant to be read at a glance and compared with its neighbour.
+  figure: { fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.1 },
 } satisfies Record<string, CSSProperties>;
 
 export const levelColor: Record<string, string> = {
@@ -62,9 +84,14 @@ export function Page({
   children: ReactNode;
 }) {
   return (
-    <div style={{ padding: `${space(6)} ${space(6)} ${space(10)}`, maxWidth: 1180, margin: "0 auto" }}>
+    <div style={{ padding: `${space(7)} ${space(6)} ${space(10)}`, maxWidth: 1180, margin: "0 auto" }}>
       <h1 style={{ ...text.h1, margin: 0, color: brand.ink }}>{title}</h1>
-      <p style={{ ...text.body, color: brand.muted, margin: `${space(2)} 0 ${space(5)}`, lineHeight: 1.6 }}>
+      {/* A lede is read as a sentence, so it is held to a comfortable measure
+          rather than run to the full width of a 1180px page. */}
+      <p
+        className="prose"
+        style={{ ...text.body, color: brand.muted, margin: `${space(3)} 0 ${space(6)}`, maxWidth: "62ch" }}
+      >
         {lede}
       </p>
       {children}
@@ -94,28 +121,18 @@ export function Disclosure({
     <section
       role="note"
       style={{
-        background: brand.canvas,
-        border: `1px solid ${brand.line}`,
-        borderRadius: 10,
-        padding: `${space(3)} ${space(4)}`,
-        margin: `0 0 ${space(5)}`,
+        // A rule on the edge, not a box. The boundary of a view is an aside to
+        // the evidence beside it, and a full border would give it the same
+        // weight as the data — which is how a permanent notice gets skipped.
+        borderLeft: `2px solid ${brand.lineStrong}`,
+        padding: `${space(1)} 0 ${space(1)} ${space(4)}`,
+        margin: `0 0 ${space(6)}`,
         ...text.small,
-        color: brand.ink,
-        lineHeight: 1.6,
+        color: brand.muted,
+        maxWidth: "72ch",
       }}
     >
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          color: brand.muted,
-          marginBottom: space(2),
-        }}
-      >
-        {caption}
-      </div>
+      <div style={{ ...text.micro, color: brand.ink, marginBottom: space(1) }}>{caption}</div>
       {children}
     </section>
   );
@@ -189,13 +206,45 @@ export function Caveat({ children }: { children: ReactNode }) {
   );
 }
 
-export function Card({ title, children }: { title?: string; children: ReactNode }) {
+export function Card({
+  title,
+  children,
+  plain = false,
+}: {
+  title?: string;
+  children: ReactNode;
+  /** Prose rather than data: a titled passage with no surface under it. */
+  plain?: boolean;
+}) {
+  if (plain) {
+    return (
+      <section style={{ marginBottom: space(6), paddingTop: space(2) }}>
+        {title !== undefined && (
+          <h2
+            style={{
+              ...text.h2,
+              margin: `0 0 ${space(3)}`,
+              color: brand.ink,
+              paddingBottom: space(2),
+              borderBottom: `1px solid ${brand.lineStrong}`,
+            }}
+          >
+            {title}
+          </h2>
+        )}
+        {children}
+      </section>
+    );
+  }
   return (
     <section
       style={{
         background: brand.surface,
         border: `1px solid ${brand.line}`,
-        borderRadius: 10,
+        // 4px, not 10. A large radius on every surface regardless of what it
+        // holds is the tell of a component kit; a small one reads as a sheet
+        // of paper, which is what these are.
+        borderRadius: 4,
         padding: space(5),
         marginBottom: space(5),
       }}
@@ -212,20 +261,35 @@ export function StatTile({ label, value, hint }: { label: string; value: string;
   return (
     <div
       style={{
-        border: `1px solid ${brand.line}`,
-        borderRadius: 10,
-        padding: space(4),
+        // A rule over a figure, not a box around it. The number is the thing
+        // worth looking at; four identical bordered rectangles make four
+        // numbers look like furniture.
+        borderTop: `2px solid ${brand.navy}`,
+        padding: `${space(3)} ${space(4)} ${space(2)} 0`,
         minWidth: 150,
         flex: "1 1 150px",
-        background: brand.surface,
       }}
     >
-      <div style={{ ...text.small, color: brand.muted }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: brand.ink, marginTop: space(1) }}>
+      <div style={{ ...text.micro, color: brand.muted }}>{label}</div>
+      {/* A tile holds either a figure or a short string, and the two want
+          different sizes: "20" wants to be read across the room, "Aug 7, 2026,
+          9:00 AM" wants to fit on one line. The scale follows the content
+          rather than forcing every value through one size and letting the long
+          ones wrap into the tile below. */}
+      <div
+        style={{
+          ...text.figure,
+          fontSize: value.length <= 7 ? 28 : value.length <= 14 ? 21 : 17,
+          color: brand.ink,
+          marginTop: space(2),
+        }}
+      >
         {value}
       </div>
       {hint !== undefined && (
-        <div style={{ ...text.small, color: brand.muted, marginTop: space(1) }}>{hint}</div>
+        <div style={{ ...text.small, color: brand.muted, marginTop: space(2), maxWidth: "34ch" }}>
+          {hint}
+        </div>
       )}
     </div>
   );
@@ -281,19 +345,21 @@ export function Pill({ level }: { level: string }) {
 export function Table({ head, children }: { head: string[]; children: ReactNode }) {
   return (
     <div style={{ overflowX: "auto" }}>
-      <table style={{ borderCollapse: "collapse", width: "100%", ...text.body }}>
+      <table style={{ borderCollapse: "collapse", width: "100%", ...text.small }}>
         <thead>
           <tr>
-            {head.map((h) => (
+            {head.map((h, i) => (
               <th
-                key={h}
+                // Index, not the label: a header row may legitimately carry two
+                // blank columns (an actions column beside a spacer), and two
+                // identical keys make React drop one of them.
+                key={`${h}-${i}`}
                 style={{
                   textAlign: "left",
                   padding: `${space(2)} ${space(3)}`,
-                  borderBottom: `2px solid ${brand.line}`,
-                  color: brand.muted,
-                  ...text.small,
-                  fontWeight: 700,
+                  borderBottom: `1.5px solid ${brand.navy}`,
+                  color: brand.ink,
+                  ...text.micro,
                   whiteSpace: "nowrap",
                 }}
               >
@@ -320,6 +386,29 @@ export function Td({ children, mono = false }: { children: ReactNode; mono?: boo
     >
       {children}
     </td>
+  );
+}
+
+/**
+ * A file path, flag or identifier named inside a sentence. It is an inline
+ * <code>, not the block <pre> that Code renders: a <pre> inside a <p> is
+ * invalid HTML, and React reports it as a hydration error.
+ */
+export function InlineCode({ children }: { children: ReactNode }) {
+  return (
+    <code
+      style={{
+        ...text.mono,
+        fontSize: "0.92em",
+        background: brand.canvas,
+        border: `1px solid ${brand.line}`,
+        borderRadius: 3,
+        padding: "0.05em 0.35em",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </code>
   );
 }
 

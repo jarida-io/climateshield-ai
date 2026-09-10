@@ -16,9 +16,9 @@ interface Endpoint {
 }
 
 const ENDPOINTS: Endpoint[] = [
-  { path: "/v1/risk/current", what: "Latest risk per county × disease", formats: "JSON · CSV · GeoJSON" },
-  { path: "/v1/risk/history", what: "Historical scores, filterable by county, disease and date", formats: "JSON · CSV · GeoJSON" },
-  { path: "/v1/stats", what: "Per-county counts derived from people (k≥10 suppressed)", formats: "JSON · CSV" },
+  { path: "/v1/risk/current", what: "Latest risk per county × disease", formats: "JSON, CSV, GeoJSON" },
+  { path: "/v1/risk/history", what: "Historical scores, filterable by county, disease and date", formats: "JSON, CSV, GeoJSON" },
+  { path: "/v1/stats", what: "Per-county counts derived from people (k≥10 suppressed)", formats: "JSON, CSV" },
   { path: "/v1/model", what: "Active predictor, published thresholds, reference record", formats: "JSON" },
   { path: "/v1/climate/series", what: "The forecast window each score was computed from", formats: "JSON" },
   { path: "/v1/climatology", what: "Reference distribution for one county-month, with the current window marked", formats: "JSON", requires: "?area=&month=", example: "?area=Kisumu&month=8" },

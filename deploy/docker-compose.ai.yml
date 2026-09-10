@@ -66,10 +66,20 @@ services:
       BRIEFING_GENERATOR: openai
       BRIEFING_OPENAI_BASE_URL: http://ollama:11434/v1
       BRIEFING_MODEL: ${BRIEFING_MODEL:-qwen2.5:1.5b}
-      # A CPU-bound 1.5B model needs room; the job is asynchronous, so a long
-      # timeout costs nobody a page load.
-      BRIEFING_TIMEOUT: ${BRIEFING_TIMEOUT:-180s}
-      BRIEFING_SWEEP_INTERVAL: ${BRIEFING_SWEEP_INTERVAL:-15m}
+      # Set outright, not defaulted from .env. This overlay is the one that
+      # knows a CPU-bound model is answering: .env's value is sized for the
+      # template generator, and inheriting it here is why the first run of this
+      # profile timed out on every county and silently served templates.
+      # Generation is a background job, so a long ceiling costs nobody a page
+      # load; it only decides how patient the job is before it gives up and
+      # says the generator was unavailable.
+      BRIEFING_TIMEOUT: 300s
+      # Also set outright. The sweep's job is unique per interval, so with the
+      # 15m default a restart of this service does nothing for a quarter of an
+      # hour — which is most of the time somebody has to look at this profile.
+      # Five minutes is short enough to demonstrate and long enough that a
+      # CPU-bound generation finishes before the next sweep is due.
+      BRIEFING_SWEEP_INTERVAL: 5m
     depends_on:
       ollama-pull:
         condition: service_completed_successfully
