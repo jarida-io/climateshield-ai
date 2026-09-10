@@ -14,7 +14,12 @@ a chat window, an issue, or a commit.
 
 ## 1. Prepare the host
 
-Debian or Ubuntu, 2 GB RAM minimum (the Go build is the peak). As root:
+Debian or Ubuntu. **4 GB RAM** (on DigitalOcean, `s-2vcpu-4gb`): the peak is
+the first build, which compiles eight Go binaries and bundles the dashboard.
+2 GB is enough to *run* the stack but not reliably to build it — npm has been
+seen to die with "Exit handler never called" on a 2 GB box. If you must use a
+smaller droplet, build the images elsewhere and push them to a registry rather
+than building on the host. As root:
 
 ```bash
 apt-get update && apt-get install -y docker.io docker-compose-plugin git
@@ -44,7 +49,16 @@ git clone https://github.com/jarida-io/climateshield.git
 cd climateshield
 ```
 
-The default branch is what you want. Do not deploy a feature branch.
+**Check what the default branch actually contains before you deploy it.** At
+the time of writing `main` is still the pre-rewrite prototype: the chain
+anchor, the county briefings, the annotated scores and the current dashboard
+are all on `feat/climatology-model` and are not on `main` until that branch is
+merged. Deploying `main` today would deploy the old system. Confirm with
+`git log --oneline -1` and check out the ref you actually mean:
+
+```bash
+git checkout feat/climatology-model   # until this is merged into main
+```
 
 Two things this stack starts that are easy to overlook when reading the base
 compose file:
@@ -61,7 +75,21 @@ compose file:
   deterministic template; no language model runs and no credential is involved
   unless you deliberately set `BRIEFING_GENERATOR`.
 
-## 3. Generate secrets **on the host**
+## 3. The short version
+
+Everything from here — secrets, firewall, build, seed and verification — is in
+one idempotent script. Run it on the host and skip to section 6:
+
+```bash
+./scripts/deploy-droplet.sh
+```
+
+It never overwrites an existing `.env`, so re-running it after a `git pull`
+updates the deployment in place and keeps the secrets generated the first time.
+The sections below are what it does, for anyone who would rather do it by hand
+or needs to change one step.
+
+## 4. Generate secrets **on the host**
 
 They are created here and never leave. Do not reuse a value you have typed
 anywhere else.
@@ -97,7 +125,7 @@ fails loudly instead of running with encryption that protects nothing.
 `openmeteo` for live forecasts — free, no API key, but the risk levels will
 then reflect real weather rather than the documented scenario.
 
-## 4. Deploy
+## 5. Deploy
 
 ```bash
 docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --build
@@ -106,25 +134,23 @@ docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml ps
 
 First build compiles eight Go binaries and the dashboard — several minutes.
 
-## 5. Seed the demo population and run the pipeline
+## 6. Seed the demo population and run the pipeline
+
+The overlay carries a one-shot `demo` service behind a profile, so the demo
+runs *inside* the compose network and resolves `postgres`, `registry` and
+`publicapi` by name:
 
 ```bash
 docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml \
-  run --rm -e REGISTRY_URL=http://registry:8082 -e PUBLICAPI_URL=http://publicapi:8080 \
-  migrate /app demo || true
+  --profile demo run --rm demo
 ```
 
-If that image has no `demo` binary, run it from the host instead — it only
-needs the database and the two service URLs:
+Do not try to run `cmd/demo` from the host. This overlay deliberately publishes
+no port for Postgres or the registry, so a host-side run cannot reach them —
+and reopening those ports to seed a demonstration would undo the one security
+property this overlay exists to provide.
 
-```bash
-set -a && . ./.env && set +a
-DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB?sslmode=disable" \
-REGISTRY_URL=http://localhost:8082 PUBLICAPI_URL=http://localhost:8080 \
-  go run ./cmd/demo
-```
-
-## 6. Verify
+## 7. Verify
 
 ```bash
 curl -s localhost/health

@@ -61,6 +61,34 @@ services:
       web:
         condition: service_started
 
+  # A one-shot demo runner, inside the compose network. It is profile-gated so
+  # it never starts with the stack: `--profile demo run --rm demo`.
+  #
+  # The obvious alternative — running cmd/demo from the host — cannot work on a
+  # production host, because this overlay closes the Postgres and registry
+  # ports on purpose. From in here the service names resolve and nothing has to
+  # be reopened to seed a demonstration.
+  demo:
+    profiles: ["demo"]
+    build:
+      context: .
+      dockerfile: deploy/go.Dockerfile
+      args: { CMD: demo }
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?}?sslmode=disable
+      PII_KEY_HEX: ${PII_KEY_HEX:?}
+      REGISTRY_URL: http://registry:8082
+      PUBLICAPI_URL: http://publicapi:8080
+      CLIMATE_SOURCE: ${CLIMATE_SOURCE:-fixture}
+      CLIMATE_FIXTURE_DIR: /testdata/golden
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      publicapi:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+    restart: "no"
+
 volumes:
   caddy_data:
   caddy_config:
